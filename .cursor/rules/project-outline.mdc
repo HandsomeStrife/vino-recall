@@ -1,0 +1,102 @@
+---
+alwaysApply: true
+---
+
+Project Name: VinoRecall
+Type: Educational Web Application (SaaS) Core Methodology: Spaced Repetition System (SRS / "The Anki Method") Subject Matter: Wine Education (Specifically WSET Level 1 & 2)
+
+1. Executive Summary
+VinoRecall is a visually immersive study platform designed to help wine students pass WSET Level 1 and Level 2 exams. Unlike traditional text-heavy study guides, VinoRecall uses the "Anki method" (Spaced Repetition) to present high-quality visual flashcards. The platform predicts when a user is about to forget a fact and serves that specific card to them, optimizing study time.
+
+2. Design Philosophy & UI/UX
+The application prioritizes visual learning over text density. The interface should feel like a premium digital wine cellar—warm, inviting, and sophisticated.
+
+Visual Style: "Dark Mode" aesthetic using deep Burgundies, Forest Greens, and Cream text. High usage of photography (vineyards, bottles, grapes).
+
+Layout (Logged In):
+
+Left Sidebar: Fixed navigation pane (collapsible on mobile).
+
+Main Canvas: A scrollable, card-based interface on the right.
+
+Interaction: Soft transitions, "flipping" card animations, and satisfying "completion" indicators.
+
+3. Content Scope (The Curriculum)
+The app is divided into two distinct "Worlds" (Levels), based on the WSET syllabus.
+
+Level 1: The Foundation
+Grape Identification: Visual cards showing a grape cluster -> User identifies the grape (e.g., Merlot, Chardonnay).
+
+Tasting Technique: The "SAT" (Systematic Approach to Tasting). Identifying acid, tannin, and body.
+
+Food & Wine: Basic pairing principles (e.g., Salt + Acid = Good).
+
+Service: Glassware types and serving temperatures.
+
+Level 2: The Intermediate
+Geography: Map-based cards. Show a highlighted region on a map -> User identifies the region (e.g., Bordeaux, Rioja).
+
+Label Terminology: Images of wine labels with blurred sections -> User identifies the missing term (e.g., "Grand Cru").
+
+Production: Diagrams of winemaking (Red vs. White vs. Rosé processes).
+
+Varietals in Depth: Linking regions to grapes (e.g., Marlborough -> Sauvignon Blanc).
+
+4. Feature Breakdown
+A. The "Study Gym" (Core Feature)
+This is the primary screen where the user spends 90% of their time.
+
+The Prompt: A card appears with an image or a short question (e.g., "What region is highlighted?").
+
+The Reveal: User clicks "Reveal Answer." The card flips or expands.
+
+The Rating: The user self-assesses how easy it was:
+
+Again (Forgot) -> Show in 1 minute.
+
+Hard -> Show in 1 day.
+
+Good -> Show in 3 days.
+
+Easy -> Show in 7 days.
+
+B. The Dashboard
+A visual overview of the user's "Wine Journey."
+
+Daily Goal: "Review 20 Cards."
+
+Streak Counter: Number of consecutive days studied.
+
+Mastery Heatmap: A visual representation (perhaps a cluster of grapes filling up) showing how much of the syllabus has been mastered.
+
+C. The Library (Deck Browser)
+Users can browse specific decks if they want to "cram" a specific topic outside of the algorithm.
+
+Filter by: Red Wines, White Wines, Regions, Production, Spirits (for L2).
+
+D. User Progression
+Leveling System: Users earn badges (e.g., "Sommelier in Training", "Vintner") based on cards mastered.
+
+5. Site Map
+1. Public Facing (Logged Out)
+
+Landing Page: High-impact visuals, value proposition, "The Science of Anki," Pricing, Success Stories.
+
+Auth Pages: Login / Register.
+
+2. Application (Logged In)
+
+Dashboard: Stats, Streaks, "Due Today."
+
+Study Interface: The distraction-free flashcard mode.
+
+Decks/Library: Overview of all available card packs.
+
+Profile/Settings: Subscription management, daily card limits.
+
+6. Technical Logic (High Level)
+The Algorithm: The backend must run a logic script every night (or upon request) that checks: When did the user last see this card? What did they rate it? Is it due today?
+
+Image Optimization: Because this is a "Visual Representation" site, the system needs to serve high-quality images that load instantly (Lazy loading).
+
+Mobile First: 70% of users will study on their commute. The flashcard interface must work perfectly on a phone screen.
