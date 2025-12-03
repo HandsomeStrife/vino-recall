@@ -6,7 +6,8 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-heading: 'Goudy Bookletter 1911', serif;
     --color-burgundy-900: #561C24; /* Dark footer/header color */
     --color-burgundy-800: #7A2B3A;
     --color-burgundy-500: #9E3B4D; /* Primary button/accent color */

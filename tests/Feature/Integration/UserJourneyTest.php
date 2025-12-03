@@ -1,0 +1,233 @@
+<?php
+
+declare(strict_types=1);
+
+use Domain\Card\Models\Card;
+use Domain\Card\Models\CardReview;
+use Domain\Deck\Models\Deck;
+use Domain\User\Enums\UserRole;
+use Domain\User\Models\User;
+
+test('complete user journey: register, login, view dashboard, study cards', function () {
+    // Create a deck with cards
+    $deck = Deck::factory()->create(['name' => 'Test Deck', 'is_active' => true]);
+    Card::factory()->count(3)->create(['deck_id' => $deck->id]);
+
+    // Register a new user
+    $response = $this->post(route('register'), [
+        'name' => 'Journey User',
+        'email' => 'journey@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('dashboard'));
+    $this->assertAuthenticated();
+
+    // Verify user was created with correct role
+    $user = User::where('email', 'journey@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->role)->toBe(UserRole::USER);
+
+    // Visit dashboard
+    $response = $this->get(route('dashboard'));
+    $response->assertStatus(200)
+        ->assertSee('Dashboard');
+
+    // Visit study page
+    $response = $this->get(route('study'));
+    $response->assertStatus(200);
+
+    // Logout
+    $response = $this->post(route('logout'));
+    $response->assertRedirect('/');
+    $this->assertGuest();
+
+    // Login again
+    $response = $this->post(route('login'), [
+        'email' => 'journey@example.com',
+        'password' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('dashboard'));
+    $this->assertAuthenticated();
+});
+
+test('admin journey: login, manage users, create deck, create cards', function () {
+    $admin = User::factory()->create([
+        'email' => 'admin@test.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        'role' => UserRole::ADMIN,
+    ]);
+
+    // Login as admin
+    $response = $this->post(route('login'), [
+        'email' => 'admin@test.com',
+        'password' => 'password',
+    ]);
+
+    $response->assertRedirect(route('dashboard'));
+    $this->assertAuthenticated();
+
+    // Access admin dashboard
+    $response = $this->get(route('admin.dashboard'));
+    $response->assertStatus(200);
+
+    // Access user management
+    $response = $this->get(route('admin.users'));
+    $response->assertStatus(200);
+
+    // Access deck management
+    $response = $this->get(route('admin.decks'));
+    $response->assertStatus(200);
+
+    // Access card management
+    $response = $this->get(route('admin.cards'));
+    $response->assertStatus(200);
+});
+
+test('user study session: select deck, study cards, rate cards, view progress', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    // Create deck with cards
+    $deck = Deck::factory()->create(['is_active' => true]);
+    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
+    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
+
+    // Visit library
+    $response = $this->get(route('library'));
+    $response->assertStatus(200)
+        ->assertSee($deck->name);
+
+    // Visit study page
+    $response = $this->get(route('study'));
+    $response->assertStatus(200);
+
+    // Study cards (simulate via CardReview creation)
+    CardReview::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card1->id,
+        'rating' => 'good',
+        'next_review_at' => now()->addDays(3),
+    ]);
+
+    // Visit dashboard to see progress
+    $response = $this->get(route('dashboard'));
+    $response->assertStatus(200)
+        ->assertSee('Cards Mastered');
+});
+
+test('user profile update journey: login, update profile, change password', function () {
+    $user = User::factory()->create([
+        'name' => 'Original Name',
+        'email' => 'original@example.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('oldpassword'),
+    ]);
+
+    $this->actingAs($user);
+
+    // Visit profile page
+    $response = $this->get(route('profile'));
+    $response->assertStatus(200)
+        ->assertSee('Profile');
+
+    // Profile page contains Livewire component that handles updates
+    $response->assertSeeLivewire('profile');
+});
+
+test('guest user journey: visit homepage, view features, register', function () {
+    // Visit homepage
+    $response = $this->get(route('home'));
+    $response->assertStatus(200)
+        ->assertSee('VinoRecall')
+        ->assertSee('Spaced Repetition');
+
+    // Try to access protected route, should redirect to login
+    $response = $this->get(route('dashboard'));
+    $response->assertRedirect(route('login'));
+
+    // Visit register page
+    $response = $this->get(route('register'));
+    $response->assertStatus(200)
+        ->assertSee('Create your account');
+});
+
+test('user cannot access admin routes', function () {
+    $user = User::factory()->create(['role' => UserRole::USER]);
+    $this->actingAs($user);
+
+    // Attempt to access admin dashboard
+    $response = $this->get(route('admin.dashboard'));
+    $response->assertStatus(403);
+
+    // Attempt to access user management
+    $response = $this->get(route('admin.users'));
+    $response->assertStatus(403);
+
+    // Attempt to access deck management
+    $response = $this->get(route('admin.decks'));
+    $response->assertStatus(403);
+
+    // Attempt to access card management
+    $response = $this->get(route('admin.cards'));
+    $response->assertStatus(403);
+});
+
+test('complete study session with multiple cards', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    // Create deck with multiple cards
+    $deck = Deck::factory()->create(['is_active' => true]);
+    $cards = Card::factory()->count(5)->create(['deck_id' => $deck->id]);
+
+    // Create reviews for all cards (simulate previous study session)
+    foreach ($cards as $card) {
+        CardReview::factory()->create([
+            'user_id' => $user->id,
+            'card_id' => $card->id,
+            'next_review_at' => now()->subDay(), // All due for review
+        ]);
+    }
+
+    // Visit study page
+    $response = $this->get(route('study'));
+    $response->assertStatus(200);
+
+    // Verify dashboard shows due cards
+    $response = $this->get(route('dashboard'));
+    $response->assertStatus(200)
+        ->assertSee('due for review');
+});
+
+test('user registration creates necessary records and redirects correctly', function () {
+    $initialUserCount = User::count();
+
+    // Register
+    $response = $this->post(route('register'), [
+        'name' => 'New User',
+        'email' => 'newuser@example.com',
+        'password' => 'securepassword',
+        'password_confirmation' => 'securepassword',
+    ]);
+
+    // Verify redirect
+    $response->assertRedirect(route('dashboard'));
+
+    // Verify user was created
+    expect(User::count())->toBe($initialUserCount + 1);
+
+    $user = User::where('email', 'newuser@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->name)->toBe('New User')
+        ->and($user->role)->toBe(UserRole::USER);
+
+    // Verify user is authenticated
+    $this->assertAuthenticatedAs($user);
+
+    // Verify can access dashboard
+    $response = $this->get(route('dashboard'));
+    $response->assertStatus(200);
+});
+

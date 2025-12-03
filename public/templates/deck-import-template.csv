@@ -1,0 +1,6 @@
+question,answer,image_path,card_type,answer_choices,correct_answer_index
+"What grape is this?","Cabernet Sauvignon","images/grapes/cabernet.jpg","traditional","",""
+"What is the primary grape in Bordeaux?","Cabernet Sauvignon","","multiple_choice","[""Merlot"",""Cabernet Sauvignon"",""Pinot Noir"",""Syrah""]","1"
+"Which region is famous for Pinot Noir?","Burgundy","","traditional","",""
+"What does AOC stand for?","Appellation d'Origine Contrôlée","","multiple_choice","[""Appellation d'Origine Contrôlée"",""Association of Certified Oenologists"",""Agricultural Organic Certification"",""Approved Origin Certificate""]","0"
+

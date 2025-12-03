@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'save' => 'Save',
+    'cancel' => 'Cancel',
+    'delete' => 'Delete',
+    'edit' => 'Edit',
+    'create' => 'Create',
+    'update' => 'Update',
+    'close' => 'Close',
+    'back' => 'Back',
+    'next' => 'Next',
+    'previous' => 'Previous',
+    'search' => 'Search',
+    'filter' => 'Filter',
+    'loading' => 'Loading...',
+    'no_results' => 'No results found',
+    'success' => 'Success!',
+    'error' => 'Error!',
+    'warning' => 'Warning!',
+    'info' => 'Info',
+    'yes' => 'Yes',
+    'no' => 'No',
+    'confirm' => 'Confirm',
+    'actions' => 'Actions',
+];
+

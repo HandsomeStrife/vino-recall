@@ -1,7 +1,10 @@
 <x-layout>
     <header class="bg-burgundy-900 text-white relative overflow-hidden">
         <nav class="flex justify-between items-center container mx-auto px-6 py-4">
-            <a href="#" class="text-2xl font-bold">VinoRecall</a>
+            <a href="{{ route('home') }}" class="flex items-center space-x-3">
+                <x-logo class="w-10 h-10 fill-current" />
+                <span class="text-2xl font-bold">VinoRecall</span>
+            </a>
             <div class="hidden md:flex space-x-8">
                 <a href="#" class="hover:text-burgundy-200">Home</a>
                 <a href="#" class="hover:text-burgundy-200">Designs</a>
@@ -9,29 +12,32 @@
                 <a href="#" class="hover:text-burgundy-200">Contact</a>
             </div>
             <div class="space-x-4">
-                <a href="#" class="hover:text-burgundy-200">Log In</a>
-                <a href="#" class="bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition">Sign Up</a>
+                <a href="{{ route('login') }}" class="hover:text-burgundy-200">Log In</a>
+                <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition">Sign Up</a>
             </div>
         </nav>
-        <div class="container mx-auto px-6 py-24 md:py-32 flex flex-col md:flex-row items-center">
-            <div class="md:w-1/2 text-center md:text-left">
-                <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                    Master Wine with the Power of <br> Spaced Repetition
-                </h1>
-                <p class="text-xl mb-8">
-                    Your WSET Level 1 & 2 Journey, Revolutionized with the Anki Method.
-                </p>
-                <a href="#" class="bg-burgundy-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-burgundy-600 transition">Start Your Journey Free</a>
+        <div class="relative min-h-[600px] flex items-center">
+            <div class="absolute inset-0 z-0">
+                <img src="{{ asset('img/hero.jpg') }}" alt="Vineyard with wine glass" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-burgundy-900/40"></div>
             </div>
-            <div class="md:w-1/2 mt-10 md:mt-0">
-                <img src="https://images.unsplash.com/photo-1597563722865-8225876582258765?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Vineyard with wine glass" class="rounded-lg shadow-2xl max-h-96 object-cover mx-auto">
+            <div class="container mx-auto px-6 py-24 md:py-32 relative z-10">
+                <div class="max-w-2xl">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight text-white">
+                        Master Wine with the Power of <br> Spaced Repetition
+                    </h1>
+                    <p class="text-xl mb-8 text-white">
+                        Your WSET Level 1 & 2 Journey, Revolutionized with the SRS Method.
+                    </p>
+                    <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-burgundy-600 transition inline-block">Start Your Journey Free</a>
+                </div>
             </div>
         </div>
     </header>
 
     <section class="py-20 bg-white text-center">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-burgundy-900">The Anki Method Visualized</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-burgundy-900">Spaced Repetition Visualized</h2>
             <div class="flex flex-col md:flex-row justify-center items-center space-y-10 md:space-y-0 md:space-x-16">
                 <div class="flex flex-col items-center">
                     <div class="bg-burgundy-500 text-white w-24 h-24 rounded-lg shadow-lg flex items-center justify-center text-4xl">
@@ -103,10 +109,56 @@
         </div>
     </section>
 
+    <section class="py-20 bg-cream-50">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center text-burgundy-900">Success Stories</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-700 italic mb-4">"Passed WSET 2 with Distinction! The SRS decks were a game-changer."</p>
+                    <p class="font-semibold text-burgundy-900">- Sarah M.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-700 italic mb-4">"The spaced repetition method helped me retain information so much better than traditional study methods."</p>
+                    <p class="font-semibold text-burgundy-900">- James K.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-700 italic mb-4">"I studied on my commute every day. VinoRecall made it so easy to stay consistent!"</p>
+                    <p class="font-semibold text-burgundy-900">- Maria L.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-burgundy-900">Ready to Master Wine?</h2>
+            <p class="text-xl text-gray-700 mb-8">Start your WSET journey today with our proven spaced repetition method.</p>
+            <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-10 py-4 rounded-lg text-xl font-semibold hover:bg-burgundy-600 transition inline-block">Get Started Today</a>
+        </div>
+    </section>
+
     <footer class="bg-burgundy-900 text-white py-12">
         <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-                <h3 class="text-xl font-bold mb-4">VinoRecall</h3>
+                <div class="flex items-center space-x-2 mb-4">
+                    <x-logo class="w-8 h-8 fill-current" />
+                    <h3 class="text-xl font-bold">VinoRecall</h3>
+                </div>
                 <p>Your path to wine mastery through spaced repetition.</p>
             </div>
             <div>

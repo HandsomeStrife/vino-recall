@@ -12,7 +12,7 @@
 */
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -41,7 +41,24 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function actingAsUser(?\Domain\User\Models\User $user = null): \Domain\User\Models\User
 {
-    // ..
+    if ($user === null) {
+        $user = \Domain\User\Models\User::factory()->create();
+    }
+
+    \Illuminate\Support\Facades\Auth::login($user);
+
+    return $user;
+}
+
+function actingAsAdmin(?\Domain\Admin\Models\Admin $admin = null): \Domain\Admin\Models\Admin
+{
+    if ($admin === null) {
+        $admin = \Domain\Admin\Models\Admin::factory()->create();
+    }
+
+    \Illuminate\Support\Facades\Auth::guard('admin')->login($admin);
+
+    return $admin;
 }
