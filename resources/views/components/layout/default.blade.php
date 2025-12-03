@@ -20,6 +20,9 @@
             <main class="flex-1">
                 {{ $slot }}
             </main>
+            @if(!isset($hideFooter) || !$hideFooter)
+                <x-layout.default.footer />
+            @endif
         </div>
         @livewireScripts
     </body>

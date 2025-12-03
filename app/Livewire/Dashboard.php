@@ -13,6 +13,30 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
+    private function formatTimeUntil(\Carbon\Carbon $datetime): string
+    {
+        $now = now();
+        $diff = $now->diff($datetime);
+        
+        if ($diff->d > 0) {
+            // Days and hours
+            if ($diff->h > 0) {
+                return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ' . $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
+            }
+            return $diff->d . ' day' . ($diff->d > 1 ? 's' : '');
+        } elseif ($diff->h > 0) {
+            // Hours and minutes
+            if ($diff->i > 0) {
+                return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ' . $diff->i . ' minute' . ($diff->i > 1 ? 's' : '');
+            }
+            return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
+        } else {
+            // Just minutes
+            $minutes = max(1, $diff->i); // Show at least 1 minute
+            return $minutes . ' minute' . ($minutes > 1 ? 's' : '');
+        }
+    }
+
     public function render(
         UserRepository $userRepository,
         CardReviewRepository $cardReviewRepository,
@@ -76,13 +100,14 @@ class Dashboard extends Component
             ];
         });
 
-        // Get deck stats for enrolled decks (prioritize by due cards for hero)
+        // Get deck stats for enrolled decks
         $decksWithStats = $enrolledDecks->map(function ($deck) use ($cardRepository, $cardReviewRepository, $user, $dueCards) {
             $cards = $cardRepository->getByDeckId($deck->id);
             $totalCards = $cards->count();
 
             // Count reviewed cards
             $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $user->id)
+                ->where('is_practice', false)
                 ->pluck('card_id')
                 ->toArray();
             $reviewedCount = $cards->filter(fn ($card) => in_array($card->id, $reviewedCardIds))->count();
@@ -98,6 +123,22 @@ class Dashboard extends Component
             // Get retention rate for this deck
             $retentionRate = $cardReviewRepository->getRetentionRate($user->id, $deck->id);
 
+            // Get next review time if no cards are due
+            $nextReviewTime = null;
+            if ($dueCardsForDeck === 0 && $reviewedCount > 0) {
+                $cardIds = $cards->pluck('id')->toArray();
+                $nextReview = \Domain\Card\Models\CardReview::where('user_id', $user->id)
+                    ->where('is_practice', false)
+                    ->whereIn('card_id', $cardIds)
+                    ->where('next_review_at', '>', now())
+                    ->orderBy('next_review_at', 'asc')
+                    ->first();
+                
+                if ($nextReview) {
+                    $nextReviewTime = $this->formatTimeUntil($nextReview->next_review_at);
+                }
+            }
+
             return [
                 'deck' => $deck,
                 'totalCards' => $totalCards,
@@ -106,17 +147,46 @@ class Dashboard extends Component
                 'newCards' => $newCardsForDeck,
                 'progress' => $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0,
                 'retentionRate' => $retentionRate,
+                'nextReviewTime' => $nextReviewTime,
                 'image' => DeckImageHelper::getImagePath($deck),
+                'enrolledAt' => $deck->pivot->enrolled_at ?? now(),
             ];
-        })->sortByDesc('dueCards'); // Sort by due cards for hero display
+        })->sortBy(function ($deckStat) {
+            // Priority sorting:
+            // 1. Decks with due cards (most urgent)
+            // 2. Recently started decks with new cards (< 7 days, has progress)
+            // 3. Newly enrolled decks (< 7 days, no progress)
+            // 4. Other decks
+            
+            $enrolledDays = \Carbon\Carbon::parse($deckStat['enrolledAt'])->diffInDays(now());
+            $hasProgress = $deckStat['reviewedCount'] > 0;
+            
+            if ($deckStat['dueCards'] > 0) {
+                // Priority 1: Most due cards first
+                return [1, -$deckStat['dueCards']];
+            } elseif ($enrolledDays <= 7 && $hasProgress) {
+                // Priority 2: Recently started (newest first)
+                return [2, $enrolledDays];
+            } elseif ($enrolledDays <= 7) {
+                // Priority 3: Newly enrolled (newest first)
+                return [3, $enrolledDays];
+            } else {
+                // Priority 4: Older decks (newest first)
+                return [4, $enrolledDays];
+            }
+        })->values();
 
-        // Take top 3 decks for hero
-        $heroDecks = $decksWithStats->take(3);
+        // Take top 2 decks for hero
+        $heroDecks = $decksWithStats->take(2);
+        
+        // Remaining decks for sidebar
+        $otherDecks = $decksWithStats->skip(2);
 
         return view('livewire.dashboard', [
             'userName' => $user->name,
             'enrolledDecks' => $decksWithStats,
             'heroDecks' => $heroDecks,
+            'otherDecks' => $otherDecks,
             'hasEnrolledDecks' => $enrolledDecks->isNotEmpty(),
             'dueCardsCount' => $dueCards->count(),
             'masteredCount' => $masteredCount,

@@ -1,4 +1,4 @@
-@props(['deckId' => null, 'deckName' => null, 'dueCount' => 0, 'newCount' => 0, 'totalCount' => 0])
+@props(['deckId' => null, 'deckName' => null, 'dueCount' => 0, 'newCount' => 0, 'totalCount' => 0, 'reviewedCount' => 0])
 
 <div x-data="{
     showModal: false,
@@ -37,8 +37,8 @@
     }
 }">
     <!-- Trigger Button -->
-    <button @click="showModal = true" {{ $attributes->merge(['class' => 'inline-flex items-center px-6 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold']) }}>
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button @click="showModal = true" {{ $attributes->merge(['class' => 'inline-flex items-center justify-center px-4 py-2 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 active:bg-burgundy-700 transition-all duration-150 font-semibold text-sm shadow-sm hover:shadow-md active:scale-98 cursor-pointer']) }}>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
         </svg>
         Start Study Session
@@ -53,12 +53,13 @@
          aria-modal="true"
          @keydown.escape.window="showModal = false">
         <!-- Background overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        <div class="fixed inset-0 bg-gray-900/40 transition-opacity"
              @click="showModal = false"></div>
         
         <!-- Modal panel -->
         <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6"
+            <div class="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full p-6"
+                 style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"
                  @click.away="showModal = false">
                 <!-- Header -->
                 <div class="mb-6">
@@ -83,13 +84,26 @@
                                        x-model="sessionType"
                                        class="mt-1 text-burgundy-500 focus:ring-burgundy-500">
                                 <div class="ml-3 flex-1">
-                                    <div class="font-semibold text-burgundy-900">Normal Review</div>
-                                    <div class="text-sm text-gray-600 mt-1">
-                                        Study cards due today using spaced repetition. Limited to ~10 cards per session.
+                                    <div class="flex items-center gap-2">
+                                        <div class="font-semibold text-burgundy-900">Normal Review</div>
+                                        @if($reviewedCount === 0 && $newCount > 0)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                Recommended
+                                            </span>
+                                        @endif
                                     </div>
-                                    @if($dueCount > 0)
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Daily review session: complete due cards and learn a few new ones. Balanced approach with ~10 cards per session.
+                                    </div>
+                                    @if($dueCount > 0 || $newCount > 0)
                                         <div class="text-sm text-burgundy-600 font-medium mt-2">
-                                            {{ $dueCount }} card{{ $dueCount !== 1 ? 's' : '' }} due
+                                            @if($dueCount > 0 && $newCount > 0)
+                                                {{ $dueCount }} due + {{ $newCount }} new
+                                            @elseif($dueCount > 0)
+                                                {{ $dueCount }} card{{ $dueCount !== 1 ? 's' : '' }} due
+                                            @else
+                                                {{ $newCount }} new card{{ $newCount !== 1 ? 's' : '' }}
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -110,10 +124,17 @@
                                 <div class="ml-3 flex-1">
                                     <div class="font-semibold text-burgundy-900">Deep Study</div>
                                     <div class="text-sm text-gray-600 mt-1">
-                                        Study all available cards in one session. Great for intensive learning. SRS tracking enabled.
+                                        Study all available cards in one session (due + new). Great for intensive learning or completing a deck quickly. SRS tracking enabled.
                                     </div>
                                     <div class="text-sm text-burgundy-600 font-medium mt-2">
-                                        {{ $totalCount }} card{{ $totalCount !== 1 ? 's' : '' }} available ({{ $dueCount }} due + {{ $newCount }} new)
+                                        {{ $totalCount }} card{{ $totalCount !== 1 ? 's' : '' }} available
+                                        @if($dueCount > 0 && $newCount > 0)
+                                            ({{ $dueCount }} due + {{ $newCount }} new)
+                                        @elseif($dueCount > 0)
+                                            ({{ $dueCount }} due)
+                                        @elseif($newCount > 0)
+                                            ({{ $newCount }} new)
+                                        @endif
                                     </div>
                                 </div>
                             </div>

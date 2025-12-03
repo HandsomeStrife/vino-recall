@@ -14,8 +14,8 @@
                 <!-- Session Type Badge and Progress -->
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        @if($deck)
-                            <x-badge.badge variant="primary">{{ $deck->name }}</x-badge.badge>
+                @if($deck)
+                        <x-badge.badge variant="primary">{{ $deck->name }}</x-badge.badge>
                         @endif
                         
                         @if($sessionConfig)
@@ -38,8 +38,8 @@
                                 <div class="h-2 bg-burgundy-500 rounded-full transition-all" 
                                      style="width: {{ $progress['percentage'] }}%"></div>
                             </div>
-                        </div>
-                    @endif
+                    </div>
+                @endif
                 </div>
                 
                 <div class="bg-white rounded-lg shadow-xl p-8 transition-all duration-300" 
@@ -179,14 +179,14 @@
                 </p>
                 
                 <div class="flex gap-3 justify-center">
-                    <a href="{{ route('dashboard') }}" class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition">
-                        Back to Dashboard
-                    </a>
                     @if($deck)
-                        <a href="{{ route('deck.stats', ['shortcode' => request()->query('deck')]) }}" class="inline-block bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
+                        <a href="{{ route('deck.stats', ['shortcode' => request()->query('deck')]) }}" class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold">
                             View Stats
                         </a>
                     @endif
+                    <a href="{{ route('dashboard') }}" class="inline-block border-2 border-burgundy-500 text-burgundy-500 px-6 py-2 rounded-lg hover:bg-burgundy-50 transition font-semibold">
+                        Back to Dashboard
+                    </a>
                 </div>
             </div>
         @endif

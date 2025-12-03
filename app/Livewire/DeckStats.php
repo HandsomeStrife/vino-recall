@@ -77,6 +77,9 @@ class DeckStats extends Component
         $correctReviews = $allReviews->whereIn('rating', ['good', 'easy'])->count();
         $accuracyRate = $totalReviewActions > 0 ? (int) (($correctReviews / $totalReviewActions) * 100) : 0;
 
+        // Calculate mastery rate (mastered cards / total cards)
+        $masteryRate = $totalCards > 0 ? (($masteredCount / $totalCards) * 100) : 0.0;
+
         // Recent activity for this deck
         $recentActivity = \Domain\Card\Models\CardReview::where('user_id', $user->id)
             ->whereHas('card', function ($query) {
@@ -95,12 +98,14 @@ class DeckStats extends Component
         return view('livewire.deck-stats', [
             'deck' => $deck,
             'totalCards' => $totalCards,
+            'reviewedCount' => $reviewedCount,
             'newCardsCount' => $newCardsCount,
             'learningCount' => $learningCount,
             'masteredCount' => $masteredCount,
             'dueCardsCount' => $dueCardsCount,
             'progress' => $progress,
             'accuracyRate' => $accuracyRate,
+            'masteryRate' => $masteryRate,
             'recentActivity' => $recentActivity,
         ]);
     }

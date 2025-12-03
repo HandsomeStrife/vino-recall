@@ -29,7 +29,9 @@
                                 :image="$deckStat['image']"
                                 :dueCards="$deckStat['dueCards']"
                                 :newCards="$deckStat['newCards']"
+                                :reviewedCount="$deckStat['reviewedCount']"
                                 :retentionRate="$deckStat['retentionRate']"
+                                :nextReviewTime="$deckStat['nextReviewTime']"
                             />
                         @endforeach
                     </div>
@@ -55,167 +57,43 @@
     <!-- Main Content -->
     <div class="max-w-6xl mx-auto px-4 py-8">
         @if($hasEnrolledDecks)
-            <!-- Daily Goal and Mistakes -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Daily Goal -->
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-bold text-burgundy-900 mb-6">Daily Goal</h2>
-                    <div class="flex flex-col items-center justify-center py-4">
-                        <!-- Circular Progress -->
-                        <div class="relative w-40 h-40 mb-6">
-                            <svg class="w-40 h-40 transform -rotate-90">
-                                <circle cx="80" cy="80" r="70" stroke="#e5e7eb" stroke-width="12" fill="none" />
-                                <circle 
-                                    cx="80" 
-                                    cy="80" 
-                                    r="70" 
-                                    stroke="#9E3B4D" 
-                                    stroke-width="12" 
-                                    fill="none"
-                                    stroke-dasharray="{{ 2 * 3.14159 * 70 }}"
-                                    stroke-dashoffset="{{ 2 * 3.14159 * 70 * (1 - $dailyGoalProgress / 100) }}"
-                                    stroke-linecap="round"
-                                    class="transition-all duration-500"
-                                />
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <div class="text-center">
-                                    <div class="text-4xl font-bold text-burgundy-500">{{ $todayReviews }}</div>
-                                    <div class="text-gray-400 text-lg">/{{ $dailyGoal }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <p class="text-gray-600 text-center mb-4">
-                            @if($todayReviews >= $dailyGoal)
-                                <span class="text-dark-green-900 font-semibold">Daily goal achieved!</span>
-                            @else
-                                <span class="font-medium">{{ $dailyGoal - $todayReviews }} more to go</span>
-                            @endif
-                        </p>
-                        
-                        <!-- Week Streak Dots -->
-                        <div class="flex gap-2">
-                            @foreach(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $index => $day)
-                                @php
-                                    $dayData = $weekActivity[$index] ?? null;
-                                    $completed = $dayData ? $dayData['completed'] : false;
-                                @endphp
-                                <div class="flex flex-col items-center">
-                                    <span class="text-xs text-gray-500 mb-1">{{ $day }}</span>
-                                    <div class="w-3 h-3 rounded-full {{ $completed ? 'bg-dark-green-900' : 'bg-gray-300' }}"></div>
-                                </div>
-                            @endforeach
-                        </div>
+            <!-- Grid: Main content + Sidebar -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Main Content (3 columns) -->
+                <div class="lg:col-span-3 space-y-6">
+                    <!-- Daily Goal and Mistakes -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <x-dashboard.daily-goal 
+                            :todayReviews="$todayReviews"
+                            :dailyGoal="$dailyGoal"
+                            :dailyGoalProgress="$dailyGoalProgress"
+                            :weekActivity="$weekActivity"
+                        />
+
+                        <x-dashboard.recent-mistakes 
+                            :mistakesWithCards="$mistakesWithCards"
+                            :dueCardsCount="$dueCardsCount"
+                        />
                     </div>
+
+                    <!-- Recent Activity -->
+                    @if($recentActivityWithCards->isNotEmpty())
+                        <x-dashboard.recent-activity :recentActivityWithCards="$recentActivityWithCards" />
+                    @endif
                 </div>
 
-                <!-- Mistakes -->
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-bold text-burgundy-900 mb-6">Recent Mistakes</h2>
-                    @if($mistakesWithCards->isNotEmpty())
-                        <div class="space-y-3">
-                            @foreach($mistakesWithCards->take(5) as $item)
-                                <div class="flex items-start gap-3 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                                    <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    <div class="flex-1 min-w-0">
-                                        @if($item['card'])
-                                            <p class="text-sm font-medium text-gray-900 truncate">{{ \Illuminate\Support\Str::limit($item['card']->question, 60) }}</p>
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                {{ \Carbon\Carbon::parse($item['review']->created_at)->format('M d, g:i A') }}
-                                            </p>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                        @if($dueCardsCount > 0)
-                            <a href="{{ route('study') }}" class="mt-4 block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
-                                Review Mistakes
-                            </a>
-                        @endif
-                    @else
-                        <div class="text-center py-12">
-                            <svg class="h-16 w-16 text-dark-green-900 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-gray-600 font-medium">No recent mistakes</p>
-                            <p class="text-sm text-gray-500 mt-1">Keep up the great work!</p>
-                        </div>
+                <!-- Right Sidebar (1 column) -->
+                <div class="lg:col-span-1 space-y-6">
+                    @if($otherDecks->isNotEmpty())
+                        <x-dashboard.other-decks :otherDecks="$otherDecks" />
                     @endif
                 </div>
             </div>
-
-            <!-- Recent Activity -->
-            @if($recentActivityWithCards->isNotEmpty())
-                <div class="bg-white p-8 rounded-xl shadow-md mb-8">
-                    <h2 class="text-2xl font-bold text-burgundy-900 mb-6">Recent Activity</h2>
-                    <div class="space-y-2">
-                        @foreach($recentActivityWithCards as $item)
-                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
-                                <div class="flex-1">
-                                    <p class="text-sm text-gray-600">
-                                        @if($item['activity']->created_at)
-                                            {{ \Carbon\Carbon::parse($item['activity']->created_at)->format('M d, Y g:i A') }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </p>
-                                    @if($item['card'])
-                                        <p class="text-gray-900 font-medium">{{ \Illuminate\Support\Str::limit($item['card']->question, 70) }}</p>
-                                    @endif
-                                </div>
-                                @if($item['activity']->is_correct !== null)
-                                    @if($item['activity']->is_correct)
-                                        <div class="flex items-center text-green-600 font-semibold ml-4">
-                                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            Correct
-                                        </div>
-                                    @else
-                                        <div class="flex items-center text-red-600 font-semibold ml-4">
-                                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            Incorrect
-                                        </div>
-                                    @endif
-                                @else
-                                    <x-badge.badge :variant="$item['activity']->rating === 'correct' ? 'success' : 'danger'">
-                                        {{ ucfirst($item['activity']->rating) }}
-                                    </x-badge.badge>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
         @endif
 
         <!-- Other Decks -->
         @if($availableDecks->isNotEmpty())
-            <div class="bg-white p-8 rounded-xl shadow-md">
-                <h2 class="text-2xl font-bold text-burgundy-900 mb-6">Available Decks</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($availableDecks as $deck)
-                        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition">
-                            <div class="h-32 bg-cover bg-center" style="background-image: url('{{ Domain\Deck\Helpers\DeckImageHelper::getImagePath($deck) }}');"></div>
-                            <div class="p-4">
-                                <h3 class="text-lg font-bold text-burgundy-900 mb-2">{{ $deck->name }}</h3>
-                                @if($deck->description)
-                                    <p class="text-sm text-gray-600 mb-4">{{ \Illuminate\Support\Str::limit($deck->description, 80) }}</p>
-                                @endif
-                                <a href="{{ route('library') }}" class="block text-center bg-burgundy-500 text-white px-4 py-2 rounded-lg hover:bg-burgundy-600 transition font-medium">
-                                    View in Library
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+            <x-dashboard.available-decks :availableDecks="$availableDecks" />
         @endif
     </div>
 </div>
