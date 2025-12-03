@@ -9,6 +9,7 @@ use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Deck extends Model
@@ -29,6 +30,7 @@ class Deck extends Model
         'name',
         'description',
         'category',
+        'image_path',
         'is_active',
         'created_by',
     ];
@@ -48,5 +50,12 @@ class Deck extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function enrolledUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'deck_user')
+            ->withPivot('enrolled_at', 'shortcode')
+            ->withTimestamps();
     }
 }

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use Domain\Card\Actions\ReviewCardAction;
-use Domain\Card\Enums\CardRating;
+use Domain\Card\Data\StudySessionConfigData;
+use Domain\Card\Enums\StudySessionType;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
 use Domain\User\Repositories\UserRepository;
@@ -21,63 +22,101 @@ class StudyInterface extends Component
 
     public ?string $selectedAnswer = null;
 
+    public ?StudySessionConfigData $sessionConfig = null;
+
+    public array $sessionCards = [];
+
+    public int $currentCardIndex = 0;
+
     public function mount(
         UserRepository $userRepository,
         CardReviewRepository $cardReviewRepository,
-        CardRepository $cardRepository
+        CardRepository $cardRepository,
+        \Domain\Deck\Repositories\DeckRepository $deckRepository
     ): void {
-        $this->deckId = request()->query('deck');
-        $this->loadNextCard($userRepository, $cardReviewRepository, $cardRepository);
+        $shortcode = request()->query('deck');
+        
+        if (!$shortcode) {
+            $this->redirect(route('library'));
+            
+            return;
+        }
+        
+        // Find deck by shortcode
+        $user = $userRepository->getLoggedInUser();
+        $deck = $deckRepository->findByShortcode($user->id, $shortcode);
+        
+        if (!$deck) {
+            $this->redirect(route('library'));
+            
+            return;
+        }
+        
+        $this->deckId = $deck->id;
+
+        // Parse session configuration from query params
+        $this->initializeSessionConfig();
+
+        // Load cards for the session
+        $this->loadSessionCards($userRepository, $cardRepository);
     }
 
-    private function loadNextCard(
+    private function initializeSessionConfig(): void
+    {
+        $sessionType = request()->query('session_type', 'normal');
+        $cardLimit = request()->query('card_limit') ? (int) request()->query('card_limit') : null;
+        $statusFilters = request()->query('status_filters') 
+            ? array_filter(explode(',', request()->query('status_filters'))) 
+            : null;
+        $randomOrder = request()->query('random_order', '0') === '1';
+
+        $type = match ($sessionType) {
+            'deep_study' => StudySessionType::DEEP_STUDY,
+            'practice' => StudySessionType::PRACTICE,
+            default => StudySessionType::NORMAL,
+        };
+
+        $trackSrs = $type !== StudySessionType::PRACTICE;
+
+        $this->sessionConfig = new StudySessionConfigData(
+            type: $type,
+            cardLimit: $cardLimit,
+            statusFilters: $statusFilters,
+            trackSrs: $trackSrs,
+            randomOrder: $randomOrder,
+        );
+    }
+
+    private function loadSessionCards(
         UserRepository $userRepository,
-        CardReviewRepository $cardReviewRepository,
         CardRepository $cardRepository
     ): void {
         $user = $userRepository->getLoggedInUser();
 
-        if ($this->deckId) {
-            // Study specific deck
-            $dueCards = $cardReviewRepository->getDueCardsForUser($user->id)
-                ->filter(function ($review) use ($cardRepository) {
-                    $card = $cardRepository->findById($review->card_id);
+        // Get cards based on session configuration
+        $cards = $cardRepository->getCardsForSession(
+            $user->id,
+            $this->deckId,
+            $this->sessionConfig
+        );
 
-                    return $card && $card->deck_id === $this->deckId;
-                });
+        $this->sessionCards = $cards->pluck('id')->toArray();
+        $this->currentCardIndex = 0;
+        
+        // Load first card
+        if (!empty($this->sessionCards)) {
+            $this->currentCardId = $this->sessionCards[0];
+        }
+    }
 
-            if ($dueCards->isNotEmpty()) {
-                $this->currentCardId = $dueCards->first()->card_id;
-
-                return;
-            }
-
-            // Get new cards from this deck
-            $newCards = $cardRepository->getNewCardsForUser($user->id)
-                ->filter(fn ($card) => $card->deck_id === $this->deckId);
-
-            if ($newCards->isNotEmpty()) {
-                $this->currentCardId = $newCards->first()->id;
-
-                return;
-            }
+    private function loadNextCard(): void
+    {
+        $this->currentCardIndex++;
+        
+        if ($this->currentCardIndex < count($this->sessionCards)) {
+            $this->currentCardId = $this->sessionCards[$this->currentCardIndex];
         } else {
-            // Study all cards (default behavior)
-            $dueCards = $cardReviewRepository->getDueCardsForUser($user->id);
-
-            if ($dueCards->isNotEmpty()) {
-                $this->currentCardId = $dueCards->first()->card_id;
-
-                return;
-            }
-
-            // If no due cards, get a new card
-            $newCards = $cardRepository->getNewCardsForUser($user->id);
-            if ($newCards->isNotEmpty()) {
-                $this->currentCardId = $newCards->first()->id;
-
-                return;
-            }
+            $this->currentCardId = null;
         }
     }
 
@@ -94,39 +133,60 @@ class StudyInterface extends Component
         $this->dispatch('card-revealed');
     }
 
-    public function rate(string $rating, ReviewCardAction $reviewCardAction, UserRepository $userRepository, CardReviewRepository $cardReviewRepository, CardRepository $cardRepository): void
+    public function continue(ReviewCardAction $reviewCardAction, UserRepository $userRepository): void
     {
         if ($this->currentCardId === null) {
             return;
         }
 
         $user = $userRepository->getLoggedInUser();
-        $cardRating = CardRating::from($rating);
 
-        $reviewCardAction->execute($user->id, $this->currentCardId, $cardRating, $this->selectedAnswer);
+        // ReviewCardAction now handles practice mode
+        $isPractice = !$this->sessionConfig->trackSrs;
+        $reviewCardAction->execute($user->id, $this->currentCardId, $this->selectedAnswer, $isPractice);
 
         $this->revealed = false;
         $this->selectedAnswer = null;
-        $this->loadNextCard($userRepository, $cardReviewRepository, $cardRepository);
+        $this->loadNextCard();
     }
 
     public function render(CardRepository $cardRepository, \Domain\Deck\Repositories\DeckRepository $deckRepository)
     {
         $card = null;
         $deck = null;
+        $isCorrect = null;
+        $progress = null;
 
         if ($this->currentCardId !== null) {
             $card = $cardRepository->findById($this->currentCardId);
             if ($card) {
                 $deck = $deckRepository->findById($card->deck_id);
+                
+                // Determine if answer is correct (for display after reveal)
+                if ($this->revealed && $this->selectedAnswer !== null && $card->card_type->value === 'multiple_choice') {
+                    $answerChoices = $card->answer_choices;
+                    $isCorrect = $this->selectedAnswer === $answerChoices[$card->correct_answer_index];
+                }
             }
         } elseif ($this->deckId) {
             $deck = $deckRepository->findById($this->deckId);
         }
 
+        // Calculate progress
+        if (!empty($this->sessionCards)) {
+            $progress = [
+                'current' => $this->currentCardIndex + 1,
+                'total' => count($this->sessionCards),
+                'percentage' => (int) ((($this->currentCardIndex + 1) / count($this->sessionCards)) * 100),
+            ];
+        }
+
         return view('livewire.study-interface', [
             'card' => $card,
             'deck' => $deck,
+            'isCorrect' => $isCorrect,
+            'sessionConfig' => $this->sessionConfig,
+            'progress' => $progress,
         ]);
     }
 }

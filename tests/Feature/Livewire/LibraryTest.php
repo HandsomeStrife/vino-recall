@@ -29,19 +29,44 @@ test('library shows active decks', function () {
         ->assertDontSee('Deck 3');
 });
 
-test('library shows deck progress', function () {
+test('library shows enrollment status', function () {
     $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card1->id,
-    ]);
+    $enrolledDeck = Deck::factory()->create(['name' => 'Enrolled Deck']);
+    $notEnrolledDeck = Deck::factory()->create(['name' => 'Not Enrolled Deck']);
+    
+    // Enroll user in first deck
+    $user->enrolledDecks()->attach($enrolledDeck->id, ['enrolled_at' => now()]);
 
     Livewire::test(Library::class)
-        ->assertSee('1 / 2 cards');
+        ->assertSee('Enrolled Deck')
+        ->assertSee('✓ Enrolled')
+        ->assertSee('Not Enrolled Deck')
+        ->assertSee('Add to My Library');
+});
+
+test('user can enroll in deck from library', function () {
+    $user = actingAsUser();
+    $deck = Deck::factory()->create(['name' => 'Test Deck']);
+
+    Livewire::test(Library::class)
+        ->call('enrollInDeck', $deck->id)
+        ->assertDispatched('deck-enrolled');
+    
+    expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeTrue();
+});
+
+test('user can unenroll from deck in library', function () {
+    $user = actingAsUser();
+    $deck = Deck::factory()->create(['name' => 'Test Deck']);
+    
+    // Enroll first
+    $user->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
+
+    Livewire::test(Library::class)
+        ->call('unenrollFromDeck', $deck->id)
+        ->assertDispatched('deck-unenrolled');
+    
+    expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeFalse();
 });
 
 // Edge Case Tests
@@ -64,20 +89,23 @@ test('library only shows active decks not inactive', function () {
         ->assertDontSee('Inactive Deck');
 });
 
-test('library shows 0 progress for deck with no reviews', function () {
+test('library shows card count for decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'New Deck']);
     Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Library::class)
         ->assertSee('New Deck')
-        ->assertSee('0 / 5 cards');
+        ->assertSee('5 cards');
 });
 
-test('library shows full progress for fully reviewed deck', function () {
+test('library shows progress bar for enrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Complete Deck']);
     $cards = Card::factory()->count(3)->create(['deck_id' => $deck->id]);
+    
+    // Enroll user in deck
+    $user->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
 
     // Review all cards
     foreach ($cards as $card) {
@@ -89,7 +117,7 @@ test('library shows full progress for fully reviewed deck', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Complete Deck')
-        ->assertSee('3 / 3 cards');
+        ->assertSee('100% complete');
 });
 
 test('library handles deck with no cards', function () {
@@ -99,7 +127,7 @@ test('library handles deck with no cards', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Empty Deck')
-        ->assertSee('0 / 0 cards');
+        ->assertSee('0 cards');
 });
 
 test('library shows correct card count for deck', function () {
@@ -109,7 +137,7 @@ test('library shows correct card count for deck', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Counted Deck')
-        ->assertSee('0 / 15 cards');
+        ->assertSee('15 cards');
 });
 
 test('library shows multiple decks correctly', function () {
@@ -128,43 +156,30 @@ test('library shows multiple decks correctly', function () {
         ->assertSee('Deck Three');
 });
 
-test('library progress is user-specific', function () {
+test('library enrollment is user-specific', function () {
     $user1 = actingAsUser();
     $user2 = User::factory()->create();
     
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Shared Deck']);
-    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
+    Card::factory()->count(2)->create(['deck_id' => $deck->id]);
 
-    // User 1 reviewed one card
-    CardReview::factory()->create([
-        'user_id' => $user1->id,
-        'card_id' => $card1->id,
-    ]);
+    // User 2 enrolls in deck
+    $user2->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
 
-    // User 2 reviewed both cards
-    CardReview::factory()->create([
-        'user_id' => $user2->id,
-        'card_id' => $card1->id,
-    ]);
-    CardReview::factory()->create([
-        'user_id' => $user2->id,
-        'card_id' => $card2->id,
-    ]);
-
-    // User 1 should see 1/2 progress
+    // User 1 should see "Add to My Library" button (not enrolled)
     Livewire::test(Library::class)
         ->assertSee('Shared Deck')
-        ->assertSee('1 / 2 cards');
+        ->assertSee('Add to My Library')
+        ->assertDontSee('✓ Enrolled');
 });
 
-test('library study deck link is present', function () {
+test('library shows add to library button for unenrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Link Deck']);
     Card::factory()->create(['deck_id' => $deck->id]);
 
     Livewire::test(Library::class)
-        ->assertSee('Study Deck')
+        ->assertSee('Add to My Library')
         ->assertSee('Link Deck');
 });
 
@@ -175,6 +190,6 @@ test('library handles very large number of cards in deck', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Large Deck')
-        ->assertSee('0 / 500 cards')
+        ->assertSee('500 cards')
         ->assertStatus(200);
 });

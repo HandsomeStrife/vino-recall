@@ -27,8 +27,17 @@ class CardReviewRepository
      */
     public function getDueCardsForUser(int $userId): \Illuminate\Support\Collection
     {
+        // Get enrolled deck IDs for the user
+        $enrolledDeckIds = \Domain\User\Models\User::find($userId)
+            ->enrolledDecks()
+            ->pluck('decks.id')
+            ->toArray();
+
         return CardReview::where('user_id', $userId)
             ->where('next_review_at', '<=', now())
+            ->whereHas('card', function ($query) use ($enrolledDeckIds) {
+                $query->whereIn('deck_id', $enrolledDeckIds);
+            })
             ->get()
             ->map(fn (CardReview $review) => CardReviewData::fromModel($review));
     }
@@ -38,26 +47,86 @@ class CardReviewRepository
      */
     public function getUserReviews(int $userId): \Illuminate\Support\Collection
     {
+        // Get enrolled deck IDs for the user
+        $enrolledDeckIds = \Domain\User\Models\User::find($userId)
+            ->enrolledDecks()
+            ->pluck('decks.id')
+            ->toArray();
+
         return CardReview::where('user_id', $userId)
+            ->whereHas('card', function ($query) use ($enrolledDeckIds) {
+                $query->whereIn('deck_id', $enrolledDeckIds);
+            })
             ->get()
             ->map(fn (CardReview $review) => CardReviewData::fromModel($review));
     }
 
     /**
-     * Get count of mastered cards (cards with ease_factor >= 2.0)
+     * Get count of mastered cards (cards with ease_factor >= 2.0) from enrolled decks
      * Since there's a unique constraint on (user_id, card_id), each card can only have one review record.
      * A card is considered "mastered" if it has been reviewed and has a high ease_factor.
      */
     public function getMasteredCardsCount(int $userId): int
     {
+        // Get enrolled deck IDs for the user
+        $enrolledDeckIds = \Domain\User\Models\User::find($userId)
+            ->enrolledDecks()
+            ->pluck('decks.id')
+            ->toArray();
+
         return CardReview::where('user_id', $userId)
             ->where('ease_factor', '>=', 2.0)
+            ->whereHas('card', function ($query) use ($enrolledDeckIds) {
+                $query->whereIn('deck_id', $enrolledDeckIds);
+            })
             ->count();
     }
 
     /**
      * Get current streak (consecutive days with at least one review)
      */
+    /**
+     * Get recent mistakes (incorrect answers) for a user
+     *
+     * @return \Illuminate\Support\Collection<int, CardReviewData>
+     */
+    public function getMistakes(int $userId, int $limit = 10): \Illuminate\Support\Collection
+    {
+        return CardReview::where('user_id', $userId)
+            ->where('is_correct', false)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(fn (CardReview $review) => CardReviewData::fromModel($review));
+    }
+
+    /**
+     * Calculate retention rate for a user's deck
+     * Returns percentage of correct answers (excluding practice reviews)
+     */
+    public function getRetentionRate(int $userId, ?int $deckId = null): float
+    {
+        $query = CardReview::where('user_id', $userId)
+            ->where('is_practice', false) // Exclude practice reviews
+            ->whereNotNull('is_correct');
+
+        if ($deckId !== null) {
+            $query->whereHas('card', function ($q) use ($deckId) {
+                $q->where('deck_id', $deckId);
+            });
+        }
+
+        $totalReviews = $query->count();
+        
+        if ($totalReviews === 0) {
+            return 0.0;
+        }
+
+        $correctReviews = (clone $query)->where('is_correct', true)->count();
+
+        return round(($correctReviews / $totalReviews) * 100, 1);
+    }
+
     public function getCurrentStreak(int $userId): int
     {
         $reviewDates = CardReview::where('user_id', $userId)
@@ -105,13 +174,22 @@ class CardReviewRepository
     }
 
     /**
-     * Get recent activity (last 5 reviews)
+     * Get recent activity (last 5 reviews) from enrolled decks
      *
      * @return \Illuminate\Support\Collection<int, CardReviewData>
      */
     public function getRecentActivity(int $userId, int $limit = 5): \Illuminate\Support\Collection
     {
+        // Get enrolled deck IDs for the user
+        $enrolledDeckIds = \Domain\User\Models\User::find($userId)
+            ->enrolledDecks()
+            ->pluck('decks.id')
+            ->toArray();
+
         return CardReview::where('user_id', $userId)
+            ->whereHas('card', function ($query) use ($enrolledDeckIds) {
+                $query->whereIn('deck_id', $enrolledDeckIds);
+            })
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()

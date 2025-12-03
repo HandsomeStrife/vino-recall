@@ -17,10 +17,15 @@ class CardReviewFactory extends Factory
 
     public function definition(): array
     {
+        $rating = fake()->randomElement(CardRating::cases());
+        $isCorrect = $rating === CardRating::CORRECT;
+
         return [
             'user_id' => User::factory(),
             'card_id' => Card::factory(),
-            'rating' => fake()->randomElement(CardRating::cases())->value,
+            'rating' => $rating->value,
+            'is_correct' => $isCorrect,
+            'is_practice' => false,
             'selected_answer' => null,
             'next_review_at' => now()->addDays(fake()->numberBetween(1, 7)),
             'ease_factor' => fake()->randomFloat(2, 1.3, 2.5),

@@ -27,6 +27,8 @@ class CardReview extends Model
         'user_id',
         'card_id',
         'rating',
+        'is_correct',
+        'is_practice',
         'selected_answer',
         'ease_factor',
         'next_review_at',
@@ -37,6 +39,8 @@ class CardReview extends Model
         return [
             'next_review_at' => 'datetime',
             'ease_factor' => 'decimal:2',
+            'is_correct' => 'boolean',
+            'is_practice' => 'boolean',
         ];
     }
 

@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'VinoRecall') }}</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=bungee:400|goudy-bookletter-1911:400|open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=aleo:400,500,600,700,800|dm-sans:200,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i" rel="stylesheet" />
 
         <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
         <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
@@ -21,7 +21,7 @@
         @endif
         @livewireStyles
     </head>
-    <body class="bg-cream-50 font-sans text-gray-800">
+    <body class="bg-accent font-sans text-gray-800">
         {{ $slot }}
         @livewireScripts
     </body>

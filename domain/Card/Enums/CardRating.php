@@ -6,8 +6,6 @@ namespace Domain\Card\Enums;
 
 enum CardRating: string
 {
-    case AGAIN = 'again';
-    case HARD = 'hard';
-    case GOOD = 'good';
-    case EASY = 'easy';
+    case CORRECT = 'correct';
+    case INCORRECT = 'incorrect';
 }

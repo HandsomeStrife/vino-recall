@@ -3,100 +3,184 @@ alwaysApply: true
 ---
 
 Project Name: VinoRecall
-Type: Educational Web Application (SaaS) Core Methodology: Spaced Repetition System (SRS) Subject Matter: Wine Education (Specifically WSET Level 1 & 2)
+Type: Educational Web Application (SaaS) 
+Core Methodology: Spaced Repetition System (SRS) - WaniKani Style
+Subject Matter: Wine Education (Specifically WSET Level 1 & 2)
 
-1. Executive Summary
-VinoRecall is a visually immersive study platform designed to help wine students pass WSET Level 1 and Level 2 exams. Unlike traditional text-heavy study guides, VinoRecall uses Spaced Repetition System (SRS) to present high-quality visual flashcards. The platform predicts when a user is about to forget a fact and serves that specific card to them, optimizing study time.
+## 1. Executive Summary
 
-2. Design Philosophy & UI/UX
+VinoRecall is a visually immersive study platform designed to help wine students pass WSET Level 1 and Level 2 exams. Unlike traditional text-heavy study guides, VinoRecall uses a WaniKani-style Spaced Repetition System (SRS) to present high-quality visual flashcards. The platform uses objective correctness tracking for multiple-choice questions, automatically determining when cards should be reviewed based on answer accuracy.
+
+## 2. Design Philosophy & UI/UX
+
 The application prioritizes visual learning over text density. The interface should feel like a premium digital wine cellar—warm, inviting, and sophisticated.
 
-Visual Style: "Dark Mode" aesthetic using deep Burgundies, Forest Greens, and Cream text. High usage of photography (vineyards, bottles, grapes).
+**Visual Style:** Deep Burgundies (#561C24, #9E3B4D), Forest Greens (#2D3F2F), and Cream tones (#FFFBF2, #FFE9CC). High usage of photography (vineyards, bottles, grapes).
 
-Layout (Logged In):
+**Layout (Logged In):**
 
-Left Sidebar: Fixed navigation pane (collapsible on mobile).
+- **Horizontal Navigation Header:** Fixed burgundy navigation bar at top with logo, menu items, user dropdown
+- **Hero Section:** Full-width background imagery with gradient overlay featuring enrolled deck cards
+- **Main Canvas:** Scrollable, card-based interface with clean white sections on cream background
+- **Mobile Responsive:** Collapsible hamburger menu, touch-optimized interactions
 
-Main Canvas: A scrollable, card-based interface on the right.
+**Interaction:** Soft transitions, automatic correctness detection, satisfying visual feedback for correct/incorrect answers.
 
-Interaction: Soft transitions, "flipping" card animations, and satisfying "completion" indicators.
+## 3. Content Scope (The Curriculum)
 
-3. Content Scope (The Curriculum)
 The app is divided into two distinct "Worlds" (Levels), based on the WSET syllabus.
 
-Level 1: The Foundation
-Grape Identification: Visual cards showing a grape cluster -> User identifies the grape (e.g., Merlot, Chardonnay).
+**Level 1: The Foundation**
+- Grape Identification: Visual cards showing grape clusters -> User identifies the grape (e.g., Merlot, Chardonnay)
+- Tasting Technique: The "SAT" (Systematic Approach to Tasting). Identifying acid, tannin, and body
+- Food & Wine: Basic pairing principles (e.g., Salt + Acid = Good)
+- Service: Glassware types and serving temperatures
 
-Tasting Technique: The "SAT" (Systematic Approach to Tasting). Identifying acid, tannin, and body.
+**Level 2: The Intermediate**
+- Geography: Map-based cards. Show a highlighted region on a map -> User identifies the region (e.g., Bordeaux, Rioja)
+- Label Terminology: Images of wine labels with blurred sections -> User identifies the missing term (e.g., "Grand Cru")
+- Production: Diagrams of winemaking (Red vs. White vs. Rosé processes)
+- Varietals in Depth: Linking regions to grapes (e.g., Marlborough -> Sauvignon Blanc)
 
-Food & Wine: Basic pairing principles (e.g., Salt + Acid = Good).
+## 4. Feature Breakdown
 
-Service: Glassware types and serving temperatures.
-
-Level 2: The Intermediate
-Geography: Map-based cards. Show a highlighted region on a map -> User identifies the region (e.g., Bordeaux, Rioja).
-
-Label Terminology: Images of wine labels with blurred sections -> User identifies the missing term (e.g., "Grand Cru").
-
-Production: Diagrams of winemaking (Red vs. White vs. Rosé processes).
-
-Varietals in Depth: Linking regions to grapes (e.g., Marlborough -> Sauvignon Blanc).
-
-4. Feature Breakdown
-A. The "Study Gym" (Core Feature)
+### A. The "Study Interface" (Core Feature)
 This is the primary screen where the user spends 90% of their time.
 
-The Prompt: A card appears with an image or a short question (e.g., "What region is highlighted?").
+**Flow:**
+1. **The Prompt:** A card appears with an image or question
+2. **Answer Selection:** For multiple-choice, user selects an answer
+3. **Instant Feedback:** System automatically shows if answer is correct or incorrect
+4. **Continue Button:** User proceeds to next card (Space/Enter hotkey)
 
-The Reveal: User clicks "Reveal Answer." The card flips or expands.
+**SRS Logic - WaniKani Style:**
+- **Correct Answer:** Next review exponentially increases (1 day → 2.5 days → 6.25 days, etc.)
+- **Incorrect Answer:** Review in 4 hours
+- **Ease Factor:** Dynamically adjusts (increases +0.1 for correct, decreases -0.2 for incorrect)
+- **Traditional Cards:** Default to correct (for non-multiple-choice content)
 
-The Rating: The user self-assesses how easy it was:
+### B. The Dashboard - Hero Section
+A visually rich overview of the user's "Wine Journey" with WaniKani-inspired layout.
 
-Again (Forgot) -> Show in 1 minute.
+**Hero Section:**
+- Full-width vineyard background with gradient overlay
+- Welcome message with user name and current streak
+- **Featured Deck Cards (2-3 decks):**
+  - Large card with deck image background
+  - Due cards count prominently displayed
+  - Retention rate percentage (correct answers ratio)
+  - Progress bar (reviewed / total cards)
+  - "Start Review" button
 
-Hard -> Show in 1 day.
+**Content Sections:**
+- **Daily Goal:** Circular progress indicator showing cards reviewed today (target: 20 cards), weekly streak dots
+- **Recent Mistakes:** List of incorrectly answered cards with timestamps, link to review mistakes
+- **Recent Activity:** Timeline of recent reviews with correct/incorrect indicators (green checkmark / red X)
+- **Available Decks:** Grid of decks not yet enrolled, with thumbnails and enroll buttons
 
-Good -> Show in 3 days.
+### C. The Library (Deck Browser)
+Users can browse and enroll in specific decks.
 
-Easy -> Show in 7 days.
+**Features:**
+- Grid layout with deck thumbnails (uses default images 1.jpg - 10.jpg based on deck ID)
+- Deck information: name, description, card count
+- Enrollment system with unique shortcodes
+- Filter by: Red Wines, White Wines, Regions, Production, Spirits (for L2)
 
-B. The Dashboard
-A visual overview of the user's "Wine Journey."
+### D. User Progression
+**Metrics Tracked:**
+- Cards Mastered: Total cards with high retention
+- Current Streak: Consecutive days of study
+- Retention Rate: Percentage of correct answers per deck
+- Daily Reviews: Number of cards reviewed today
 
-Daily Goal: "Review 20 Cards."
+**Future:** Leveling System with badges (e.g., "Sommelier in Training", "Vintner") based on cards mastered.
 
-Streak Counter: Number of consecutive days studied.
+## 5. Site Map
 
-Mastery Heatmap: A visual representation (perhaps a cluster of grapes filling up) showing how much of the syllabus has been mastered.
+**1. Public Facing (Logged Out)**
+- Landing Page: High-impact visuals, value proposition, "The Science of SRS," Pricing, Success Stories
+- Auth Pages: Login / Register
 
-C. The Library (Deck Browser)
-Users can browse specific decks if they want to "cram" a specific topic outside of the algorithm.
+**2. Application (Logged In)**
+- **Dashboard:** Hero with deck cards, daily goal, mistakes, recent activity, available decks
+- **Study Interface:** Distraction-free flashcard mode (navigation hidden)
+- **Library:** Deck browser with enrollment
+- **Deck Stats:** Detailed statistics per deck
+- **Profile/Settings:** Subscription management, user preferences
 
-Filter by: Red Wines, White Wines, Regions, Production, Spirits (for L2).
+## 6. Technical Architecture
 
-D. User Progression
-Leveling System: Users earn badges (e.g., "Sommelier in Training", "Vintner") based on cards mastered.
+### SRS Algorithm (WaniKani-Style)
+The system uses **objective correctness tracking** rather than subjective difficulty ratings:
 
-5. Site Map
-1. Public Facing (Logged Out)
+**Core Logic:**
+- Multiple-choice cards: System compares selected answer with correct answer
+- Correct → `is_correct = true`, rating = 'correct'
+- Incorrect → `is_correct = false`, rating = 'incorrect'
+- Traditional cards: Default to correct (for self-assessment content)
 
-Landing Page: High-impact visuals, value proposition, "The Science of SRS," Pricing, Success Stories.
+**Review Intervals:**
+- **Incorrect:** 4 hours
+- **Correct (First time):** 1 day
+- **Correct (Subsequent):** Previous interval × ease_factor
+- **Ease Factor:** Starts at 2.5, increases +0.1 for correct (max 3.0), decreases -0.2 for incorrect (min 1.3)
 
-Auth Pages: Login / Register.
+**Database Schema:**
+- `card_reviews.rating`: 'correct' or 'incorrect'
+- `card_reviews.is_correct`: boolean
+- `card_reviews.selected_answer`: stores user's answer for multiple-choice
+- `card_reviews.ease_factor`: dynamic difficulty adjustment
+- `card_reviews.next_review_at`: calculated review time
 
-2. Application (Logged In)
+### Deck Management
+- **Enrollment System:** Each user-deck relationship has a unique 8-character shortcode
+- **Image System:** Decks can have custom images or use default images (1.jpg - 10.jpg based on deck ID modulo 10)
+- **DeckImageHelper:** Centralized helper for consistent image paths
 
-Dashboard: Stats, Streaks, "Due Today."
+### Navigation Architecture
+- **Header-based Navigation:** Replaced sidebar with horizontal burgundy header
+- **Responsive Design:** Mobile hamburger menu, collapsible on small screens
+- **Study Mode:** Navigation hidden during review sessions for focus
 
-Study Interface: The distraction-free flashcard mode.
+### Repository Pattern
+- **CardReviewRepository Methods:**
+  - `getMistakes($userId, $limit)`: Recent incorrect answers
+  - `getRetentionRate($userId, $deckId)`: Percentage of correct answers
+  - `getDueCardsForUser($userId)`: Cards due for review
+  - `getCurrentStreak($userId)`: Consecutive study days
+- **DeckRepository Methods:**
+  - `getAvailableDecks($userId)`: Decks not yet enrolled
+  - `getUserEnrolledDecks($userId)`: User's active decks
 
-Decks/Library: Overview of all available card packs.
+### Frontend Components
+- **Blade Components:** Header, hero sections, stat cards, deck cards
+- **Livewire:** Dashboard, StudyInterface, Library (reactive components)
+- **AlpineJS:** Dropdown menus, mobile navigation, interactive elements
+- **TailwindCSS:** Utility-first styling with custom burgundy/cream theme
 
-Profile/Settings: Subscription management, daily card limits.
+## 7. Image Optimization
 
-6. Technical Logic (High Level)
-The Algorithm: The backend must run a logic script every night (or upon request) that checks: When did the user last see this card? What did they rate it? Is it due today?
+**Visual First Approach:**
+- High-quality photography for decks and cards
+- Default image library (10 vineyard/wine images)
+- Lazy loading for performance
+- Background images with gradient overlays for readability
 
-Image Optimization: Because this is a "Visual Representation" site, the system needs to serve high-quality images that load instantly (Lazy loading).
+## 8. Mobile First
 
-Mobile First: 70% of users will study on their commute. The flashcard interface must work perfectly on a phone screen.
+70% of users will study on their commute:
+- Touch-optimized card interactions
+- Responsive hero section (stacks on mobile)
+- Hamburger navigation menu
+- Large touch targets for buttons
+- Space/Enter keyboard shortcuts for desktop power users
+
+## 9. Key Differentiators from Anki
+
+VinoRecall uses a **WaniKani-style approach** rather than Anki:
+- **Objective vs Subjective:** System determines correctness automatically for multiple-choice
+- **Simplified Ratings:** Only correct/incorrect (not again/hard/good/easy)
+- **Visual First:** Hero dashboard with deck imagery
+- **Retention Focus:** Emphasizes accuracy percentage over ease perception
+- **Shorter Incorrect Intervals:** 4 hours (not 1 minute) for realistic re-learning

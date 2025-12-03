@@ -8,12 +8,21 @@ use Domain\Card\Repositories\CardRepository;
 use Domain\Deck\Models\Deck;
 use Domain\User\Models\User;
 
-test('get new cards for user returns cards not yet reviewed', function () {
+test('get new cards for user returns cards not yet reviewed from enrolled decks only', function () {
     $user = User::factory()->create();
-    $deck = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card3 = Card::factory()->create(['deck_id' => $deck->id]);
+    $enrolledDeck = Deck::factory()->create();
+    $notEnrolledDeck = Deck::factory()->create();
+    
+    // Enroll user in first deck
+    $user->enrolledDecks()->attach($enrolledDeck->id, [
+        'enrolled_at' => now(),
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(8)),
+    ]);
+    
+    $card1 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);
+    $card2 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);
+    $card3 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);
+    $card4 = Card::factory()->create(['deck_id' => $notEnrolledDeck->id]); // Not enrolled
 
     CardReview::factory()->create([
         'user_id' => $user->id,
@@ -26,6 +35,7 @@ test('get new cards for user returns cards not yet reviewed', function () {
     expect($newCards->pluck('id')->toArray())->toContain($card2->id);
     expect($newCards->pluck('id')->toArray())->toContain($card3->id);
     expect($newCards->pluck('id')->toArray())->not->toContain($card1->id);
+    expect($newCards->pluck('id')->toArray())->not->toContain($card4->id); // Not in enrolled deck
 });
 
 test('get by deck id returns cards for specific deck', function () {

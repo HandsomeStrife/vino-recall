@@ -8,6 +8,8 @@ alwaysApply: true
 
 The site is accessed via http://localhost:8282
 
+NO emojis should be used - this is professional site.
+
 1. **No Creation of `app/Domain`**  
    - **All domain-based work** must be placed in `/domain/` and **never** in `/app/Domain` or `/app/domain`.
    - **Never** create or access an `app/Domain` or `app/domain` folder.

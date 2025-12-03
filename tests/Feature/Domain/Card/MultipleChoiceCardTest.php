@@ -120,7 +120,7 @@ test('can update a card from traditional to multiple choice', function (): void 
         ->and($cardData->correct_answer_index)->toBe(1);
 });
 
-test('can review a multiple choice card with selected answer', function (): void {
+test('can review a multiple choice card with correct answer', function (): void {
     $user = User::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $user->id]);
 
@@ -138,18 +138,19 @@ test('can review a multiple choice card with selected answer', function (): void
     $reviewData = $action->execute(
         userId: $user->id,
         cardId: $card->id,
-        rating: CardRating::GOOD,
         selectedAnswer: 'Paris'
     );
 
     expect($reviewData->selected_answer)->toBe('Paris')
-        ->and($reviewData->rating)->toBe('good');
+        ->and($reviewData->rating)->toBe(CardRating::CORRECT->value)
+        ->and($reviewData->is_correct)->toBeTrue();
 
     $this->assertDatabaseHas('card_reviews', [
         'user_id' => $user->id,
         'card_id' => $card->id,
-        'rating' => 'good',
+        'rating' => 'correct',
         'selected_answer' => 'Paris',
+        'is_correct' => true,
     ]);
 });
 
@@ -171,22 +172,23 @@ test('can review a multiple choice card with incorrect answer', function (): voi
     $reviewData = $action->execute(
         userId: $user->id,
         cardId: $card->id,
-        rating: CardRating::AGAIN,
         selectedAnswer: 'London'
     );
 
     expect($reviewData->selected_answer)->toBe('London')
-        ->and($reviewData->rating)->toBe('again');
+        ->and($reviewData->rating)->toBe(CardRating::INCORRECT->value)
+        ->and($reviewData->is_correct)->toBeFalse();
 
     $this->assertDatabaseHas('card_reviews', [
         'user_id' => $user->id,
         'card_id' => $card->id,
-        'rating' => 'again',
+        'rating' => 'incorrect',
         'selected_answer' => 'London',
+        'is_correct' => false,
     ]);
 });
 
-test('traditional card review can have null selected answer', function (): void {
+test('traditional card review defaults to correct', function (): void {
     $user = User::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $user->id]);
 
@@ -202,11 +204,10 @@ test('traditional card review can have null selected answer', function (): void 
     $reviewData = $action->execute(
         userId: $user->id,
         cardId: $card->id,
-        rating: CardRating::GOOD,
         selectedAnswer: null
     );
 
     expect($reviewData->selected_answer)->toBeNull()
-        ->and($reviewData->rating)->toBe('good');
+        ->and($reviewData->rating)->toBe(CardRating::CORRECT->value)
+        ->and($reviewData->is_correct)->toBeTrue();
 });
-

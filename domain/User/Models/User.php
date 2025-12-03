@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Domain\User\Models;
 
+use Domain\Deck\Models\Deck;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -51,5 +53,12 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function enrolledDecks(): BelongsToMany
+    {
+        return $this->belongsToMany(Deck::class, 'deck_user')
+            ->withPivot('enrolled_at', 'shortcode')
+            ->withTimestamps();
     }
 }

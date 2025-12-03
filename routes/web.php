@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/library', fn () => view('pages.library'))->name('library');
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
     Route::get('/subscription', fn () => view('pages.subscription'))->name('subscription');
+    Route::get('/deck/{shortcode}/stats', fn (string $shortcode) => view('pages.deck-stats', ['shortcode' => $shortcode]))->name('deck.stats');
 });
 
 Route::middleware(['auth:admin', \App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->name('admin.')->group(function () {

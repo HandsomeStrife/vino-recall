@@ -19,6 +19,10 @@ test('dashboard can be rendered', function () {
 test('dashboard shows user statistics', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
+    
+    // Enroll user in deck
+    $user->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
+    
     $card1 = Card::factory()->create(['deck_id' => $deck->id]);
     $card2 = Card::factory()->create(['deck_id' => $deck->id]);
     $card3 = Card::factory()->create(['deck_id' => $deck->id]);
@@ -69,7 +73,7 @@ test('dashboard handles user with no reviews', function () {
 
     Livewire::test(Dashboard::class)
         ->assertSee('Cards Mastered')
-        ->assertSee('0');
+        ->assertSee('Browse the library');
 });
 
 test('dashboard shows correct streak for consecutive days', function () {

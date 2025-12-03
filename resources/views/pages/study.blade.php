@@ -1,4 +1,4 @@
-<x-layout.default :showSidebar="true">
+<x-layout.default :showNavigation="false">
     <livewire:study-interface />
 </x-layout.default>
 

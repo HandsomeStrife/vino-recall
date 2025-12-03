@@ -15,11 +15,9 @@
         @livewireStyles
     </head>
     <body class="bg-cream-50 font-sans text-gray-800">
-        <div class="flex h-screen">
-            @if(isset($showSidebar) && $showSidebar)
-                <x-layout.default.sidebar />
-            @endif
-            <main class="flex-1 overflow-y-auto">
+        <div class="min-h-screen flex flex-col">
+            <x-layout.default.header :showNavigation="$showNavigation ?? true" />
+            <main class="flex-1">
                 {{ $slot }}
             </main>
         </div>
