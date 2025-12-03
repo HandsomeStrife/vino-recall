@@ -8,7 +8,7 @@
             <div class="flex items-center space-x-8">
                 <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="flex items-center space-x-3">
                     <x-logo class="w-8 h-8 fill-current" />
-                    <span class="text-xl font-bold">VinoRecall</span>
+                    <span class="text-xl font-bold font-heading">VinoRecall</span>
                 </a>
 
                 @auth

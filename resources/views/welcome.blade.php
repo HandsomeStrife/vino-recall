@@ -3,14 +3,8 @@
         <nav class="flex justify-between items-center container mx-auto px-6 py-4">
             <a href="{{ route('home') }}" class="flex items-center space-x-3">
                 <x-logo class="w-10 h-10 fill-current" />
-                <span class="text-2xl font-bold">VinoRecall</span>
+                <span class="text-2xl font-bold font-heading">VinoRecall</span>
             </a>
-            <div class="hidden md:flex space-x-8">
-                <a href="#" class="hover:text-burgundy-200">Home</a>
-                <a href="#" class="hover:text-burgundy-200">Designs</a>
-                <a href="#" class="hover:text-burgundy-200">Pricing</a>
-                <a href="#" class="hover:text-burgundy-200">Contact</a>
-            </div>
             <div class="space-x-4">
                 <a href="{{ route('login') }}" class="hover:text-burgundy-200">Log In</a>
                 <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition">Sign Up</a>
@@ -19,17 +13,17 @@
         <div class="relative min-h-[600px] flex items-center font-heading">
             <div class="absolute inset-0 z-0">
                 <img src="{{ asset('img/hero.jpg') }}" alt="Vineyard with wine glass" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-burgundy-900/40"></div>
+                <div class="absolute inset-0 bg-burgundy-900/50"></div>
             </div>
             <div class="container mx-auto px-6 py-24 md:py-32 relative z-10">
                 <div class="max-w-2xl">
-                    <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight text-white">
-                        Master Wine with the Power of <br> Spaced Repetition
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight text-white text-shadow-lg/40">
+                        Master Wine with the Power of Spaced Repetition
                     </h1>
-                    <p class="text-xl mb-8 text-white">
-                        Your WSET Level 1 & 2 Journey, Revolutionized with the SRS Method.
+                    <p class="text-xl mb-8 text-white text-shadow-lg/40">
+                        Learn wine knowledge efficiently with spaced repetition. Perfect for WSET Level 1 & 2 students and wine enthusiasts.
                     </p>
-                    <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-burgundy-600 transition inline-block">Start Your Journey Free</a>
+                    <a href="{{ route('register') }}" class="bg-burgundy-500 drop-shadow-lg/60 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-burgundy-600 transition inline-block">Start Your Journey Free</a>
                 </div>
             </div>
         </div>
@@ -65,80 +59,37 @@
 
     <section class="py-20 bg-cream-50">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center text-burgundy-900">WSET Level 1: Foundation</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center text-burgundy-900">What You'll Learn</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <img src="https://images.unsplash.com/photo-1559563548-4a3932076c9c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Key Grape Varieties" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <img src="{{ asset('img/defaults/1.jpg') }}" alt="Key Grape Varieties" class="w-full h-48 object-cover rounded-lg mb-4">
                     <h3 class="text-xl font-bold mb-2">Key Grape Varieties</h3>
                     <p>Learn the principal grape varieties, their characteristics, and the regions they are grown.</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <img src="https://www.wsetglobal.com/media/4506/level-1-sat.jpg?anchor=center&mode=crop&width=400&height=225" alt="Systematic Tasting Technique" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h3 class="text-xl font-bold mb-2">Systematic Tasting Technique</h3>
-                    <p>Master the WSET Level 1 Systematic Approach to Tasting Wine®.</p>
+                    <img src="{{ asset('img/homepage/production.jpg') }}" alt="Wine Production Methods" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Wine Production Methods</h3>
+                    <p>Understand fermentation, aging, and production techniques that create different wine styles.</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <img src="https://images.unsplash.com/photo-1572552321806-471748838770?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Food & Wine Pairing" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <img src="{{ asset('img/homepage/tasting.jpg') }}" alt="Food & Wine Pairing" class="w-full h-48 object-cover rounded-lg mb-4">
                     <h3 class="text-xl font-bold mb-2">Food & Wine Pairing</h3>
                     <p>Discover the principles of food and wine pairing to enhance your dining experience.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-20 bg-white">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center text-burgundy-900">WSET Level 2: Intermediate</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-cream-100 p-6 rounded-lg shadow-md text-center">
-                    <img src="https://www.wsetglobal.com/media/5827/wset_map_france.jpg?anchor=center&mode=crop&width=400&height=225" alt="Global Wine Regions" class="w-full h-48 object-cover rounded-lg mb-4">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <img src="{{ asset('img/homepage/regions.jpg') }}" alt="Global Wine Regions" class="w-full h-48 object-cover rounded-lg mb-4">
                     <h3 class="text-xl font-bold mb-2">Global Wine Regions</h3>
                     <p>Explore key wine-producing regions of the world and their wine styles.</p>
                 </div>
-                <div class="bg-cream-100 p-6 rounded-lg shadow-md text-center">
-                    <img src="https://images.unsplash.com/photo-1504279577054-123544249241?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Winemaking Processes" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h3 class="text-xl font-bold mb-2">Winemaking Processes</h3>
-                    <p>Understand the factors affecting wine style, quality, and price.</p>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <img src="{{ asset('img/homepage/service.jpg') }}" alt="Wine Service & Storage" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Wine Service & Storage</h3>
+                    <p>Master proper serving temperatures, glassware selection, and optimal storage conditions.</p>
                 </div>
-                <div class="bg-cream-100 p-6 rounded-lg shadow-md text-center">
-                    <img src="https://images.unsplash.com/photo-1606765965508-118564793345?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Label Terminology" class="w-full h-48 object-cover rounded-lg mb-4">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <img src="{{ asset('img/homepage/labels.jpg') }}" alt="Label Terminology" class="w-full h-48 object-cover rounded-lg mb-4">
                     <h3 class="text-xl font-bold mb-2">Label Terminology</h3>
                     <p>Learn to decipher wine labels and understand common terminology.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-20 bg-cream-50">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center text-burgundy-900">Success Stories</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
-                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-700 italic mb-4">"Passed WSET 2 with Distinction! The SRS decks were a game-changer."</p>
-                    <p class="font-semibold text-burgundy-900">- Sarah M.</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
-                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-700 italic mb-4">"The spaced repetition method helped me retain information so much better than traditional study methods."</p>
-                    <p class="font-semibold text-burgundy-900">- James K.</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-burgundy-100 flex items-center justify-center">
-                        <svg class="w-12 h-12 text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-700 italic mb-4">"I studied on my commute every day. VinoRecall made it so easy to stay consistent!"</p>
-                    <p class="font-semibold text-burgundy-900">- Maria L.</p>
                 </div>
             </div>
         </div>
@@ -147,7 +98,7 @@
     <section class="py-20 bg-white">
         <div class="container mx-auto px-6 text-center">
             <h2 class="text-3xl md:text-4xl font-bold mb-12 text-burgundy-900">Ready to Master Wine?</h2>
-            <p class="text-xl text-gray-700 mb-8">Start your WSET journey today with our proven spaced repetition method.</p>
+            <p class="text-xl text-gray-700 mb-8">Start learning wine today with our proven spaced repetition method. Perfect preparation for WSET exams.</p>
             <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-10 py-4 rounded-lg text-xl font-semibold hover:bg-burgundy-600 transition inline-block">Get Started Today</a>
         </div>
     </section>
