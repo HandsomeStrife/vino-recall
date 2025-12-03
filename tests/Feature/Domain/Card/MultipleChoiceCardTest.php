@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Domain\Admin\Models\Admin;
 use Domain\Card\Actions\CreateCardAction;
 use Domain\Card\Actions\ReviewCardAction;
 use Domain\Card\Actions\UpdateCardAction;
@@ -12,8 +13,8 @@ use Domain\Deck\Models\Deck;
 use Domain\User\Models\User;
 
 test('can create a multiple choice card', function (): void {
-    $user = User::factory()->create(['role' => 'admin']);
-    $deck = Deck::factory()->create(['created_by' => $user->id]);
+    $admin = Admin::factory()->create();
+    $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
     $action = new CreateCardAction();
 
@@ -42,8 +43,8 @@ test('can create a multiple choice card', function (): void {
 });
 
 test('can create a traditional card', function (): void {
-    $user = User::factory()->create(['role' => 'admin']);
-    $deck = Deck::factory()->create(['created_by' => $user->id]);
+    $admin = Admin::factory()->create();
+    $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
     $action = new CreateCardAction();
 
@@ -61,8 +62,8 @@ test('can create a traditional card', function (): void {
 });
 
 test('multiple choice card requires at least 2 answer choices', function (): void {
-    $user = User::factory()->create(['role' => 'admin']);
-    $deck = Deck::factory()->create(['created_by' => $user->id]);
+    $admin = Admin::factory()->create();
+    $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
     $action = new CreateCardAction();
 
@@ -78,8 +79,8 @@ test('multiple choice card requires at least 2 answer choices', function (): voi
 })->throws(\InvalidArgumentException::class, 'Multiple choice cards must have at least 2 answer choices.');
 
 test('multiple choice card requires valid correct answer index', function (): void {
-    $user = User::factory()->create(['role' => 'admin']);
-    $deck = Deck::factory()->create(['created_by' => $user->id]);
+    $admin = Admin::factory()->create();
+    $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
     $action = new CreateCardAction();
 
@@ -95,8 +96,8 @@ test('multiple choice card requires valid correct answer index', function (): vo
 })->throws(\InvalidArgumentException::class, 'Multiple choice cards must have a valid correct answer index.');
 
 test('can update a card from traditional to multiple choice', function (): void {
-    $user = User::factory()->create(['role' => 'admin']);
-    $deck = Deck::factory()->create(['created_by' => $user->id]);
+    $admin = Admin::factory()->create();
+    $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
     $card = Card::create([
         'deck_id' => $deck->id,

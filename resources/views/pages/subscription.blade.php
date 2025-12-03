@@ -1,4 +1,4 @@
 <x-layout.default :showSidebar="true">
-    @livewire('subscription-management')
+    <livewire:subscription-management />
 </x-layout.default>
 

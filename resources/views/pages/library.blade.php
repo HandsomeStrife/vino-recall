@@ -1,4 +1,4 @@
 <x-layout.default :showSidebar="true">
-    @livewire('library')
+    <livewire:library />
 </x-layout.default>
 

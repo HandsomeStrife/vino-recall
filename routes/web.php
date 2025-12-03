@@ -49,12 +49,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/subscription', fn () => view('pages.subscription'))->name('subscription');
 });
 
-Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth:admin', \App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn () => view('pages.admin.dashboard'))->name('dashboard');
     Route::get('/users', fn () => view('pages.admin.users'))->name('users');
     Route::get('/cards', fn () => view('pages.admin.cards'))->name('cards');
     Route::get('/decks', fn () => view('pages.admin.decks'))->name('decks');
-    Route::get('/decks/import', fn () => view('pages.admin.deck-import'))->name('decks.import');
+    Route::get('/import', fn () => view('pages.admin.deck-import'))->name('deck-import');
 });
 
 if (app()->environment('local')) {

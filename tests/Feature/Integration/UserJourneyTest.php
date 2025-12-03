@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use Domain\Admin\Models\Admin;
 use Domain\Card\Models\Card;
 use Domain\Card\Models\CardReview;
 use Domain\Deck\Models\Deck;
-use Domain\User\Enums\UserRole;
 use Domain\User\Models\User;
 
 test('complete user journey: register, login, view dashboard, study cards', function () {
@@ -24,10 +24,9 @@ test('complete user journey: register, login, view dashboard, study cards', func
     $response->assertRedirect(route('dashboard'));
     $this->assertAuthenticated();
 
-    // Verify user was created with correct role
+    // Verify user was created
     $user = User::where('email', 'journey@example.com')->first();
-    expect($user)->not->toBeNull()
-        ->and($user->role)->toBe(UserRole::USER);
+    expect($user)->not->toBeNull();
 
     // Visit dashboard
     $response = $this->get(route('dashboard'));
@@ -54,20 +53,19 @@ test('complete user journey: register, login, view dashboard, study cards', func
 });
 
 test('admin journey: login, manage users, create deck, create cards', function () {
-    $admin = User::factory()->create([
+    $admin = Admin::factory()->create([
         'email' => 'admin@test.com',
         'password' => \Illuminate\Support\Facades\Hash::make('password'),
-        'role' => UserRole::ADMIN,
     ]);
 
     // Login as admin
-    $response = $this->post(route('login'), [
+    $response = $this->post(route('admin.login'), [
         'email' => 'admin@test.com',
         'password' => 'password',
     ]);
 
-    $response->assertRedirect(route('dashboard'));
-    $this->assertAuthenticated();
+    $response->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticatedAs($admin, 'admin');
 
     // Access admin dashboard
     $response = $this->get(route('admin.dashboard'));
@@ -154,24 +152,24 @@ test('guest user journey: visit homepage, view features, register', function () 
 });
 
 test('user cannot access admin routes', function () {
-    $user = User::factory()->create(['role' => UserRole::USER]);
+    $user = User::factory()->create();
     $this->actingAs($user);
 
     // Attempt to access admin dashboard
     $response = $this->get(route('admin.dashboard'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('admin.login'));
 
     // Attempt to access user management
     $response = $this->get(route('admin.users'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('admin.login'));
 
     // Attempt to access deck management
     $response = $this->get(route('admin.decks'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('admin.login'));
 
     // Attempt to access card management
     $response = $this->get(route('admin.cards'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('admin.login'));
 });
 
 test('complete study session with multiple cards', function () {
@@ -220,8 +218,7 @@ test('user registration creates necessary records and redirects correctly', func
 
     $user = User::where('email', 'newuser@example.com')->first();
     expect($user)->not->toBeNull()
-        ->and($user->name)->toBe('New User')
-        ->and($user->role)->toBe(UserRole::USER);
+        ->and($user->name)->toBe('New User');
 
     // Verify user is authenticated
     $this->assertAuthenticatedAs($user);

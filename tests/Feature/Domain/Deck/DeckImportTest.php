@@ -131,7 +131,7 @@ test('CSV validator rejects MC cards with invalid answer index', function (): vo
 });
 
 test('can import deck from CSV file', function (): void {
-    $user = \Domain\User\Models\User::factory()->create(['role' => 'admin']);
+    $admin = \Domain\Admin\Models\Admin::factory()->create();
 
     $csvContent = <<<CSV
 question,answer,image_path,card_type,answer_choices,correct_answer_index
@@ -149,7 +149,7 @@ CSV;
     );
 
     $result = $action->execute(
-        userId: $user->id,
+        userId: $admin->id,
         filePath: $path,
         deckName: 'Test Wine Deck',
         description: 'A test deck'
@@ -160,7 +160,7 @@ CSV;
 
     $this->assertDatabaseHas('decks', [
         'name' => 'Test Wine Deck',
-        'created_by' => $user->id,
+        'created_by' => $admin->id,
     ]);
 
     $this->assertDatabaseHas('cards', [
@@ -172,7 +172,7 @@ CSV;
 });
 
 test('import handles errors gracefully', function (): void {
-    $user = \Domain\User\Models\User::factory()->create(['role' => 'admin']);
+    $admin = \Domain\Admin\Models\Admin::factory()->create();
 
     $action = new \Domain\Deck\Actions\ImportDeckAction(
         new CsvImportService(),
@@ -181,7 +181,7 @@ test('import handles errors gracefully', function (): void {
     );
 
     expect(fn () => $action->execute(
-        userId: $user->id,
+        userId: $admin->id,
         filePath: '/nonexistent/file.csv',
         deckName: 'Test Deck',
         description: ''

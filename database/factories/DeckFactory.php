@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Domain\Deck\Models\Deck;
-use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,7 +19,7 @@ class DeckFactory extends Factory
             'description' => fake()->sentence(),
             'category' => fake()->optional()->randomElement(['red-wines', 'white-wines', 'regions', 'production', 'spirits']),
             'is_active' => true,
-            'created_by' => User::factory(),
+            'created_by' => null, // Can be set explicitly when creating
         ];
     }
 }

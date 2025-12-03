@@ -1,4 +1,4 @@
 <x-layout.default :showSidebar="true">
-    @livewire('dashboard')
+    <livewire:dashboard />
 </x-layout.default>
 

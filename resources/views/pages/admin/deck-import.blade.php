@@ -1,4 +1,4 @@
-<x-layout.default>
-    @livewire('admin.deck-import')
-</x-layout.default>
+<x-layout.admin>
+    <livewire:admin.deck-import-manager />
+</x-layout.admin>
 

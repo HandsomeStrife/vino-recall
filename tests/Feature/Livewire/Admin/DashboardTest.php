@@ -55,12 +55,12 @@ test('non-admin cannot access admin dashboard', function () {
     $user = actingAsUser();
 
     $response = $this->get(route('admin.dashboard'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('admin.login'));
 });
 
 test('guest cannot access admin dashboard', function () {
     $response = $this->get(route('admin.dashboard'));
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('admin.login'));
 });
 
 test('admin dashboard displays all statistics together', function () {

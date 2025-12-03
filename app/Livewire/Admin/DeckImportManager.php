@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-class DeckImport extends Component
+class DeckImportManager extends Component
 {
     use WithFileUploads;
 

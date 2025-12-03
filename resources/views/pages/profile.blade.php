@@ -1,4 +1,4 @@
 <x-layout.default :showSidebar="true">
-    @livewire('profile')
+    <livewire:profile />
 </x-layout.default>
 

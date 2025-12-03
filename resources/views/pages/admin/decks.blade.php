@@ -1,4 +1,4 @@
-<x-layout.default :showSidebar="true">
-    @livewire('admin.deck-management')
-</x-layout.default>
+<x-layout.admin>
+    <livewire:admin.deck-management />
+</x-layout.admin>
 

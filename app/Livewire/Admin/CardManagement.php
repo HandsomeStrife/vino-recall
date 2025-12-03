@@ -27,11 +27,27 @@ class CardManagement extends Component
 
     public ?int $editingCardId = null;
 
-    public string $card_type = 'traditional';
+    public string $card_type = 'multiple_choice';
 
     public array $answer_choices = ['', '', '', ''];
 
-    public ?int $correct_answer_index = null;
+    public ?int $correct_answer_index = 0;
+
+    public function updatedCorrectAnswerIndex(): void
+    {
+        // Auto-update answer field when correct answer index changes for multiple choice
+        if ($this->card_type === 'multiple_choice' && isset($this->answer_choices[$this->correct_answer_index])) {
+            $this->answer = $this->answer_choices[$this->correct_answer_index];
+        }
+    }
+
+    public function updatedAnswerChoices(): void
+    {
+        // Auto-update answer field when answer choices change for multiple choice
+        if ($this->card_type === 'multiple_choice' && isset($this->answer_choices[$this->correct_answer_index])) {
+            $this->answer = $this->answer_choices[$this->correct_answer_index];
+        }
+    }
 
     public function render(CardRepository $cardRepository, DeckRepository $deckRepository)
     {
@@ -85,7 +101,10 @@ class CardManagement extends Component
             correctAnswerIndex: $correctAnswerIndex
         );
 
-        $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId', 'card_type', 'answer_choices', 'correct_answer_index']);
+        $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId']);
+        $this->card_type = 'multiple_choice';
+        $this->answer_choices = ['', '', '', ''];
+        $this->correct_answer_index = 0;
         session()->flash('message', 'Card created successfully.');
     }
 
@@ -146,7 +165,10 @@ class CardManagement extends Component
                 correctAnswerIndex: $correctAnswerIndex
             );
 
-            $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId', 'card_type', 'answer_choices', 'correct_answer_index']);
+            $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId']);
+            $this->card_type = 'multiple_choice';
+            $this->answer_choices = ['', '', '', ''];
+            $this->correct_answer_index = 0;
             session()->flash('message', 'Card updated successfully.');
         }
     }

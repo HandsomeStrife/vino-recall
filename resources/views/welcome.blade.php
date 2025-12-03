@@ -16,7 +16,7 @@
                 <a href="{{ route('register') }}" class="bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition">Sign Up</a>
             </div>
         </nav>
-        <div class="relative min-h-[600px] flex items-center">
+        <div class="relative min-h-[600px] flex items-center font-heading">
             <div class="absolute inset-0 z-0">
                 <img src="{{ asset('img/hero.jpg') }}" alt="Vineyard with wine glass" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-burgundy-900/40"></div>
