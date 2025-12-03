@@ -30,6 +30,11 @@ class LocalizationService
                 $locale = substr($locale, 0, strpos($locale, '-'));
             }
 
+            // Validate locale format: only lowercase letters, exactly 2 characters
+            if (! preg_match('/^[a-z]{2}$/', $locale)) {
+                continue; // Skip invalid locales
+            }
+
             $quality = 1.0;
             if (isset($parts[1]) && str_starts_with($parts[1], 'q=')) {
                 $quality = (float) substr($parts[1], 2);

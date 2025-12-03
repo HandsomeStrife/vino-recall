@@ -34,13 +34,16 @@ class StudyInterface extends Component
         CardRepository $cardRepository,
         \Domain\Deck\Repositories\DeckRepository $deckRepository
     ): void {
-        $shortcode = request()->query('deck');
-        
-        if (!$shortcode) {
-            $this->redirect(route('library'));
-            
-            return;
-        }
+        // Validate query parameters
+        $validated = request()->validate([
+            'deck' => ['required', 'string', 'size:8', 'alpha_num'],
+            'session_type' => ['sometimes', 'string', 'in:normal,deep_study,practice'],
+            'card_limit' => ['sometimes', 'integer', 'min:1', 'max:1000'],
+            'status_filters' => ['sometimes', 'string'],
+            'random_order' => ['sometimes', 'in:0,1'],
+        ]);
+
+        $shortcode = $validated['deck'];
         
         // Find deck by shortcode
         $user = $userRepository->getLoggedInUser();
@@ -63,11 +66,21 @@ class StudyInterface extends Component
 
     private function initializeSessionConfig(): void
     {
+        // Query parameters are already validated in mount()
         $sessionType = request()->query('session_type', 'normal');
         $cardLimit = request()->query('card_limit') ? (int) request()->query('card_limit') : null;
-        $statusFilters = request()->query('status_filters') 
-            ? array_filter(explode(',', request()->query('status_filters'))) 
-            : null;
+        $statusFiltersString = request()->query('status_filters');
+        
+        // Parse and validate status filters
+        $statusFilters = null;
+        if ($statusFiltersString) {
+            $filters = array_filter(explode(',', $statusFiltersString));
+            // Validate each filter is an allowed value
+            $allowedFilters = ['new', 'due', 'reviewed'];
+            $validFilters = array_intersect($filters, $allowedFilters);
+            $statusFilters = !empty($validFilters) ? array_values($validFilters) : null;
+        }
+        
         $randomOrder = request()->query('random_order', '0') === '1';
 
         $type = match ($sessionType) {

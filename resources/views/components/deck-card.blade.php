@@ -22,9 +22,12 @@
         </a>
     </div>
     
-    <div class="flex relative flex-1">
-        <!-- Content Section - with proper padding to avoid image overlap -->
-        <div class="flex-1 p-6 pr-64 flex flex-col justify-between">
+    <div class="flex relative flex-1" style="background-image: url('{{ $image }}'); background-size: cover; background-position: center;">
+        <!-- Mobile gradient overlay to ensure text readability -->
+        <div class="absolute inset-0 bg-gradient-to-b from-white/95 via-white/90 to-white/95 md:hidden"></div>
+        
+        <!-- Content Section - with proper padding to avoid image overlap on desktop -->
+        <div class="flex-1 p-6 md:pr-64 flex flex-col justify-between relative z-10 md:bg-white">
             <div class="mb-4">
                 @if($dueCards > 0 && $newCards > 0)
                     <!-- Both due and new cards -->
@@ -81,8 +84,8 @@
                 class="w-full" />
         </div>
         
-        <!-- Diagonal Image Section - full height -->
-        <div class="absolute top-0 right-0 bottom-0 w-56 overflow-hidden pointer-events-none">
+        <!-- Diagonal Image Section - hidden on mobile, visible on desktop -->
+        <div class="hidden md:block absolute top-0 right-0 bottom-0 w-56 overflow-hidden pointer-events-none">
             <div class="absolute inset-0 bg-cover bg-center" 
                  style="background-image: url('{{ $image }}'); 
                         clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);">
