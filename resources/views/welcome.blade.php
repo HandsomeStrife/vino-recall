@@ -29,30 +29,89 @@
         </div>
     </header>
 
-    <section class="py-20 bg-white text-center">
+    <section class="py-20 bg-cream-50">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-burgundy-900">Spaced Repetition Visualized</h2>
-            <div class="flex flex-col md:flex-row justify-center items-center space-y-10 md:space-y-0 md:space-x-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-16 text-center text-burgundy-900">How Spaced Repetition Works</h2>
+            
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6 max-w-6xl mx-auto">
                 <div class="flex flex-col items-center">
-                    <div class="bg-burgundy-500 text-white w-24 h-24 rounded-lg shadow-lg flex items-center justify-center text-4xl">
-                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <div class="bg-burgundy-800 text-white rounded-2xl shadow-xl p-8 w-42 h-42 flex flex-col items-center justify-center relative">
+                        <div class="absolute -top-8 w-20 h-20 -rotate-30">
+                            <img src="{{ asset('img/homepage/grapes.png') }}" alt="Grape" class="w-full h-full object-contain">
+                        </div>
+                        <h3 class="text-xl font-bold text-center mt-4">SHORT-TERM<br>MEMORY</h3>
                     </div>
-                    <p class="mt-4 font-semibold">New Concepts</p>
                 </div>
-                <svg class="w-16 h-16 text-burgundy-500 hidden md:block transform rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+
+                <div class="flex items-center">
+                    <svg class="w-12 h-12 text-burgundy-600 transform rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </div>
+
+                <div class="flex flex-col items-center gap-8">
+                    <div class="text-center mb-4">
+                        <p class="text-xl font-bold text-burgundy-900">SPACED REVIEW</p>
+                        <p class="text-sm text-gray-600">(The Forgetting Curve)</p>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-6 items-end">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mb-3">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="bg-burgundy-700 text-white rounded-lg shadow-lg p-4 w-32 h-40 flex flex-col items-center justify-center gap-2">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="border-t-2 border-white/30 w-16 my-1"></div>
+                                <p class="text-lg font-bold">DAY 1</p>
+                                <p class="text-xs">(Review)</p>
+                            </div>
+                        </div>
+
+                        <svg class="w-8 h-8 text-burgundy-500 transform rotate-90 md:rotate-0 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mb-3">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="bg-burgundy-700 text-white rounded-lg shadow-lg p-4 w-32 h-40 flex flex-col items-center justify-center gap-2">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="border-t-2 border-white/30 w-16 my-1"></div>
+                                <p class="text-lg font-bold">DAY 3</p>
+                                <p class="text-xs">(Review)</p>
+                            </div>
+                        </div>
+
+                        <svg class="w-8 h-8 text-burgundy-500 transform rotate-90 md:rotate-0 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center mb-3">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="bg-burgundy-700 text-white rounded-lg shadow-lg p-4 w-32 h-40 flex flex-col items-center justify-center gap-2">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="border-t-2 border-white/30 w-16 my-1"></div>
+                                <p class="text-lg font-bold">WEEK 1</p>
+                                <p class="text-xs">(Review)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <svg class="w-12 h-12 text-burgundy-600 transform rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </div>
+
                 <div class="flex flex-col items-center">
-                    <div class="bg-burgundy-500 text-white w-24 h-24 rounded-lg shadow-lg flex items-center justify-center text-4xl">
-                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <div class="bg-green-800 text-white rounded-2xl shadow-xl p-8 w-56 h-56 flex flex-col items-center justify-center relative">
+                        <div class="absolute -top-22 w-40 h-40">
+                            <img src="{{ asset('img/homepage/grape-bucket.png') }}" alt="Grape Basket" class="w-full h-full object-contain">
+                        </div>
+                        <h3 class="text-2xl font-bold text-center mt-4 mb-4">LONG-TERM<br>MEMORY</h3>
                     </div>
-                    <p class="mt-4 font-semibold">Spaced Review</p>
                 </div>
-                <svg class="w-16 h-16 text-burgundy-500 hidden md:block transform rotate-90 md:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                <div class="flex flex-col items-center">
-                    <div class="bg-burgundy-500 text-white w-24 h-24 rounded-lg shadow-lg flex items-center justify-center text-4xl">
-                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    </div>
-                    <p class="mt-4 font-semibold">Long-Term Memory</p>
-                </div>
+            </div>
+
+            <div class="mt-12 text-center max-w-3xl mx-auto">
+                <p class="text-gray-700 text-lg">By reviewing at scientifically optimal intervals, wine knowledge moves from short-term memory into permanent long-term retention.</p>
             </div>
         </div>
     </section>
