@@ -34,7 +34,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/login', [\App\Http\Controllers\Admin\Auth\LoginController::class, 'login']);
     });
 
-    Route::middleware('auth:admin')->group(function () {
+    Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Admin\Auth\LogoutController::class, 'logout'])->name('logout');
     });
 });
@@ -50,12 +50,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/deck/{shortcode}/stats', fn (string $shortcode) => view('pages.deck-stats', ['shortcode' => $shortcode]))->name('deck.stats');
 });
 
-Route::middleware(['auth:admin', \App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn () => view('pages.admin.dashboard'))->name('dashboard');
     Route::get('/users', fn () => view('pages.admin.users'))->name('users');
     Route::get('/cards', fn () => view('pages.admin.cards'))->name('cards');
     Route::get('/decks', fn () => view('pages.admin.decks'))->name('decks');
-    Route::get('/import', fn () => view('pages.admin.deck-import'))->name('deck-import');
+    Route::get('/import', fn () => view('pages.admin.deck-import'))->name('decks.import');
 });
 
 if (app()->environment('local')) {

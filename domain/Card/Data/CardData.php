@@ -18,7 +18,7 @@ class CardData extends Data
         public string $answer,
         public ?string $image_path,
         public ?array $answer_choices,
-        public ?int $correct_answer_index,
+        public ?array $correct_answer_indices,
         public string $created_at,
         public string $updated_at,
     ) {}
@@ -33,9 +33,17 @@ class CardData extends Data
             answer: $card->answer,
             image_path: $card->image_path,
             answer_choices: $card->answer_choices ? json_decode($card->answer_choices, true) : null,
-            correct_answer_index: $card->correct_answer_index,
+            correct_answer_indices: $card->correct_answer_indices ? json_decode($card->correct_answer_indices, true) : null,
             created_at: $card->created_at->toDateTimeString(),
             updated_at: $card->updated_at->toDateTimeString(),
         );
+    }
+
+    /**
+     * Check if this card has multiple correct answers.
+     */
+    public function hasMultipleCorrectAnswers(): bool
+    {
+        return is_array($this->correct_answer_indices) && count($this->correct_answer_indices) > 1;
     }
 }

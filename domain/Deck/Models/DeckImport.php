@@ -22,10 +22,18 @@ class DeckImport extends Model
         'user_id',
         'deck_id',
         'filename',
+        'original_filename',
+        'file_path',
         'format',
         'status',
         'imported_cards_count',
+        'updated_cards_count',
+        'total_rows',
+        'skipped_rows',
         'error_message',
+        'validation_errors',
+        'started_at',
+        'completed_at',
     ];
 
     protected function casts(): array
@@ -33,6 +41,9 @@ class DeckImport extends Model
         return [
             'format' => \Domain\Deck\Enums\ImportFormat::class,
             'status' => \Domain\Deck\Enums\ImportStatus::class,
+            'validation_errors' => 'array',
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -45,5 +56,35 @@ class DeckImport extends Model
     {
         return $this->belongsTo(Deck::class);
     }
-}
 
+    public function isProcessing(): bool
+    {
+        return $this->status === \Domain\Deck\Enums\ImportStatus::PROCESSING;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === \Domain\Deck\Enums\ImportStatus::PENDING;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === \Domain\Deck\Enums\ImportStatus::COMPLETED;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === \Domain\Deck\Enums\ImportStatus::FAILED;
+    }
+
+    public function getProgressPercentage(): int
+    {
+        if ($this->total_rows === 0) {
+            return 0;
+        }
+
+        $processed = $this->imported_cards_count + $this->updated_cards_count + $this->skipped_rows;
+
+        return min(100, (int) (($processed / $this->total_rows) * 100));
+    }
+}

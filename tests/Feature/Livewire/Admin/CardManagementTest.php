@@ -24,13 +24,16 @@ test('admin can create a new card', function () {
     Livewire::test(CardManagement::class)
         ->set('deck_id', $deck->id)
         ->set('question', 'Test Question')
-        ->set('answer', 'Test Answer')
+        ->set('answer_choices', ['Option A', 'Option B', 'Option C', 'Option D'])
+        ->set('correct_answer_indices', [1])
+        ->set('answer', 'Option B')
         ->call('createCard');
 
     $card = Card::where('question', 'Test Question')->first();
     expect($card)->not->toBeNull();
-    expect($card->answer)->toBe('Test Answer');
+    expect($card->answer)->toBe('Option B');
     expect($card->deck_id)->toBe($deck->id);
+    expect($card->card_type)->toBe('multiple_choice');
 });
 
 test('admin can create card with image', function () {
@@ -42,11 +45,14 @@ test('admin can create card with image', function () {
     Livewire::test(CardManagement::class)
         ->set('deck_id', $deck->id)
         ->set('question', 'Test Question')
-        ->set('answer', 'Test Answer')
+        ->set('answer_choices', ['Option A', 'Option B', 'Option C', 'Option D'])
+        ->set('correct_answer_indices', [0])
+        ->set('answer', 'Option A')
         ->set('image', $image)
         ->call('createCard');
 
     $card = Card::where('question', 'Test Question')->first();
+    expect($card)->not->toBeNull();
     expect($card->image_path)->not->toBeNull();
     Storage::disk('public')->assertExists($card->image_path);
 });
@@ -78,4 +84,21 @@ test('admin can delete a card', function () {
         ->call('deleteCard', $card->id);
 
     expect(Card::find($card->id))->toBeNull();
+});
+
+test('admin can create card with multiple correct answers', function () {
+    $admin = actingAsAdmin();
+    $deck = Deck::factory()->create();
+
+    Livewire::test(CardManagement::class)
+        ->set('deck_id', $deck->id)
+        ->set('question', 'Which are red grapes?')
+        ->set('answer_choices', ['Chardonnay', 'Merlot', 'Riesling', 'Syrah'])
+        ->set('correct_answer_indices', [1, 3])
+        ->set('answer', 'Merlot, Syrah')
+        ->call('createCard');
+
+    $card = Card::where('question', 'Which are red grapes?')->first();
+    expect($card)->not->toBeNull();
+    expect(json_decode($card->correct_answer_indices, true))->toBe([1, 3]);
 });

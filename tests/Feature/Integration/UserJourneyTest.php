@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Domain\Admin\Models\Admin;
 use Domain\Card\Models\Card;
 use Domain\Card\Models\CardReview;
+use Domain\Deck\Actions\EnrollUserInDeckAction;
 use Domain\Deck\Models\Deck;
 use Domain\User\Models\User;
 
@@ -28,10 +29,10 @@ test('complete user journey: register, login, view dashboard, study cards', func
     $user = User::where('email', 'journey@example.com')->first();
     expect($user)->not->toBeNull();
 
-    // Visit dashboard
+    // Visit dashboard - should see welcome message
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200)
-        ->assertSee('Dashboard');
+        ->assertSee('Welcome back');
 
     // Visit study page
     $response = $this->get(route('study'));
@@ -102,18 +103,22 @@ test('user study session: select deck, study cards, rate cards, view progress', 
     $response = $this->get(route('study'));
     $response->assertStatus(200);
 
+    // Enroll in deck
+    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+
     // Study cards (simulate via CardReview creation)
     CardReview::factory()->create([
         'user_id' => $user->id,
         'card_id' => $card1->id,
-        'rating' => 'good',
+        'rating' => 'correct',
+        'is_correct' => true,
         'next_review_at' => now()->addDays(3),
     ]);
 
-    // Visit dashboard to see progress
+    // Visit dashboard to see progress - should see Daily Goal section
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200)
-        ->assertSee('Cards Mastered');
+        ->assertSee('Daily Goal');
 });
 
 test('user profile update journey: login, update profile, change password', function () {
@@ -180,12 +185,16 @@ test('complete study session with multiple cards', function () {
     $deck = Deck::factory()->create(['is_active' => true]);
     $cards = Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
+    // Enroll user in deck
+    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+
     // Create reviews for all cards (simulate previous study session)
     foreach ($cards as $card) {
         CardReview::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
             'next_review_at' => now()->subDay(), // All due for review
+            'is_practice' => false,
         ]);
     }
 
@@ -193,10 +202,10 @@ test('complete study session with multiple cards', function () {
     $response = $this->get(route('study'));
     $response->assertStatus(200);
 
-    // Verify dashboard shows due cards
+    // Verify dashboard shows enrolled deck with daily goal
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200)
-        ->assertSee('due for review');
+        ->assertSee('Daily Goal');
 });
 
 test('user registration creates necessary records and redirects correctly', function () {
@@ -227,4 +236,3 @@ test('user registration creates necessary records and redirects correctly', func
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200);
 });
-

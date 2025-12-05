@@ -20,7 +20,10 @@ class StudyInterface extends Component
 
     public ?int $deckId = null;
 
-    public ?string $selectedAnswer = null;
+    public ?string $deckShortcode = null;
+
+    /** @var array<string> */
+    public array $selectedAnswers = [];
 
     public ?StudySessionConfigData $sessionConfig = null;
 
@@ -44,18 +47,19 @@ class StudyInterface extends Component
         ]);
 
         $shortcode = $validated['deck'];
-        
+
         // Find deck by shortcode
         $user = $userRepository->getLoggedInUser();
         $deck = $deckRepository->findByShortcode($user->id, $shortcode);
-        
+
         if (!$deck) {
             $this->redirect(route('library'));
-            
+
             return;
         }
-        
+
         $this->deckId = $deck->id;
+        $this->deckShortcode = $shortcode;
 
         // Parse session configuration from query params
         $this->initializeSessionConfig();
@@ -70,7 +74,7 @@ class StudyInterface extends Component
         $sessionType = request()->query('session_type', 'normal');
         $cardLimit = request()->query('card_limit') ? (int) request()->query('card_limit') : null;
         $statusFiltersString = request()->query('status_filters');
-        
+
         // Parse and validate status filters
         $statusFilters = null;
         if ($statusFiltersString) {
@@ -80,7 +84,7 @@ class StudyInterface extends Component
             $validFilters = array_intersect($filters, $allowedFilters);
             $statusFilters = !empty($validFilters) ? array_values($validFilters) : null;
         }
-        
+
         $randomOrder = request()->query('random_order', '0') === '1';
 
         $type = match ($sessionType) {
@@ -115,7 +119,7 @@ class StudyInterface extends Component
 
         $this->sessionCards = $cards->pluck('id')->toArray();
         $this->currentCardIndex = 0;
-        
+
         // Load first card
         if (!empty($this->sessionCards)) {
             $this->currentCardId = $this->sessionCards[0];
@@ -125,7 +129,7 @@ class StudyInterface extends Component
     private function loadNextCard(): void
     {
         $this->currentCardIndex++;
-        
+
         if ($this->currentCardIndex < count($this->sessionCards)) {
             $this->currentCardId = $this->sessionCards[$this->currentCardIndex];
         } else {
@@ -139,9 +143,32 @@ class StudyInterface extends Component
         $this->dispatch('card-revealed');
     }
 
-    public function selectAnswer(string $answer): void
+    /**
+     * Toggle an answer selection for multi-answer support.
+     */
+    public function toggleAnswer(string $answer): void
     {
-        $this->selectedAnswer = $answer;
+        if (in_array($answer, $this->selectedAnswers, true)) {
+            // Remove from selection
+            $this->selectedAnswers = array_values(array_filter(
+                $this->selectedAnswers,
+                fn ($a) => $a !== $answer
+            ));
+        } else {
+            // Add to selection
+            $this->selectedAnswers[] = $answer;
+        }
+    }
+
+    /**
+     * Submit the selected answers and reveal the correct answer.
+     */
+    public function submitAnswers(): void
+    {
+        if (count($this->selectedAnswers) === 0) {
+            return;
+        }
+
         $this->revealed = true;
         $this->dispatch('card-revealed');
     }
@@ -154,12 +181,13 @@ class StudyInterface extends Component
 
         $user = $userRepository->getLoggedInUser();
 
-        // ReviewCardAction now handles practice mode
+        // ReviewCardAction now handles practice mode and accepts array of answers
         $isPractice = !$this->sessionConfig->trackSrs;
-        $reviewCardAction->execute($user->id, $this->currentCardId, $this->selectedAnswer, $isPractice);
+        $answersToSubmit = count($this->selectedAnswers) > 0 ? $this->selectedAnswers : null;
+        $reviewCardAction->execute($user->id, $this->currentCardId, $answersToSubmit, $isPractice);
 
         $this->revealed = false;
-        $this->selectedAnswer = null;
+        $this->selectedAnswers = [];
         $this->loadNextCard();
     }
 
@@ -174,11 +202,27 @@ class StudyInterface extends Component
             $card = $cardRepository->findById($this->currentCardId);
             if ($card) {
                 $deck = $deckRepository->findById($card->deck_id);
-                
+
                 // Determine if answer is correct (for display after reveal)
-                if ($this->revealed && $this->selectedAnswer !== null && $card->card_type->value === 'multiple_choice') {
-                    $answerChoices = $card->answer_choices;
-                    $isCorrect = $this->selectedAnswer === $answerChoices[$card->correct_answer_index];
+                if ($this->revealed && count($this->selectedAnswers) > 0) {
+                    $answerChoices = $card->answer_choices ?? [];
+                    $correctIndices = $card->correct_answer_indices ?? [];
+
+                    // Get correct answers as strings
+                    $correctAnswers = [];
+                    foreach ($correctIndices as $index) {
+                        if (isset($answerChoices[$index])) {
+                            $correctAnswers[] = $answerChoices[$index];
+                        }
+                    }
+
+                    // Sort both for comparison
+                    $sortedSelected = $this->selectedAnswers;
+                    $sortedCorrect = $correctAnswers;
+                    sort($sortedSelected);
+                    sort($sortedCorrect);
+
+                    $isCorrect = $sortedSelected === $sortedCorrect;
                 }
             }
         } elseif ($this->deckId) {
@@ -200,6 +244,7 @@ class StudyInterface extends Component
             'isCorrect' => $isCorrect,
             'sessionConfig' => $this->sessionConfig,
             'progress' => $progress,
+            'deckShortcode' => $this->deckShortcode,
         ]);
     }
 }

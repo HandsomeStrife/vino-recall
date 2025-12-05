@@ -50,7 +50,7 @@
                             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
                             if ((e.key === ' ' || e.key === 'Enter') && !revealed) {
                                 e.preventDefault();
-                                @this.call('reveal');
+                                @this.call('submitAnswers');
                             } else if (revealed && (e.key === ' ' || e.key === 'Enter')) {
                                 e.preventDefault();
                                 @this.call('continue');
@@ -63,86 +63,111 @@
                         @if($card->image_path)
                             <img src="{{ asset('storage/' . $card->image_path) }}" alt="Card image" class="mx-auto max-h-64 rounded-lg mb-4" loading="lazy">
                         @endif
+                        
+                        @if($card->hasMultipleCorrectAnswers())
+                            <p class="text-sm text-burgundy-600 font-medium mt-2">Select all that apply</p>
+                        @endif
                     </div>
 
-                    @if($card->card_type->value === 'multiple_choice')
-                        @if(!$revealed)
-                            <div class="space-y-3">
-                                @foreach($card->answer_choices as $index => $choice)
-                                    <button wire:click="selectAnswer('{{ $choice }}')" 
-                                            class="w-full px-6 py-3 text-left bg-gray-100 hover:bg-burgundy-100 border-2 border-transparent hover:border-burgundy-500 rounded-lg transition">
-                                        <span class="font-semibold text-burgundy-900">{{ chr(65 + $index) }}.</span> {{ $choice }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="space-y-3 mb-8">
-                                @foreach($card->answer_choices as $index => $choice)
-                                    <div class="w-full px-6 py-3 text-left rounded-lg border-2 
-                                                {{ $index === $card->correct_answer_index ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300' }}
-                                                {{ $selectedAnswer === $choice && $index !== $card->correct_answer_index ? 'bg-red-100 border-red-500' : '' }}">
-                                        <span class="font-semibold">{{ chr(65 + $index) }}.</span> {{ $choice }}
-                                        @if($index === $card->correct_answer_index)
-                                            <span class="text-green-600 font-semibold ml-2">✓ Correct</span>
-                                        @elseif($selectedAnswer === $choice)
-                                            <span class="text-red-600 font-semibold ml-2">✗ Your Answer</span>
+                    @if(!$revealed)
+                        <div class="space-y-3">
+                            @foreach($card->answer_choices as $index => $choice)
+                                <button wire:click="toggleAnswer('{{ $choice }}')" 
+                                        class="w-full px-6 py-3 text-left rounded-lg transition flex items-center
+                                               {{ in_array($choice, $selectedAnswers) 
+                                                  ? 'bg-burgundy-100 border-2 border-burgundy-500' 
+                                                  : 'bg-gray-100 hover:bg-burgundy-50 border-2 border-transparent hover:border-burgundy-300' }}">
+                                    <span class="flex-shrink-0 w-6 h-6 mr-3 rounded border-2 flex items-center justify-center
+                                                 {{ in_array($choice, $selectedAnswers) 
+                                                    ? 'bg-burgundy-500 border-burgundy-500' 
+                                                    : 'border-gray-400' }}">
+                                        @if(in_array($choice, $selectedAnswers))
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                            </svg>
                                         @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                            
-                            @if($isCorrect !== null)
-                                <div class="text-center mb-6">
-                                    @if($isCorrect)
-                                        <div class="inline-flex items-center px-6 py-3 bg-green-100 text-green-800 rounded-lg font-semibold text-lg">
-                                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </span>
+                                    <span class="font-semibold text-burgundy-900">{{ chr(65 + $index) }}.</span>
+                                    <span class="ml-2">{{ $choice }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                        
+                        <div class="text-center mt-6">
+                            <button wire:click="submitAnswers" 
+                                    class="px-8 py-3 rounded-lg transition font-semibold transform
+                                           {{ count($selectedAnswers) > 0 
+                                              ? 'bg-burgundy-500 text-white hover:bg-burgundy-600 hover:scale-105' 
+                                              : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
+                                    {{ count($selectedAnswers) === 0 ? 'disabled' : '' }}
+                                    title="Press Space or Enter">
+                                Submit Answer{{ $card->hasMultipleCorrectAnswers() ? 's' : '' }}
+                            </button>
+                            <p class="text-sm text-gray-500 mt-4">
+                                {{ count($selectedAnswers) > 0 ? 'Press Space or Enter to submit' : 'Select an answer to continue' }}
+                            </p>
+                        </div>
+                    @else
+                        <div class="space-y-3 mb-8">
+                            @foreach($card->answer_choices as $index => $choice)
+                                @php
+                                    $isCorrectAnswer = in_array($index, $card->correct_answer_indices ?? []);
+                                    $wasSelected = in_array($choice, $selectedAnswers);
+                                @endphp
+                                <div class="w-full px-6 py-3 text-left rounded-lg border-2 flex items-center
+                                            {{ $isCorrectAnswer ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300' }}
+                                            {{ $wasSelected && !$isCorrectAnswer ? 'bg-red-100 border-red-500' : '' }}">
+                                    <span class="flex-shrink-0 w-6 h-6 mr-3 rounded border-2 flex items-center justify-center
+                                                 {{ $isCorrectAnswer ? 'bg-green-500 border-green-500' : ($wasSelected ? 'bg-red-500 border-red-500' : 'border-gray-400') }}">
+                                        @if($isCorrectAnswer)
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                             </svg>
-                                            Correct!
-                                        </div>
-                                    @else
-                                        <div class="inline-flex items-center px-6 py-3 bg-red-100 text-red-800 rounded-lg font-semibold text-lg">
-                                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        @elseif($wasSelected)
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
                                             </svg>
-                                            Incorrect
-                                        </div>
+                                        @endif
+                                    </span>
+                                    <span class="font-semibold">{{ chr(65 + $index) }}.</span>
+                                    <span class="ml-2">{{ $choice }}</span>
+                                    @if($isCorrectAnswer)
+                                        <span class="text-green-600 font-semibold ml-auto">Correct</span>
+                                    @elseif($wasSelected)
+                                        <span class="text-red-600 font-semibold ml-auto">Your Answer</span>
                                     @endif
                                 </div>
-                            @endif
+                            @endforeach
+                        </div>
+                        
+                        @if($isCorrect !== null)
+                            <div class="text-center mb-6">
+                                @if($isCorrect)
+                                    <div class="inline-flex items-center px-6 py-3 bg-green-100 text-green-800 rounded-lg font-semibold text-lg">
+                                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Correct!
+                                    </div>
+                                @else
+                                    <div class="inline-flex items-center px-6 py-3 bg-red-100 text-red-800 rounded-lg font-semibold text-lg">
+                                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Incorrect
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
 
-                            <div class="text-center">
-                                <button wire:click="continue" 
-                                        class="px-8 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105"
-                                        title="Press Space or Enter">
-                                    Continue
-                                </button>
-                                <p class="text-center text-sm text-gray-500 mt-4">Press Space or Enter to continue</p>
-                            </div>
-                        @endif
-                    @else
-                        @if($revealed)
-                            <div class="text-center mb-8 transition-all duration-300">
-                                <p class="text-xl text-gray-700 mb-6">{{ $card->answer }}</p>
-                            </div>
-                            <div class="text-center">
-                                <button wire:click="continue" 
-                                        class="px-8 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105"
-                                        title="Press Space or Enter">
-                                    Continue
-                                </button>
-                                <p class="text-center text-sm text-gray-500 mt-4">Press Space or Enter to continue</p>
-                            </div>
-                        @else
-                            <div class="text-center">
-                                <button wire:click="reveal" 
-                                        class="px-8 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105"
-                                        title="Press Space or Enter">
-                                    Reveal Answer
-                                </button>
-                                <p class="text-sm text-gray-500 mt-4">Press Space or Enter to reveal</p>
-                            </div>
-                        @endif
+                        <div class="text-center">
+                            <button wire:click="continue" 
+                                    class="px-8 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105"
+                                    title="Press Space or Enter">
+                                Continue
+                            </button>
+                            <p class="text-center text-sm text-gray-500 mt-4">Press Space or Enter to continue</p>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -179,8 +204,8 @@
                 </p>
                 
                 <div class="flex gap-3 justify-center">
-                    @if($deck)
-                        <a href="{{ route('deck.stats', ['shortcode' => request()->query('deck')]) }}" class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold">
+                    @if($deck && $deckShortcode)
+                        <a href="{{ route('deck.stats', ['shortcode' => $deckShortcode]) }}" class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold">
                             View Stats
                         </a>
                     @endif

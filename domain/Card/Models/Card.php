@@ -31,7 +31,7 @@ class Card extends Model
         'answer',
         'image_path',
         'answer_choices',
-        'correct_answer_index',
+        'correct_answer_indices',
     ];
 
     public function deck(): BelongsTo

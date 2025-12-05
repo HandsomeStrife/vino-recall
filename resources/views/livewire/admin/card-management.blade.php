@@ -18,21 +18,6 @@
                         @error('deck_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- Card Type Selection -->
-                    <div>
-                        <x-form.label>Card Type</x-form.label>
-                        <div class="mt-2 space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" wire:model.live="card_type" value="multiple_choice" class="form-radio text-burgundy-600">
-                                <span class="ml-2 text-sm text-gray-700">Multiple Choice (Recommended)</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" wire:model.live="card_type" value="traditional" class="form-radio text-burgundy-600">
-                                <span class="ml-2 text-sm text-gray-700">Traditional Q&A</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <!-- Question -->
                     <div>
                         <x-form.label>Question</x-form.label>
@@ -40,50 +25,54 @@
                         @error('question') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- Multiple Choice Options -->
-                    @if($card_type === 'multiple_choice')
-                        <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-200">
-                            <h3 class="text-sm font-semibold text-burgundy-900 mb-3">Answer Choices</h3>
-                            <p class="text-xs text-gray-600 mb-4">Add at least 2 answer choices. Check the correct answer.</p>
-                            <div class="space-y-3">
-                                @foreach($answer_choices as $index => $choice)
-                                    <div class="flex items-start space-x-3">
-                                        <div class="flex items-center pt-2">
-                                            <input type="radio" 
-                                                   wire:model="correct_answer_index" 
-                                                   value="{{ $index }}" 
-                                                   class="form-radio text-green-600 h-5 w-5"
-                                                   id="correct_{{ $index }}">
-                                        </div>
-                                        <div class="flex-1">
-                                            <label for="correct_{{ $index }}" class="text-xs text-gray-500 block mb-1">
-                                                Choice {{ chr(65 + $index) }}
-                                                @if($correct_answer_index == $index)
-                                                    <span class="text-green-600 font-semibold">(Correct Answer)</span>
-                                                @endif
-                                            </label>
-                                            <input type="text" 
-                                                   wire:model="answer_choices.{{ $index }}" 
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-burgundy-500 focus:border-burgundy-500"
-                                                   placeholder="Enter answer choice {{ chr(65 + $index) }}...">
-                                        </div>
+                    <!-- Answer Choices -->
+                    <div class="bg-burgundy-50 p-4 rounded-lg border border-burgundy-200">
+                        <h3 class="text-sm font-semibold text-burgundy-900 mb-3">Answer Choices</h3>
+                        <p class="text-xs text-gray-600 mb-4">Add at least 2 answer choices. Check all correct answers (you can select multiple).</p>
+                        <div class="space-y-3">
+                            @foreach($answer_choices as $index => $choice)
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex items-center pt-2">
+                                        <button type="button"
+                                                wire:click="toggleCorrectAnswer({{ $index }})"
+                                                class="w-5 h-5 rounded border-2 flex items-center justify-center transition
+                                                       {{ in_array($index, $correct_answer_indices) 
+                                                          ? 'bg-green-500 border-green-500' 
+                                                          : 'border-gray-400 hover:border-green-400' }}">
+                                            @if(in_array($index, $correct_answer_indices))
+                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            @endif
+                                        </button>
                                     </div>
-                                @endforeach
-                            </div>
-                            @error('answer_choices') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                            @error('correct_answer_index') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    <div class="flex-1">
+                                        <label for="choice_{{ $index }}" class="text-xs text-gray-500 block mb-1">
+                                            Choice {{ chr(65 + $index) }}
+                                            @if(in_array($index, $correct_answer_indices))
+                                                <span class="text-green-600 font-semibold">(Correct Answer)</span>
+                                            @endif
+                                        </label>
+                                        <input type="text" 
+                                               id="choice_{{ $index }}"
+                                               wire:model.live="answer_choices.{{ $index }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-burgundy-500 focus:border-burgundy-500"
+                                               placeholder="Enter answer choice {{ chr(65 + $index) }}...">
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
+                        @if(count($correct_answer_indices) > 1)
+                            <p class="mt-3 text-xs text-burgundy-700 font-medium">
+                                {{ count($correct_answer_indices) }} correct answers selected - this will be a "Select all that apply" question.
+                            </p>
+                        @endif
+                        @error('answer_choices') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('correct_answer_indices') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
 
-                        <!-- Hidden Answer field (auto-filled with correct choice) -->
-                        <input type="hidden" wire:model="answer" value="{{ $answer_choices[$correct_answer_index] ?? '' }}">
-                    @else
-                        <!-- Traditional Answer -->
-                        <div>
-                            <x-form.label>Answer</x-form.label>
-                            <x-form.textarea name="answer" wire:model="answer" placeholder="Enter the answer..." />
-                            @error('answer') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    @endif
+                    <!-- Hidden Answer field (auto-filled with correct choices) -->
+                    <input type="hidden" wire:model="answer">
 
                     <!-- Image Upload -->
                     <div>
@@ -148,4 +137,3 @@
             </table>
         </div>
     </div>
-

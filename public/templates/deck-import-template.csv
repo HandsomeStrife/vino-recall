@@ -1,6 +1,5 @@
-question,answer,image_path,card_type,answer_choices,correct_answer_index
-"What grape is this?","Cabernet Sauvignon","images/grapes/cabernet.jpg","traditional","",""
-"What is the primary grape in Bordeaux?","Cabernet Sauvignon","","multiple_choice","[""Merlot"",""Cabernet Sauvignon"",""Pinot Noir"",""Syrah""]","1"
-"Which region is famous for Pinot Noir?","Burgundy","","traditional","",""
-"What does AOC stand for?","Appellation d'Origine Contrôlée","","multiple_choice","[""Appellation d'Origine Contrôlée"",""Association of Certified Oenologists"",""Agricultural Organic Certification"",""Approved Origin Certificate""]","0"
-
+question,answer,image_path,card_type,answer_choices,correct_answer_indices
+"What is the primary grape in Bordeaux?","Cabernet Sauvignon","","multiple_choice","[""Merlot"",""Cabernet Sauvignon"",""Pinot Noir"",""Syrah""]","[1]"
+"What does AOC stand for?","Appellation d'Origine Controlee","","multiple_choice","[""Appellation d'Origine Controlee"",""Association of Certified Oenologists"",""Agricultural Organic Certification"",""Approved Origin Certificate""]","[0]"
+"Which of the following are red grape varieties?","Merlot, Syrah","","multiple_choice","[""Chardonnay"",""Merlot"",""Riesling"",""Syrah""]","[1,3]"
+"What grape is known for Champagne production?","Chardonnay, Pinot Noir, Pinot Meunier","images/grapes/champagne.jpg","multiple_choice","[""Cabernet Sauvignon"",""Chardonnay"",""Pinot Noir"",""Pinot Meunier""]","[1,2,3]"

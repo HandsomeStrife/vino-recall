@@ -27,26 +27,52 @@ class CardManagement extends Component
 
     public ?int $editingCardId = null;
 
-    public string $card_type = 'multiple_choice';
-
     public array $answer_choices = ['', '', '', ''];
 
-    public ?int $correct_answer_index = 0;
+    /** @var array<int> */
+    public array $correct_answer_indices = [0];
 
-    public function updatedCorrectAnswerIndex(): void
+    public function updatedCorrectAnswerIndices(): void
     {
-        // Auto-update answer field when correct answer index changes for multiple choice
-        if ($this->card_type === 'multiple_choice' && isset($this->answer_choices[$this->correct_answer_index])) {
-            $this->answer = $this->answer_choices[$this->correct_answer_index];
-        }
+        $this->updateAnswerFromCorrectChoices();
     }
 
     public function updatedAnswerChoices(): void
     {
-        // Auto-update answer field when answer choices change for multiple choice
-        if ($this->card_type === 'multiple_choice' && isset($this->answer_choices[$this->correct_answer_index])) {
-            $this->answer = $this->answer_choices[$this->correct_answer_index];
+        $this->updateAnswerFromCorrectChoices();
+    }
+
+    private function updateAnswerFromCorrectChoices(): void
+    {
+        if (count($this->correct_answer_indices) > 0) {
+            $correctAnswers = [];
+            foreach ($this->correct_answer_indices as $index) {
+                if (isset($this->answer_choices[$index]) && $this->answer_choices[$index] !== '') {
+                    $correctAnswers[] = $this->answer_choices[$index];
+                }
+            }
+            $this->answer = implode(', ', $correctAnswers);
         }
+    }
+
+    /**
+     * Toggle a correct answer index for multiple correct answers.
+     */
+    public function toggleCorrectAnswer(int $index): void
+    {
+        if (in_array($index, $this->correct_answer_indices, true)) {
+            // Don't allow removing the last correct answer
+            if (count($this->correct_answer_indices) > 1) {
+                $this->correct_answer_indices = array_values(array_filter(
+                    $this->correct_answer_indices,
+                    fn ($i) => $i !== $index
+                ));
+            }
+        } else {
+            $this->correct_answer_indices[] = $index;
+            sort($this->correct_answer_indices);
+        }
+        $this->updateAnswerFromCorrectChoices();
     }
 
     public function render(CardRepository $cardRepository, DeckRepository $deckRepository)
@@ -62,49 +88,37 @@ class CardManagement extends Component
 
     public function createCard(CreateCardAction $createCardAction): void
     {
-        $rules = [
+        $this->validate([
             'deck_id' => ['required', 'integer', 'exists:decks,id'],
             'question' => ['required', 'string', 'min:3'],
-            'answer' => ['required', 'string', 'min:3'],
+            'answer' => ['required', 'string', 'min:1'],
             'image' => ['nullable', 'image', 'max:5120'],
-            'card_type' => ['required', 'in:traditional,multiple_choice'],
-        ];
-
-        if ($this->card_type === 'multiple_choice') {
-            $rules['answer_choices'] = ['required', 'array', 'min:2'];
-            $rules['answer_choices.*'] = ['required', 'string'];
-            $rules['correct_answer_index'] = ['required', 'integer', 'min:0'];
-        }
-
-        $this->validate($rules);
+            'answer_choices' => ['required', 'array', 'min:2'],
+            'answer_choices.*' => ['required', 'string'],
+            'correct_answer_indices' => ['required', 'array', 'min:1'],
+            'correct_answer_indices.*' => ['required', 'integer', 'min:0'],
+        ]);
 
         $imagePath = null;
         if ($this->image) {
             $imagePath = $this->image->store('cards', 'public');
         }
 
-        $answerChoices = null;
-        $correctAnswerIndex = null;
-
-        if ($this->card_type === 'multiple_choice') {
-            $answerChoices = array_values(array_filter($this->answer_choices, fn ($choice) => ! empty($choice)));
-            $correctAnswerIndex = $this->correct_answer_index;
-        }
+        $answerChoices = array_values(array_filter($this->answer_choices, fn ($choice) => ! empty($choice)));
 
         $createCardAction->execute(
             deckId: $this->deck_id,
             question: $this->question,
             answer: $this->answer,
             image_path: $imagePath,
-            cardType: CardType::from($this->card_type),
+            cardType: CardType::MULTIPLE_CHOICE,
             answerChoices: $answerChoices,
-            correctAnswerIndex: $correctAnswerIndex
+            correctAnswerIndices: $this->correct_answer_indices
         );
 
         $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId']);
-        $this->card_type = 'multiple_choice';
         $this->answer_choices = ['', '', '', ''];
-        $this->correct_answer_index = 0;
+        $this->correct_answer_indices = [0];
         session()->flash('message', 'Card created successfully.');
     }
 
@@ -116,43 +130,31 @@ class CardManagement extends Component
             $this->deck_id = $card->deck_id;
             $this->question = $card->question;
             $this->answer = $card->answer;
-            $this->card_type = $card->card_type->value;
             $this->answer_choices = $card->answer_choices ?? ['', '', '', ''];
-            $this->correct_answer_index = $card->correct_answer_index;
+            $this->correct_answer_indices = $card->correct_answer_indices ?? [0];
         }
     }
 
     public function updateCard(UpdateCardAction $updateCardAction): void
     {
         if ($this->editingCardId) {
-            $rules = [
+            $this->validate([
                 'deck_id' => ['required', 'integer', 'exists:decks,id'],
                 'question' => ['required', 'string', 'min:3'],
-                'answer' => ['required', 'string', 'min:3'],
+                'answer' => ['required', 'string', 'min:1'],
                 'image' => ['nullable', 'image', 'max:5120'],
-                'card_type' => ['required', 'in:traditional,multiple_choice'],
-            ];
-
-            if ($this->card_type === 'multiple_choice') {
-                $rules['answer_choices'] = ['required', 'array', 'min:2'];
-                $rules['answer_choices.*'] = ['required', 'string'];
-                $rules['correct_answer_index'] = ['required', 'integer', 'min:0'];
-            }
-
-            $this->validate($rules);
+                'answer_choices' => ['required', 'array', 'min:2'],
+                'answer_choices.*' => ['required', 'string'],
+                'correct_answer_indices' => ['required', 'array', 'min:1'],
+                'correct_answer_indices.*' => ['required', 'integer', 'min:0'],
+            ]);
 
             $imagePath = null;
             if ($this->image) {
                 $imagePath = $this->image->store('cards', 'public');
             }
 
-            $answerChoices = null;
-            $correctAnswerIndex = null;
-
-            if ($this->card_type === 'multiple_choice') {
-                $answerChoices = array_values(array_filter($this->answer_choices, fn ($choice) => ! empty($choice)));
-                $correctAnswerIndex = $this->correct_answer_index;
-            }
+            $answerChoices = array_values(array_filter($this->answer_choices, fn ($choice) => ! empty($choice)));
 
             $updateCardAction->execute(
                 cardId: $this->editingCardId,
@@ -160,15 +162,14 @@ class CardManagement extends Component
                 question: $this->question,
                 answer: $this->answer,
                 image_path: $imagePath,
-                cardType: CardType::from($this->card_type),
+                cardType: CardType::MULTIPLE_CHOICE,
                 answerChoices: $answerChoices,
-                correctAnswerIndex: $correctAnswerIndex
+                correctAnswerIndices: $this->correct_answer_indices
             );
 
             $this->reset(['deck_id', 'question', 'answer', 'image', 'editingCardId']);
-            $this->card_type = 'multiple_choice';
             $this->answer_choices = ['', '', '', ''];
-            $this->correct_answer_index = 0;
+            $this->correct_answer_indices = [0];
             session()->flash('message', 'Card updated successfully.');
         }
     }

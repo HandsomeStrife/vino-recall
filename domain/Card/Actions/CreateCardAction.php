@@ -15,29 +15,34 @@ class CreateCardAction
         string $question,
         string $answer,
         ?string $image_path = null,
-        CardType $cardType = CardType::TRADITIONAL,
+        CardType $cardType = CardType::MULTIPLE_CHOICE,
         ?array $answerChoices = null,
-        ?int $correctAnswerIndex = null
+        ?array $correctAnswerIndices = null
     ): CardData {
-        // Validate multiple choice fields if card type is multiple choice
-        if ($cardType === CardType::MULTIPLE_CHOICE) {
-            if ($answerChoices === null || count($answerChoices) < 2) {
-                throw new \InvalidArgumentException('Multiple choice cards must have at least 2 answer choices.');
-            }
+        // Validate multiple choice fields - all cards must have valid MC data
+        if ($answerChoices === null || count($answerChoices) < 2) {
+            throw new \InvalidArgumentException('Cards must have at least 2 answer choices.');
+        }
 
-            if ($correctAnswerIndex === null || $correctAnswerIndex < 0 || $correctAnswerIndex >= count($answerChoices)) {
-                throw new \InvalidArgumentException('Multiple choice cards must have a valid correct answer index.');
+        if ($correctAnswerIndices === null || count($correctAnswerIndices) < 1) {
+            throw new \InvalidArgumentException('Cards must have at least one correct answer index.');
+        }
+
+        // Validate all indices are within bounds
+        foreach ($correctAnswerIndices as $index) {
+            if ($index < 0 || $index >= count($answerChoices)) {
+                throw new \InvalidArgumentException('Cards must have valid correct answer indices.');
             }
         }
 
         $card = Card::create([
             'deck_id' => $deckId,
-            'card_type' => $cardType->value,
+            'card_type' => CardType::MULTIPLE_CHOICE->value,
             'question' => $question,
             'answer' => $answer,
             'image_path' => $image_path,
-            'answer_choices' => $answerChoices ? json_encode($answerChoices) : null,
-            'correct_answer_index' => $correctAnswerIndex,
+            'answer_choices' => json_encode($answerChoices),
+            'correct_answer_indices' => json_encode($correctAnswerIndices),
         ]);
 
         return CardData::fromModel($card);

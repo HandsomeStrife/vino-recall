@@ -18,7 +18,7 @@ class UpdateCardAction
         ?string $image_path = null,
         ?CardType $cardType = null,
         ?array $answerChoices = null,
-        ?int $correctAnswerIndex = null
+        ?array $correctAnswerIndices = null
     ): CardData {
         $card = Card::findOrFail($cardId);
 
@@ -40,30 +40,33 @@ class UpdateCardAction
             $updateData['image_path'] = $image_path;
         }
 
-        if ($cardType !== null) {
-            $updateData['card_type'] = $cardType->value;
-        }
+        // Always set card type to multiple choice
+        $updateData['card_type'] = CardType::MULTIPLE_CHOICE->value;
 
         if ($answerChoices !== null) {
             $updateData['answer_choices'] = json_encode($answerChoices);
         }
 
-        if ($correctAnswerIndex !== null) {
-            $updateData['correct_answer_index'] = $correctAnswerIndex;
+        if ($correctAnswerIndices !== null) {
+            $updateData['correct_answer_indices'] = json_encode($correctAnswerIndices);
         }
 
-        // Validate multiple choice fields if card type is being set to multiple choice
-        $finalCardType = $cardType ?? CardType::from($card->card_type);
-        if ($finalCardType === CardType::MULTIPLE_CHOICE) {
-            $finalAnswerChoices = $answerChoices ?? ($card->answer_choices ? json_decode($card->answer_choices, true) : null);
-            $finalCorrectAnswerIndex = $correctAnswerIndex ?? $card->correct_answer_index;
+        // Validate card fields
+        $finalAnswerChoices = $answerChoices ?? ($card->answer_choices ? json_decode($card->answer_choices, true) : null);
+        $finalCorrectAnswerIndices = $correctAnswerIndices ?? ($card->correct_answer_indices ? json_decode($card->correct_answer_indices, true) : null);
 
-            if ($finalAnswerChoices === null || count($finalAnswerChoices) < 2) {
-                throw new \InvalidArgumentException('Multiple choice cards must have at least 2 answer choices.');
-            }
+        if ($finalAnswerChoices === null || count($finalAnswerChoices) < 2) {
+            throw new \InvalidArgumentException('Cards must have at least 2 answer choices.');
+        }
 
-            if ($finalCorrectAnswerIndex === null || $finalCorrectAnswerIndex < 0 || $finalCorrectAnswerIndex >= count($finalAnswerChoices)) {
-                throw new \InvalidArgumentException('Multiple choice cards must have a valid correct answer index.');
+        if ($finalCorrectAnswerIndices === null || count($finalCorrectAnswerIndices) < 1) {
+            throw new \InvalidArgumentException('Cards must have at least one correct answer index.');
+        }
+
+        // Validate all indices are within bounds
+        foreach ($finalCorrectAnswerIndices as $index) {
+            if ($index < 0 || $index >= count($finalAnswerChoices)) {
+                throw new \InvalidArgumentException('Cards must have valid correct answer indices.');
             }
         }
 

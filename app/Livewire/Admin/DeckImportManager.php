@@ -7,9 +7,10 @@ namespace App\Livewire\Admin;
 use Domain\Admin\Repositories\AdminRepository;
 use Domain\Deck\Actions\ImportDeckAction;
 use Domain\Deck\Enums\ImportFormat;
+use Domain\Deck\Models\Deck;
 use Domain\Deck\Models\DeckImport;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -25,6 +26,16 @@ class DeckImportManager extends Component
 
     public string $format = 'csv';
 
+    public string $importMode = 'new'; // 'new' or 'existing'
+
+    public ?int $selectedDeckId = null;
+
+    public bool $showProgressModal = false;
+
+    public ?int $currentImportId = null;
+
+    public array $validationResult = [];
+
     public function render(AdminRepository $adminRepository)
     {
         $admin = $adminRepository->getLoggedInAdmin();
@@ -34,9 +45,35 @@ class DeckImportManager extends Component
             ->take(20)
             ->get();
 
+        $decks = Deck::orderBy('name')->get();
+
         return view('livewire.admin.deck-import', [
             'imports' => $imports,
+            'decks' => $decks,
+            'formatOptions' => [
+                'csv' => ImportFormat::CSV->label(),
+                'txt' => ImportFormat::TXT->label(),
+            ],
         ]);
+    }
+
+    public function updatedFile(): void
+    {
+        // Clear previous validation when file changes
+        $this->validationResult = [];
+    }
+
+    public function validateFile(ImportDeckAction $importDeckAction): void
+    {
+        $this->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+            'format' => ['required', 'in:csv,txt'],
+        ]);
+
+        $tempPath = $this->file->getRealPath();
+        $importFormat = $this->format === 'txt' ? ImportFormat::TXT : ImportFormat::CSV;
+
+        $this->validationResult = $importDeckAction->validateFile($tempPath, $importFormat);
     }
 
     public function import(ImportDeckAction $importDeckAction, AdminRepository $adminRepository): void
@@ -44,57 +81,85 @@ class DeckImportManager extends Component
         // Apply rate limiting
         $executed = RateLimiter::attempt(
             'import-deck:' . auth()->guard('admin')->id(),
-            5, // Max 5 attempts
-            function () {
-                // This callback is executed if the rate limit is not exceeded
-            },
-            60 * 60 // Per hour
+            5,
+            function () {},
+            60 * 60
         );
 
         if (! $executed) {
             session()->flash('error', __('admin.import_rate_limit_exceeded'));
+
             return;
         }
 
-        $this->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt,apkg', 'max:10240'], // Max 10MB
-            'deckName' => ['required', 'string', 'min:3', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'format' => ['required', 'in:csv,apkg'],
-        ]);
+        // Validation rules based on import mode
+        $rules = [
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+            'format' => ['required', 'in:csv,txt'],
+            'importMode' => ['required', 'in:new,existing'],
+        ];
+
+        if ($this->importMode === 'new') {
+            $rules['deckName'] = ['required', 'string', 'min:3', 'max:255'];
+            $rules['description'] = ['nullable', 'string', 'max:1000'];
+        } else {
+            $rules['selectedDeckId'] = ['required', 'integer', 'exists:decks,id'];
+        }
+
+        $this->validate($rules);
 
         $admin = $adminRepository->getLoggedInAdmin();
 
-        // Generate a cryptographically secure temporary file name
-        $originalExtension = $this->file->getClientOriginalExtension();
-        $tempFileName = Str::random(40) . '.' . $originalExtension;
-        $filePath = $this->file->storeAs('imports', $tempFileName, 'local');
-        $fullPath = storage_path('app/' . $filePath);
-
         try {
-            $importFormat = $this->format === 'apkg' ? ImportFormat::APKG : ImportFormat::CSV;
+            $tempPath = $this->file->getRealPath();
+            $originalFilename = $this->file->getClientOriginalName();
+            $importFormat = $this->format === 'txt' ? ImportFormat::TXT : ImportFormat::CSV;
 
-            // Execute import synchronously for now (could be queued)
-            $importDeckAction->execute(
+            // Execute import (will dispatch job)
+            $importData = $importDeckAction->execute(
                 userId: $admin->id,
-                filePath: $fullPath,
-                deckName: $this->deckName,
-                description: $this->description,
-                format: $importFormat
+                filePath: $tempPath,
+                originalFilename: $originalFilename,
+                format: $importFormat,
+                deckId: $this->importMode === 'existing' ? $this->selectedDeckId : null,
+                deckName: $this->importMode === 'new' ? $this->deckName : null,
+                description: $this->description
             );
 
-            session()->flash('message', __('admin.deck_imported_successfully'));
-            $this->reset(['file', 'deckName', 'description', 'format']);
+            // Show progress modal
+            $this->currentImportId = $importData->id;
+            $this->showProgressModal = true;
+
+            // Reset form
+            $this->reset(['file', 'deckName', 'description', 'validationResult']);
         } catch (\Exception $e) {
-            // Log the full error for debugging, but show a generic message to the user
             \Log::error("Deck import failed for admin {$admin->id}: " . $e->getMessage(), ['exception' => $e]);
-            session()->flash('error', __('admin.import_failed') . ': ' . __('admin.generic_error_message'));
-        } finally {
-            // Clean up temp file
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
-            }
+            session()->flash('error', $e->getMessage());
         }
+    }
+
+    #[Computed]
+    public function currentImport(): ?DeckImport
+    {
+        if (! $this->currentImportId) {
+            return null;
+        }
+
+        return DeckImport::find($this->currentImportId);
+    }
+
+    public function refreshImportStatus(): void
+    {
+        // This method is called by polling to refresh the import status
+        // The currentImport computed property will automatically fetch fresh data
+        unset($this->currentImport);
+    }
+
+    public function closeProgressModal(): void
+    {
+        $this->showProgressModal = false;
+        $this->currentImportId = null;
+        $this->validationResult = [];
     }
 
     public function downloadTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -102,6 +167,14 @@ class DeckImportManager extends Component
         return response()->download(
             public_path('templates/deck-import-template.csv'),
             'deck-import-template.csv'
+        );
+    }
+
+    public function downloadTxtTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        return response()->download(
+            public_path('templates/deck-import-template.txt'),
+            'deck-import-template.txt'
         );
     }
 }

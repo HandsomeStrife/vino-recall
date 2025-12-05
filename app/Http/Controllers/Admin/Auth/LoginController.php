@@ -20,7 +20,7 @@ class LoginController
     public function login(Request $request): RedirectResponse
     {
         // Rate limiting: 3 attempts per minute per IP + email combination (stricter for admin)
-        $key = 'admin.login:' . $request->ip() . ':' . strtolower($request->input('email', ''));
+        $key = 'admin.login:' . $request->ip() . ':' . strtolower($request->input('email') ?? '');
         
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $seconds = RateLimiter::availableIn($key);

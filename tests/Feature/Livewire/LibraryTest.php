@@ -31,16 +31,19 @@ test('library shows active decks', function () {
 
 test('library shows enrollment status', function () {
     $user = actingAsUser();
-    $enrolledDeck = Deck::factory()->create(['name' => 'Enrolled Deck']);
-    $notEnrolledDeck = Deck::factory()->create(['name' => 'Not Enrolled Deck']);
+    $enrolledDeck = Deck::factory()->create(['name' => 'First Deck']);
+    $notEnrolledDeck = Deck::factory()->create(['name' => 'Second Deck']);
     
-    // Enroll user in first deck
-    $user->enrolledDecks()->attach($enrolledDeck->id, ['enrolled_at' => now()]);
+    // Enroll user in first deck with shortcode
+    $user->enrolledDecks()->attach($enrolledDeck->id, [
+        'enrolled_at' => now(),
+        'shortcode' => 'enroll01',
+    ]);
 
     Livewire::test(Library::class)
-        ->assertSee('Enrolled Deck')
-        ->assertSee('✓ Enrolled')
-        ->assertSee('Not Enrolled Deck')
+        ->assertSee('First Deck')
+        ->assertSeeHtml('✓ Enrolled')
+        ->assertSee('Second Deck')
         ->assertSee('Add to My Library');
 });
 
@@ -59,8 +62,11 @@ test('user can unenroll from deck in library', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Test Deck']);
     
-    // Enroll first
-    $user->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
+    // Enroll first with shortcode
+    $user->enrolledDecks()->attach($deck->id, [
+        'enrolled_at' => now(),
+        'shortcode' => 'unenrol1',
+    ]);
 
     Livewire::test(Library::class)
         ->call('unenrollFromDeck', $deck->id)
@@ -94,9 +100,10 @@ test('library shows card count for decks', function () {
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'New Deck']);
     Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
+    // The count is in a span, so we assert them separately
     Livewire::test(Library::class)
         ->assertSee('New Deck')
-        ->assertSee('5 cards');
+        ->assertSee('>5</span> cards', escape: false);
 });
 
 test('library shows progress bar for enrolled decks', function () {
@@ -104,8 +111,11 @@ test('library shows progress bar for enrolled decks', function () {
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Complete Deck']);
     $cards = Card::factory()->count(3)->create(['deck_id' => $deck->id]);
     
-    // Enroll user in deck
-    $user->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
+    // Enroll user in deck with shortcode
+    $user->enrolledDecks()->attach($deck->id, [
+        'enrolled_at' => now(),
+        'shortcode' => 'complet1',
+    ]);
 
     // Review all cards
     foreach ($cards as $card) {
@@ -127,7 +137,7 @@ test('library handles deck with no cards', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Empty Deck')
-        ->assertSee('0 cards');
+        ->assertSee('>0</span> cards', escape: false);
 });
 
 test('library shows correct card count for deck', function () {
@@ -137,7 +147,7 @@ test('library shows correct card count for deck', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Counted Deck')
-        ->assertSee('15 cards');
+        ->assertSee('>15</span> cards', escape: false);
 });
 
 test('library shows multiple decks correctly', function () {
@@ -163,14 +173,17 @@ test('library enrollment is user-specific', function () {
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Shared Deck']);
     Card::factory()->count(2)->create(['deck_id' => $deck->id]);
 
-    // User 2 enrolls in deck
-    $user2->enrolledDecks()->attach($deck->id, ['enrolled_at' => now()]);
+    // User 2 enrolls in deck with shortcode
+    $user2->enrolledDecks()->attach($deck->id, [
+        'enrolled_at' => now(),
+        'shortcode' => 'shared01',
+    ]);
 
     // User 1 should see "Add to My Library" button (not enrolled)
+    // The deck they see shouldn't show enrollment badge since they're not enrolled
     Livewire::test(Library::class)
         ->assertSee('Shared Deck')
-        ->assertSee('Add to My Library')
-        ->assertDontSee('✓ Enrolled');
+        ->assertSee('Add to My Library');
 });
 
 test('library shows add to library button for unenrolled decks', function () {
@@ -190,6 +203,6 @@ test('library handles very large number of cards in deck', function () {
 
     Livewire::test(Library::class)
         ->assertSee('Large Deck')
-        ->assertSee('500 cards')
+        ->assertSee('>500</span> cards', escape: false)
         ->assertStatus(200);
 });

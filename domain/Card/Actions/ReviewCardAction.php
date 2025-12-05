@@ -17,48 +17,67 @@ class ReviewCardAction
 
     private const INCORRECT_INTERVAL_HOURS = 4;
 
-    public function execute(int $userId, int $cardId, ?string $selectedAnswer = null, bool $isPractice = false): CardReviewData
+    /**
+     * @param array<string>|null $selectedAnswers Array of selected answer strings for multi-answer support
+     */
+    public function execute(int $userId, int $cardId, ?array $selectedAnswers = null, bool $isPractice = false): CardReviewData
     {
         $card = Card::findOrFail($cardId);
-        
+
         // Determine if answer is correct
-        $isCorrect = $this->isAnswerCorrect($card, $selectedAnswer);
+        $isCorrect = $this->isAnswerCorrect($card, $selectedAnswers);
         $rating = $isCorrect ? CardRating::CORRECT : CardRating::INCORRECT;
+
+        // Store selected answers as JSON for review history
+        $selectedAnswerJson = $selectedAnswers !== null ? json_encode($selectedAnswers) : null;
 
         $review = CardReview::where('user_id', $userId)
             ->where('card_id', $cardId)
             ->first();
 
         if ($isPractice) {
-            // For practice sessions, record the review but don't affect SRS
-            CardReview::create([
-                'user_id' => $userId,
-                'card_id' => $cardId,
-                'rating' => $rating->value,
-                'is_correct' => $isCorrect,
-                'is_practice' => true,
-                'selected_answer' => $selectedAnswer,
-                'ease_factor' => $review?->ease_factor ?? self::INITIAL_EASE_FACTOR,
-                'next_review_at' => $review?->next_review_at ?? now()->addDay(),
-            ]);
+            // For practice sessions, if no SRS review exists yet, create a practice record
+            // Otherwise, just return a virtual practice response without persisting
+            // (to avoid unique constraint violation on user_id + card_id)
+            if ($review === null) {
+                $practiceReview = CardReview::create([
+                    'user_id' => $userId,
+                    'card_id' => $cardId,
+                    'rating' => $rating->value,
+                    'is_correct' => $isCorrect,
+                    'is_practice' => true,
+                    'selected_answer' => $selectedAnswerJson,
+                    'ease_factor' => self::INITIAL_EASE_FACTOR,
+                    'next_review_at' => now()->addDay(),
+                ]);
 
-            // Return the existing review or create a temporary one
-            return CardReviewData::fromModel(
-                CardReview::where('user_id', $userId)
-                    ->where('card_id', $cardId)
-                    ->where('is_practice', true)
-                    ->latest()
-                    ->first()
+                return CardReviewData::fromModel($practiceReview);
+            }
+
+            // Return a virtual practice response based on existing review
+            // This doesn't persist a new record but provides feedback
+            return new CardReviewData(
+                id: $review->id,
+                user_id: $userId,
+                card_id: $cardId,
+                rating: $rating->value,
+                is_correct: $isCorrect,
+                is_practice: true,
+                selected_answer: $selectedAnswerJson,
+                next_review_at: $review->next_review_at->toDateTimeString(),
+                ease_factor: (string) $review->ease_factor,
+                created_at: now()->toDateTimeString(),
+                updated_at: now()->toDateTimeString(),
             );
         }
 
         $easeFactor = $review?->ease_factor ?? self::INITIAL_EASE_FACTOR;
-        
+
         // Calculate next interval based on correctness and review history
         if ($isCorrect) {
             // Increase ease factor for correct answers
             $easeFactor = min($easeFactor + 0.1, 3.0);
-            
+
             // Calculate exponentially increasing intervals
             if ($review === null) {
                 // First review correct: 1 day
@@ -72,7 +91,7 @@ class ReviewCardAction
         } else {
             // Decrease ease factor for incorrect answers
             $easeFactor = max($easeFactor - 0.2, self::MIN_EASE_FACTOR);
-            
+
             // Incorrect answers: review in 4 hours
             $nextReviewAt = now()->addHours(self::INCORRECT_INTERVAL_HOURS);
         }
@@ -84,7 +103,7 @@ class ReviewCardAction
                 'rating' => $rating->value,
                 'is_correct' => $isCorrect,
                 'is_practice' => false,
-                'selected_answer' => $selectedAnswer,
+                'selected_answer' => $selectedAnswerJson,
                 'ease_factor' => $easeFactor,
                 'next_review_at' => $nextReviewAt,
             ]);
@@ -93,7 +112,7 @@ class ReviewCardAction
                 'rating' => $rating->value,
                 'is_correct' => $isCorrect,
                 'is_practice' => false,
-                'selected_answer' => $selectedAnswer,
+                'selected_answer' => $selectedAnswerJson,
                 'ease_factor' => $easeFactor,
                 'next_review_at' => $nextReviewAt,
             ]);
@@ -102,24 +121,44 @@ class ReviewCardAction
         return CardReviewData::fromModel($review->fresh());
     }
 
-    private function isAnswerCorrect(Card $card, ?string $selectedAnswer): bool
+    /**
+     * Check if the selected answers are correct (all-or-nothing for multi-answer).
+     *
+     * @param array<string>|null $selectedAnswers
+     */
+    private function isAnswerCorrect(Card $card, ?array $selectedAnswers): bool
     {
-        // For multiple choice cards
-        if ($card->card_type === 'multiple_choice') {
-            if ($selectedAnswer === null || $card->correct_answer_index === null || $card->answer_choices === null) {
-                return false;
-            }
-
-            $answerChoices = json_decode($card->answer_choices, true);
-            if (!is_array($answerChoices) || !isset($answerChoices[$card->correct_answer_index])) {
-                return false;
-            }
-
-            return $selectedAnswer === $answerChoices[$card->correct_answer_index];
+        // All cards are multiple choice - validate the answer
+        if ($selectedAnswers === null || count($selectedAnswers) === 0) {
+            return false;
         }
 
-        // For traditional cards, we cannot auto-determine correctness
-        // So we'll mark it as correct by default (user self-assessment)
-        return true;
+        if ($card->correct_answer_indices === null || $card->answer_choices === null) {
+            return false;
+        }
+
+        $answerChoices = json_decode($card->answer_choices, true);
+        $correctIndices = json_decode($card->correct_answer_indices, true);
+
+        if (!is_array($answerChoices) || !is_array($correctIndices)) {
+            return false;
+        }
+
+        // Get the correct answers as strings
+        $correctAnswers = [];
+        foreach ($correctIndices as $index) {
+            if (isset($answerChoices[$index])) {
+                $correctAnswers[] = $answerChoices[$index];
+            }
+        }
+
+        // Sort both arrays for comparison
+        $sortedSelected = $selectedAnswers;
+        $sortedCorrect = $correctAnswers;
+        sort($sortedSelected);
+        sort($sortedCorrect);
+
+        // All-or-nothing: user must select exactly the correct answers
+        return $sortedSelected === $sortedCorrect;
     }
 }

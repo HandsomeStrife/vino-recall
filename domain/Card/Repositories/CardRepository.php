@@ -39,9 +39,12 @@ class CardRepository
     /**
      * Get cards that the user hasn't reviewed yet (only from enrolled decks)
      *
+     * @param int $userId
+     * @param int|null $deckId Optional specific deck ID to filter by
+     * @param int|null $limit Optional limit on number of cards returned
      * @return \Illuminate\Support\Collection<int, CardData>
      */
-    public function getNewCardsForUser(int $userId, ?int $limit = null): \Illuminate\Support\Collection
+    public function getNewCardsForUser(int $userId, ?int $deckId = null, ?int $limit = null): \Illuminate\Support\Collection
     {
         $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
             ->pluck('card_id')
@@ -53,8 +56,17 @@ class CardRepository
             ->pluck('decks.id')
             ->toArray();
 
+        // If specific deck requested, validate it's enrolled
+        $targetDeckIds = $enrolledDeckIds;
+        if ($deckId !== null) {
+            if (!in_array($deckId, $enrolledDeckIds)) {
+                return collect();
+            }
+            $targetDeckIds = [$deckId];
+        }
+
         $query = Card::whereNotIn('id', $reviewedCardIds)
-            ->whereIn('deck_id', $enrolledDeckIds)
+            ->whereIn('deck_id', $targetDeckIds)
             ->orderBy('id', 'asc');
 
         if ($limit !== null) {
@@ -264,12 +276,37 @@ class CardRepository
         // Add some new cards (up to 10 total cards for the session)
         $remainingSlots = max(0, 10 - $cards->count());
         if ($remainingSlots > 0) {
-            $newCards = $this->getNewCardsForUser($userId, $remainingSlots)
-                ->filter(fn ($card) => in_array($card->deck_id, $deckIds));
-
+            // Get new cards specifically for the target decks
+            $newCards = $this->getNewCardsForDeckIds($userId, $deckIds, $remainingSlots);
             $cards = $cards->merge($newCards);
         }
 
         return $cards->values();
+    }
+
+    /**
+     * Get new cards for specific deck IDs (helper for normal session)
+     *
+     * @param int $userId
+     * @param array<int> $deckIds
+     * @param int|null $limit
+     * @return \Illuminate\Support\Collection<int, CardData>
+     */
+    private function getNewCardsForDeckIds(int $userId, array $deckIds, ?int $limit = null): \Illuminate\Support\Collection
+    {
+        $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+            ->pluck('card_id')
+            ->toArray();
+
+        $query = Card::whereNotIn('id', $reviewedCardIds)
+            ->whereIn('deck_id', $deckIds)
+            ->orderBy('id', 'asc');
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get()
+            ->map(fn (Card $card) => CardData::fromModel($card));
     }
 }

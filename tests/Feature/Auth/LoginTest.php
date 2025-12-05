@@ -8,7 +8,7 @@ test('login page can be rendered', function () {
     $response = $this->get(route('login'));
 
     $response->assertStatus(200);
-    $response->assertSee('Sign in to your account');
+    $response->assertSee('Welcome back');
 });
 
 test('users can authenticate using the login screen', function () {

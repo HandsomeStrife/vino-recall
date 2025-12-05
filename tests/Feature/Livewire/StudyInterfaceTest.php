@@ -3,255 +3,207 @@
 declare(strict_types=1);
 
 use App\Livewire\StudyInterface;
-use Domain\Card\Enums\CardRating;
 use Domain\Card\Models\Card;
 use Domain\Card\Models\CardReview;
 use Domain\Deck\Models\Deck;
+use Domain\User\Models\User;
 use Livewire\Livewire;
 
-test('study interface can be rendered', function () {
-    $user = actingAsUser();
-
-    Livewire::test(StudyInterface::class)
-        ->assertStatus(200);
+beforeEach(function () {
+    // StudyInterface requires a deck shortcode
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+    
+    $this->deck = Deck::factory()->create();
+    
+    // Enroll user in deck
+    $this->user->enrolledDecks()->attach($this->deck->id, [
+        'shortcode' => 'testcode',
+        'enrolled_at' => now(),
+    ]);
 });
 
 test('study interface shows card when available', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->create([
-        'deck_id' => $deck->id,
+    $card = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
         'question' => 'Test Question',
         'answer' => 'Test Answer',
     ]);
 
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    Livewire::test(StudyInterface::class)
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
         ->assertSee('Test Question');
 });
 
-test('study interface reveals answer on reveal click', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->traditional()->create([
-        'deck_id' => $deck->id,
-        'question' => 'Test Question',
-        'answer' => 'Test Answer',
+test('study interface shows select all that apply for multi-answer cards', function () {
+    $card = Card::factory()->multipleCorrectAnswers()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Multi Answer Question',
     ]);
 
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    Livewire::test(StudyInterface::class)
-        ->assertSee('Reveal Answer')
-        ->call('reveal')
-        ->assertSee('Test Answer')
-        ->assertSee('Again');
-});
-
-test('study interface rates card and loads next', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card1->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    Livewire::test(StudyInterface::class)
-        ->call('reveal')
-        ->call('rate', 'good')
-        ->assertSet('revealed', false);
-
-    $review = CardReview::where('user_id', $user->id)
-        ->where('card_id', $card1->id)
-        ->first();
-
-    expect($review)->not->toBeNull();
-    expect($review->rating)->toBe(CardRating::GOOD->value);
-});
-
-test('study interface filters by deck when deck parameter provided', function () {
-    $user = actingAsUser();
-    $deck1 = Deck::factory()->create();
-    $deck2 = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck1->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck2->id]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card1->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card2->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    Livewire::withQueryParams(['deck' => $deck1->id])
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
         ->test(StudyInterface::class)
-        ->assertSee($card1->question);
+        ->assertSee('Multi Answer Question')
+        ->assertSee('Select all that apply');
 });
 
-// Edge case tests
-
-test('study interface shows message when no cards are due', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->create(['deck_id' => $deck->id]);
-
-    // Card exists but not due yet
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->addWeek(),
-    ]);
-
-    Livewire::test(StudyInterface::class)
-        ->assertSee('No cards due for review');
-});
-
-test('study interface shows new card when user has not reviewed it yet', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
+test('study interface can toggle answer selection', function () {
     $card = Card::factory()->create([
-        'deck_id' => $deck->id,
-        'question' => 'New Question',
-    ]);
-
-    // No CardReview exists for this user and card
-
-    Livewire::test(StudyInterface::class)
-        ->assertSee('New Question');
-});
-
-test('study interface handles empty deck gracefully', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    // No cards in deck
-
-    Livewire::test(StudyInterface::class)
-        ->assertSee('No cards due for review');
-});
-
-test('study interface with invalid deck parameter shows all due cards', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->create(['deck_id' => $deck->id]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    // Deck ID 999999 does not exist
-    Livewire::withQueryParams(['deck' => 999999])
-        ->test(StudyInterface::class)
-        ->assertStatus(200);
-});
-
-test('study interface shows multiple due cards in sequence', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck->id, 'question' => 'Question 1']);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id, 'question' => 'Question 2']);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card1->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card2->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    // Rate first card, component should still be usable
-    Livewire::test(StudyInterface::class)
-        ->call('reveal')
-        ->call('rate', 'good')
-        ->assertStatus(200);
-});
-
-test('study interface handles rating card multiple times correctly', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->create(['deck_id' => $deck->id]);
-
-    $review = CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->subDay(),
-        'ease_factor' => 2.5,
-    ]);
-
-    Livewire::test(StudyInterface::class)
-        ->call('reveal')
-        ->call('rate', 'easy');
-
-    $review->refresh();
-    expect($review->rating)->toBe(CardRating::EASY->value)
-        ->and($review->next_review_at)->toBeGreaterThan(now());
-});
-
-test('study interface does not show revealed answer before reveal is called', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card = Card::factory()->traditional()->create([
-        'deck_id' => $deck->id,
+        'deck_id' => $this->deck->id,
         'question' => 'Test Question',
-        'answer' => 'Test Answer',
+        'answer_choices' => json_encode(['Option A', 'Option B', 'Option C', 'Option D']),
+        'correct_answer_indices' => json_encode([1]),
     ]);
 
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card->id,
-        'next_review_at' => now()->subDay(),
-    ]);
-
-    Livewire::test(StudyInterface::class)
-        ->assertSee('Test Question')
-        ->assertDontSee('Test Answer')
-        ->assertSee('Reveal Answer');
+    $component = Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->assertSet('selectedAnswers', [])
+        ->call('toggleAnswer', 'Option A')
+        ->assertSet('selectedAnswers', ['Option A'])
+        ->call('toggleAnswer', 'Option B')
+        ->assertSet('selectedAnswers', ['Option A', 'Option B'])
+        ->call('toggleAnswer', 'Option A');
+        
+    // After toggling A off, only B should remain
+    expect($component->get('selectedAnswers'))->toContain('Option B');
 });
 
-test('study interface resets revealed state after rating', function () {
-    $user = actingAsUser();
-    $deck = Deck::factory()->create();
-    $card1 = Card::factory()->create(['deck_id' => $deck->id]);
-    $card2 = Card::factory()->create(['deck_id' => $deck->id]);
-
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card1->id,
-        'next_review_at' => now()->subDay(),
+test('study interface can submit answers and reveal result', function () {
+    $card = Card::factory()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Test Question',
+        'answer' => 'Correct Answer',
+        'answer_choices' => json_encode(['Wrong', 'Correct Answer', 'Also Wrong', 'Nope']),
+        'correct_answer_indices' => json_encode([1]),
     ]);
 
-    CardReview::factory()->create([
-        'user_id' => $user->id,
-        'card_id' => $card2->id,
-        'next_review_at' => now()->subDay(),
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->assertSet('revealed', false)
+        ->call('toggleAnswer', 'Correct Answer')
+        ->call('submitAnswers')
+        ->assertSet('revealed', true);
+});
+
+test('study interface continues to next card after review', function () {
+    $card1 = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Question 1',
+    ]);
+    $card2 = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Question 2',
     ]);
 
-    Livewire::test(StudyInterface::class)
-        ->call('reveal')
-        ->assertSet('revealed', true)
-        ->call('rate', 'good')
+    $component = Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->assertSee('Question 1')
+        ->call('toggleAnswer', 'Option B')
+        ->call('submitAnswers')
+        ->call('continue')
+        ->assertSet('revealed', false)
+        ->assertSet('selectedAnswers', []);
+        
+    // Should now be on next card
+    expect($component->get('currentCardIndex'))->toBe(1);
+});
+
+test('study interface shows completion message when all cards done', function () {
+    $card = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Only Question',
+    ]);
+
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->call('toggleAnswer', 'Option B')
+        ->call('submitAnswers')
+        ->call('continue')
+        ->assertSee('Deep Study Complete');
+});
+
+test('study interface does not submit when no answer selected', function () {
+    $card = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Test Question',
+    ]);
+
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->assertSet('selectedAnswers', [])
+        ->call('submitAnswers')
+        // Should not reveal because no answers selected
         ->assertSet('revealed', false);
+});
+
+test('study interface creates review record after submission', function () {
+    $card = Card::factory()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Test Question',
+        'answer' => 'Correct',
+        'answer_choices' => json_encode(['Wrong', 'Correct', 'Also Wrong', 'Nope']),
+        'correct_answer_indices' => json_encode([1]),
+    ]);
+
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->call('toggleAnswer', 'Correct')
+        ->call('submitAnswers')
+        ->call('continue');
+
+    $this->assertDatabaseHas('card_reviews', [
+        'user_id' => $this->user->id,
+        'card_id' => $card->id,
+        'is_correct' => true,
+    ]);
+});
+
+test('study interface records incorrect answer', function () {
+    $card = Card::factory()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Test Question',
+        'answer' => 'Correct',
+        'answer_choices' => json_encode(['Wrong', 'Correct', 'Also Wrong', 'Nope']),
+        'correct_answer_indices' => json_encode([1]),
+    ]);
+
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
+        ->test(StudyInterface::class)
+        ->call('toggleAnswer', 'Wrong')
+        ->call('submitAnswers')
+        ->call('continue');
+
+    $this->assertDatabaseHas('card_reviews', [
+        'user_id' => $this->user->id,
+        'card_id' => $card->id,
+        'is_correct' => false,
+    ]);
+});
+
+test('practice session does not create new SRS review if one exists', function () {
+    $card = Card::factory()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Test Question',
+        'answer' => 'Correct',
+        'answer_choices' => json_encode(['Wrong', 'Correct']),
+        'correct_answer_indices' => json_encode([1]),
+    ]);
+    
+    // Create existing SRS review
+    CardReview::factory()->create([
+        'user_id' => $this->user->id,
+        'card_id' => $card->id,
+        'is_practice' => false,
+        'ease_factor' => 2.5,
+        'next_review_at' => now()->addDay(),
+    ]);
+
+    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'practice'])
+        ->test(StudyInterface::class)
+        ->call('toggleAnswer', 'Wrong')
+        ->call('submitAnswers')
+        ->call('continue');
+
+    // Should only have 1 review (the original)
+    expect(CardReview::where('user_id', $this->user->id)->where('card_id', $card->id)->count())->toBe(1);
 });

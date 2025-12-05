@@ -6,7 +6,7 @@ namespace Domain\Deck\Services;
 
 use Domain\Card\Enums\CardType;
 
-class CsvImportService
+class TxtImportService
 {
     private const MAX_QUESTION_LENGTH = 1000;
 
@@ -15,11 +15,11 @@ class CsvImportService
     private const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
     /**
-     * Parse CSV file and return cards data
+     * Parse TXT file (tab-delimited) and return cards data
      *
-     * Expected format: question,answer,image_path,card_type,[answer_choices],[correct_answer_indices]
+     * Expected format: question\tanswer\timage_path\tcard_type\t[answer_choices]\t[correct_answer_indices]
      */
-    public function parseCSV(string $filePath): array
+    public function parseTXT(string $filePath): array
     {
         if (! file_exists($filePath)) {
             throw new \InvalidArgumentException("File not found: {$filePath}");
@@ -33,16 +33,28 @@ class CsvImportService
         }
 
         // Skip header row
-        $header = fgetcsv($handle);
+        $header = fgets($handle);
 
-        while (($row = fgetcsv($handle)) !== false) {
-            // Skip empty rows
+        $lineNumber = 1;
+        while (($line = fgets($handle)) !== false) {
+            $lineNumber++;
+
+            // Skip empty lines
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+
+            // Split by tab
+            $row = explode("\t", $line);
+
+            // Skip rows with less than 2 columns
             if (count($row) < 2) {
                 continue;
             }
 
-            $question = $this->sanitizeCsvValue($row[0] ?? '');
-            $answer = $this->sanitizeCsvValue($row[1] ?? '');
+            $question = $this->sanitizeValue($row[0] ?? '');
+            $answer = $this->sanitizeValue($row[1] ?? '');
             $imagePath = $this->sanitizeImagePath($row[2] ?? null);
             // card_type column is ignored - all cards are multiple_choice
             $answerChoicesJson = $row[4] ?? null;
@@ -65,7 +77,7 @@ class CsvImportService
                     $answerChoices = null;
                 } else {
                     // Sanitize each answer choice
-                    $answerChoices = array_map(fn ($choice) => $this->sanitizeCsvValue($choice), $answerChoices);
+                    $answerChoices = array_map(fn ($choice) => $this->sanitizeValue($choice), $answerChoices);
                 }
 
                 // Parse correct answer indices
@@ -88,6 +100,7 @@ class CsvImportService
                 'card_type' => CardType::MULTIPLE_CHOICE,
                 'answer_choices' => $answerChoices,
                 'correct_answer_indices' => $correctAnswerIndices,
+                'line_number' => $lineNumber,
             ];
         }
 
@@ -97,20 +110,20 @@ class CsvImportService
     }
 
     /**
-     * Sanitize CSV value to prevent formula injection
+     * Sanitize value to prevent injection
      */
-    private function sanitizeCsvValue(string $value): string
+    private function sanitizeValue(string $value): string
     {
         $value = trim($value);
 
-        // Prevent CSV formula injection
+        // Prevent formula injection
         if (str_starts_with($value, '=') ||
             str_starts_with($value, '+') ||
             str_starts_with($value, '-') ||
             str_starts_with($value, '@') ||
             str_starts_with($value, "\t") ||
             str_starts_with($value, "\r")) {
-            $value = "'" . $value; // Prefix with quote to neutralize
+            $value = "'" . $value;
         }
 
         return $value;
@@ -125,7 +138,6 @@ class CsvImportService
             return null;
         }
 
-        // Remove any leading/trailing whitespace
         $imagePath = trim($imagePath);
 
         // Reject absolute paths
@@ -189,3 +201,4 @@ class CsvImportService
         return true;
     }
 }
+

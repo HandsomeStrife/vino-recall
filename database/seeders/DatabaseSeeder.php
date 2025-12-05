@@ -95,7 +95,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Chardonnay, Pinot Noir, and Pinot Meunier',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Chardonnay, Pinot Noir, and Pinot Meunier', 'Cabernet Sauvignon and Merlot', 'Syrah and Grenache', 'Riesling and Gewürztraminer'],
-            correctAnswerIndex: 0
+            correctAnswerIndices: [0]
         );
 
         (new CreateCardAction)->execute(
@@ -104,7 +104,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Sangiovese',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Nebbiolo', 'Sangiovese', 'Barbera', 'Montepulciano'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -113,7 +113,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Sauvignon Blanc',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Chardonnay', 'Pinot Grigio', 'Sauvignon Blanc', 'Viognier'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -122,7 +122,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Merlot',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Cabernet Sauvignon', 'Syrah', 'Merlot', 'Malbec'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -131,7 +131,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Pinot Grigio',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Pinot Blanc', 'Pinot Grigio', 'Pinot Meunier', 'Pinot Nero'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         // WSET Level 1: Wine Service - Multiple Choice Cards
@@ -141,7 +141,7 @@ class DatabaseSeeder extends Seeder
             answer: '15-18°C (59-64°F)',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['5-10°C (41-50°F)', '10-13°C (50-55°F)', '15-18°C (59-64°F)', '20-25°C (68-77°F)'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -150,7 +150,7 @@ class DatabaseSeeder extends Seeder
             answer: '6-10°C (43-50°F)',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['6-10°C (43-50°F)', '10-13°C (50-55°F)', '13-16°C (55-61°F)', '16-18°C (61-64°F)'],
-            correctAnswerIndex: 0
+            correctAnswerIndices: [0]
         );
 
         (new CreateCardAction)->execute(
@@ -159,7 +159,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Dry (low sugar content)',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Sweet', 'Semi-sweet', 'Dry (low sugar content)', 'Very sweet'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -168,7 +168,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Large bowl-shaped glass',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Tall flute', 'Small narrow glass', 'Large bowl-shaped glass', 'Wide shallow glass'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -177,7 +177,7 @@ class DatabaseSeeder extends Seeder
             answer: 'To separate wine from sediment and allow it to aerate',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['To chill the wine faster', 'To separate wine from sediment and allow it to aerate', 'To remove the cork', 'To add bubbles'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         // WSET Level 2: Wine Regions - Multiple Choice Cards
@@ -187,7 +187,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Piedmont',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Tuscany', 'Piedmont', 'Veneto', 'Sicily'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -196,7 +196,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Burgundy',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Bordeaux', 'Burgundy', 'Rhône Valley', 'Loire Valley'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -205,7 +205,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Spain',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Portugal', 'Spain', 'Italy', 'France'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -214,7 +214,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Marlborough',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Hawke\'s Bay', 'Central Otago', 'Marlborough', 'Waipara Valley'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         (new CreateCardAction)->execute(
@@ -223,7 +223,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Pauillac',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Pomerol', 'Saint-Émilion', 'Pauillac', 'Fronsac'],
-            correctAnswerIndex: 2
+            correctAnswerIndices: [2]
         );
 
         // WSET Level 2: Label Terminology - Multiple Choice Cards
@@ -233,7 +233,7 @@ class DatabaseSeeder extends Seeder
             answer: 'The highest vineyard classification',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['A specific grape variety', 'The highest vineyard classification', 'A winemaking technique', 'A type of barrel aging'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -242,7 +242,7 @@ class DatabaseSeeder extends Seeder
             answer: 'The wine has been aged for a minimum period',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['It\'s a sweet wine', 'The wine has been aged for a minimum period', 'It\'s made from organic grapes', 'It\'s a sparkling wine'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -251,7 +251,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Aging wine on its lees (dead yeast cells)',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Aging in stainless steel', 'Aging wine on its lees (dead yeast cells)', 'Aging in very old barrels', 'Aging in bottle for 5+ years'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -260,7 +260,7 @@ class DatabaseSeeder extends Seeder
             answer: 'The year the grapes were harvested',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['The year the wine was bottled', 'The year the grapes were harvested', 'The age of the vines', 'The winery\'s founding year'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -269,7 +269,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Denominazione di Origine Controllata',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Denominazione di Origine Controllata', 'Denominazione Originale Classico', 'Di Origine Certificata', 'Denominazione Organica Controllata'],
-            correctAnswerIndex: 0
+            correctAnswerIndices: [0]
         );
 
         // WSET Level 2: Wine Production - Multiple Choice Cards
@@ -279,7 +279,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Red wine is fermented with grape skins',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Red wine uses red grapes only', 'Red wine is fermented with grape skins', 'Red wine ferments at higher temperatures', 'Red wine takes longer to ferment'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -288,7 +288,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Converting malic acid to lactic acid',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Converting sugar to alcohol', 'Converting malic acid to lactic acid', 'Removing sediment from wine', 'Adding sulfites to wine'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -297,7 +297,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Méthode Champenoise',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Méthode Traditionnelle', 'Méthode Champenoise', 'Charmat Method', 'Transfer Method'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -306,7 +306,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Flavors like vanilla, toast, and complexity',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['More alcohol content', 'Flavors like vanilla, toast, and complexity', 'Natural carbonation', 'Higher acidity'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
 
         (new CreateCardAction)->execute(
@@ -315,7 +315,7 @@ class DatabaseSeeder extends Seeder
             answer: 'Producing light, fruity red wines like Beaujolais Nouveau',
             cardType: \Domain\Card\Enums\CardType::MULTIPLE_CHOICE,
             answerChoices: ['Making sparkling wines', 'Producing light, fruity red wines like Beaujolais Nouveau', 'Creating sweet dessert wines', 'Aging white wines'],
-            correctAnswerIndex: 1
+            correctAnswerIndices: [1]
         );
     }
 }

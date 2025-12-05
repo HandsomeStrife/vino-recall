@@ -20,7 +20,7 @@
             <a href="{{ route('admin.cards') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.cards') ? 'bg-burgundy-800' : '' }}">
                 {{ __('navigation.cards') }}
             </a>
-            <a href="{{ route('admin.deck-import') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.deck-import') ? 'bg-burgundy-800' : '' }}">
+            <a href="{{ route('admin.decks.import') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.decks.import') ? 'bg-burgundy-800' : '' }}">
                 {{ __('navigation.import_deck') }}
             </a>
         </nav>

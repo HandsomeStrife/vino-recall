@@ -10,7 +10,7 @@ test('password reset link screen can be rendered', function () {
     $response = $this->get(route('password.request'));
 
     $response->assertStatus(200);
-    $response->assertSee('Reset Password');
+    $response->assertSee('Reset your password');
 });
 
 test('password reset link can be requested', function () {

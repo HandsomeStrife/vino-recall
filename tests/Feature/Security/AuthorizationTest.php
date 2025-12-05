@@ -36,9 +36,8 @@ test('guest cannot access admin routes', function () {
 
     foreach ($adminRoutes as $route) {
         $response = $this->get(route($route));
-        // Admin routes have auth:admin middleware, which redirects to user login (default auth)
-        // This is expected behavior - auth:admin uses the 'admin' guard
-        $response->assertRedirect(route('login'));
+        // Admin routes use AdminAuthenticate middleware which redirects to admin login
+        $response->assertRedirect(route('admin.login'));
     }
 });
 
@@ -55,8 +54,8 @@ test('regular user cannot access admin routes', function () {
     foreach ($adminRoutes as $route) {
         $response = $this->get(route($route));
         // Regular user authenticated as web guard, but admin routes need admin guard
-        // The auth:admin middleware will redirect to login page (not admin.login)
-        $response->assertRedirect(route('login'));
+        // The AdminAuthenticate middleware redirects to admin login
+        $response->assertRedirect(route('admin.login'));
     }
 });
 
