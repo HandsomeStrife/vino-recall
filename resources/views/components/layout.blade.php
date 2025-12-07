@@ -1,3 +1,5 @@
+@props(['hideHeader' => false, 'hideFooter' => false, 'showNavigation' => true])
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -22,7 +24,27 @@
         @livewireStyles
     </head>
     <body class="bg-accent font-sans text-gray-800">
-        {{ $slot }}
+        <div class="min-h-screen flex flex-col">
+            @if(!$hideHeader)
+                @auth
+                    <x-layout.default.header :showNavigation="$showNavigation" />
+                @else
+                    <x-layout.public.header />
+                @endauth
+            @endif
+
+            <main class="flex-1">
+                {{ $slot }}
+            </main>
+
+            @if(!$hideFooter)
+                @auth
+                    <x-layout.default.footer />
+                @else
+                    <x-layout.public.footer />
+                @endauth
+            @endif
+        </div>
         @livewireScripts
     </body>
 </html>

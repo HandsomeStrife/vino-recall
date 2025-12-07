@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :hideHeader="true" :hideFooter="true">
     <div class="min-h-screen flex">
         <!-- Left Side - Form -->
         <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-20 xl:px-24 bg-white">

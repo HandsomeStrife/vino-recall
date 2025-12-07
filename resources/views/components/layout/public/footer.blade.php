@@ -12,13 +12,12 @@
                 </p>
             </div>
 
-            <!-- Quick Links -->
+            <!-- Get Started -->
             <div>
-                <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+                <h3 class="text-lg font-bold mb-4">Get Started</h3>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="{{ route('dashboard') }}" class="text-cream-200 hover:text-white transition">Dashboard</a></li>
-                    <li><a href="{{ route('library') }}" class="text-cream-200 hover:text-white transition">Library</a></li>
-                    <li><a href="{{ route('profile') }}" class="text-cream-200 hover:text-white transition">Profile</a></li>
+                    <li><a href="{{ route('login') }}" class="text-cream-200 hover:text-white transition">Log In</a></li>
+                    <li><a href="{{ route('register') }}" class="text-cream-200 hover:text-white transition">Sign Up</a></li>
                 </ul>
             </div>
 
@@ -49,5 +48,3 @@
         </div>
     </div>
 </footer>
-
-

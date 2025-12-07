@@ -12,6 +12,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::get('/about', fn () => view('pages.about'))->name('about');
+Route::get('/terms', fn () => view('pages.terms'))->name('terms');
+Route::get('/privacy', fn () => view('pages.privacy'))->name('privacy');
+
 // Stripe webhook (must be outside middleware groups)
 Route::post('/webhook/stripe', [WebhookController::class, 'handleStripeWebhook'])->name('webhook.stripe');
 

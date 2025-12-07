@@ -1,7 +1,7 @@
 @props(['showNavigation' => true])
 
 @if($showNavigation)
-<header class="bg-burgundy-900 text-white shadow-lg sticky top-0 z-50">
+<header class="bg-burgundy-900 text-cream-100 shadow-lg sticky top-0 z-50">
     <nav class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
             <!-- Logo and Brand -->

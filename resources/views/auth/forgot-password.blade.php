@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :hideHeader="true" :hideFooter="true">
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full">
             <div class="bg-white rounded-2xl shadow-xl p-8 sm:p-10">

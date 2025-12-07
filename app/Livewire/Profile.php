@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use Domain\Subscription\Repositories\PlanRepository;
-use Domain\Subscription\Repositories\SubscriptionRepository;
 use Domain\User\Actions\UpdateUserAction;
 use Domain\User\Repositories\UserRepository;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
 class Profile extends Component
@@ -22,11 +21,8 @@ class Profile extends Component
 
     public string $password_confirmation = '';
 
-    public function mount(
-        UserRepository $userRepository,
-        SubscriptionRepository $subscriptionRepository,
-        PlanRepository $planRepository
-    ): void {
+    public function mount(UserRepository $userRepository): void
+    {
         $user = $userRepository->getLoggedInUser();
         $this->name = $user->name;
         $this->email = $user->email;
@@ -59,7 +55,7 @@ class Profile extends Component
         $user = $userRepository->getLoggedInUser();
         $userModel = \Domain\User\Models\User::findOrFail($user->id);
 
-        if (! \Illuminate\Support\Facades\Hash::check($this->current_password, $userModel->password)) {
+        if (! Hash::check($this->current_password, $userModel->password)) {
             $this->addError('current_password', 'Current password is incorrect.');
 
             return;
@@ -74,23 +70,8 @@ class Profile extends Component
         session()->flash('password_message', 'Password updated successfully.');
     }
 
-    public function render(
-        SubscriptionRepository $subscriptionRepository,
-        PlanRepository $planRepository,
-        UserRepository $userRepository
-    ) {
-        $user = $userRepository->getLoggedInUser();
-        $subscription = $subscriptionRepository->findByUserId($user->id);
-        $plan = null;
-        if ($subscription) {
-            $plan = $planRepository->findById($subscription->plan_id);
-        }
-        $plans = $planRepository->getAll();
-
-        return view('livewire.profile', [
-            'subscription' => $subscription,
-            'plan' => $plan,
-            'plans' => $plans,
-        ]);
+    public function render()
+    {
+        return view('livewire.profile');
     }
 }
