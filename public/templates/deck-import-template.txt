@@ -3,3 +3,5 @@ What grape variety is primarily used in Burgundy red wines?	Pinot Noir is the ex
 Which of the following are characteristics of Champagne production?	Champagne must be made using specific grapes and the traditional method, and can only come from the Champagne region of France.		multiple_choice	["Made in France","Uses traditional method","Made from any grape","Uses Charmat method"]	[0,1]
 At what temperature should red wine typically be served?	Red wines are generally served at room temperature, between 15-18C (60-65F), which allows the complex aromas and flavors to fully express themselves.		multiple_choice	["4-8C (40-46F)","8-12C (46-54F)","15-18C (60-65F)","20-25C (68-77F)"]	[2]
 
+
+

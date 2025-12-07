@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Deck\Models;
 
+use Database\Factories\DeckImportFactory;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DeckImport extends Model
 {
     use HasFactory;
+
+    protected static function newFactory(): DeckImportFactory
+    {
+        return DeckImportFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.
