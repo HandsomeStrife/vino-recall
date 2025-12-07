@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Domain\Card\Models\CardReview;
 use Domain\Card\Repositories\CardRepository;
+use Domain\Category\Repositories\CategoryRepository;
 use Domain\Deck\Actions\EnrollUserInDeckAction;
 use Domain\Deck\Actions\UnenrollUserFromDeckAction;
+use Domain\Deck\Data\DeckData;
+use Domain\Deck\Helpers\DeckImageHelper;
+use Domain\Deck\Models\Deck;
 use Domain\Deck\Repositories\DeckRepository;
 use Domain\User\Repositories\UserRepository;
 use Livewire\Component;
 
 class Library extends Component
 {
-    public ?string $category = null;
+    public ?int $categoryId = null;
 
-    public function filterByCategory(?string $category): void
+    public function filterByCategory(?int $categoryId): void
     {
-        $this->category = $category;
+        $this->categoryId = $categoryId;
     }
 
     public function enrollInDeck(int $deckId, EnrollUserInDeckAction $enrollAction, UserRepository $userRepository): void
@@ -39,37 +44,91 @@ class Library extends Component
     public function render(
         DeckRepository $deckRepository,
         CardRepository $cardRepository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        CategoryRepository $categoryRepository
     ) {
-        $decksQuery = $this->category
-            ? \Domain\Deck\Models\Deck::where('is_active', true)
-                ->where('category', $this->category)
-                ->get()
-                ->map(fn ($deck) => \Domain\Deck\Data\DeckData::from($deck))
-            : $deckRepository->getActive();
-
         $user = $userRepository->getLoggedInUser();
 
-        // Get unique categories for filter
-        $categories = \Domain\Deck\Models\Deck::where('is_active', true)
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category')
-            ->filter()
-            ->values();
+        // Get active decks (only parent + standalone, with children loaded)
+        $decks = $deckRepository->getActive();
 
-        // Get card counts and review status for each deck
-        $decksWithStats = $decksQuery->map(function ($deck) use ($cardRepository, $user, $deckRepository) {
-            $cards = $cardRepository->getByDeckId($deck->id);
-            $totalCards = $cards->count();
+        // Get all categories for the filter
+        $categories = $categoryRepository->getAll();
 
-            // Count reviewed cards
-            $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $user->id)
-                ->pluck('card_id')
-                ->toArray();
-            $reviewedCount = $cards->filter(fn ($card) => in_array($card->id, $reviewedCardIds))->count();
+        // Build deck stats and apply category filter
+        $decksWithStats = $decks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
+            return $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
+        });
 
-            // Check if user is enrolled
+        // Apply category filter if selected
+        if ($this->categoryId !== null) {
+            $decksWithStats = $decksWithStats->filter(function ($deckStat) {
+                $deck = $deckStat['deck'];
+                
+                // Check if deck has this category
+                if ($deck->category_ids && in_array($this->categoryId, $deck->category_ids)) {
+                    return true;
+                }
+                
+                // For collections, check if any children have this category
+                if ($deckStat['isParent'] && !empty($deckStat['children'])) {
+                    foreach ($deckStat['children'] as $childStat) {
+                        $childDeck = $childStat['deck'];
+                        if ($childDeck->category_ids && in_array($this->categoryId, $childDeck->category_ids)) {
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
+            });
+        }
+
+        // Separate collections and standalone decks
+        $collections = $decksWithStats->filter(fn ($stat) => $stat['isParent']);
+        $standaloneDecks = $decksWithStats->filter(fn ($stat) => !$stat['isParent']);
+
+        return view('livewire.library', [
+            'collections' => $collections,
+            'standaloneDecks' => $standaloneDecks,
+            'categories' => $categories,
+            'selectedCategoryId' => $this->categoryId,
+        ]);
+    }
+
+    private function buildDeckStats(
+        DeckData $deck,
+        CardRepository $cardRepository,
+        $user,
+        DeckRepository $deckRepository
+    ): array {
+        $isParent = $deck->is_collection;
+        $children = $deck->children;
+
+        if ($isParent && $children !== null && $children->isNotEmpty()) {
+            // For parent decks, aggregate stats from all children
+            $totalCards = 0;
+            $reviewedCount = 0;
+            $childStats = [];
+
+            foreach ($children as $childDeck) {
+                $childCardStats = $this->getCardStats($childDeck, $cardRepository, $user);
+                $totalCards += $childCardStats['totalCards'];
+                $reviewedCount += $childCardStats['reviewedCount'];
+
+                $isChildEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $childDeck->id);
+
+                $childStats[] = [
+                    'deck' => $childDeck,
+                    'totalCards' => $childCardStats['totalCards'],
+                    'reviewedCount' => $childCardStats['reviewedCount'],
+                    'progress' => $childCardStats['progress'],
+                    'isEnrolled' => $isChildEnrolled,
+                    'image' => DeckImageHelper::getImagePath($childDeck),
+                ];
+            }
+
+            // Check if user is enrolled in parent (which means enrolled in all children)
             $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $deck->id);
 
             return [
@@ -78,13 +137,42 @@ class Library extends Component
                 'reviewedCount' => $reviewedCount,
                 'progress' => $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0,
                 'isEnrolled' => $isEnrolled,
+                'isParent' => true,
+                'children' => $childStats,
+                'childCount' => count($childStats),
             ];
-        });
+        }
 
-        return view('livewire.library', [
-            'decksWithStats' => $decksWithStats,
-            'categories' => $categories,
-            'selectedCategory' => $this->category,
-        ]);
+        // Standalone deck (or collection without children yet)
+        $cardStats = $this->getCardStats($deck, $cardRepository, $user);
+        $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $deck->id);
+
+        return [
+            'deck' => $deck,
+            'totalCards' => $cardStats['totalCards'],
+            'reviewedCount' => $cardStats['reviewedCount'],
+            'progress' => $cardStats['progress'],
+            'isEnrolled' => $isEnrolled,
+            'isParent' => $isParent,
+            'children' => [],
+            'childCount' => 0,
+        ];
+    }
+
+    private function getCardStats(DeckData $deck, CardRepository $cardRepository, $user): array
+    {
+        $cards = $cardRepository->getByDeckId($deck->id);
+        $totalCards = $cards->count();
+
+        $reviewedCardIds = CardReview::where('user_id', $user->id)
+            ->pluck('card_id')
+            ->toArray();
+        $reviewedCount = $cards->filter(fn ($card) => in_array($card->id, $reviewedCardIds))->count();
+
+        return [
+            'totalCards' => $totalCards,
+            'reviewedCount' => $reviewedCount,
+            'progress' => $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0,
+        ];
     }
 }

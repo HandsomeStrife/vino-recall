@@ -32,13 +32,16 @@ class Deck extends Model
         'description',
         'image_path',
         'is_active',
+        'is_collection',
         'created_by',
+        'parent_deck_id',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_collection' => 'boolean',
         ];
     }
 
@@ -63,5 +66,53 @@ class Deck extends Model
     {
         return $this->belongsToMany(Category::class, 'category_deck')
             ->withTimestamps();
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Deck::class, 'parent_deck_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Deck::class, 'parent_deck_id');
+    }
+
+    /**
+     * Check if this deck is a collection (explicitly marked as parent container).
+     */
+    public function isCollection(): bool
+    {
+        return $this->is_collection;
+    }
+
+    /**
+     * Check if this deck is a child deck (has a parent).
+     */
+    public function isChild(): bool
+    {
+        return $this->parent_deck_id !== null;
+    }
+
+    /**
+     * Check if this deck is standalone (not a collection and no parent).
+     */
+    public function isStandalone(): bool
+    {
+        return !$this->is_collection && !$this->isChild();
+    }
+
+    /**
+     * Get the deck type as a string.
+     */
+    public function getDeckType(): string
+    {
+        if ($this->isChild()) {
+            return 'child';
+        }
+        if ($this->is_collection) {
+            return 'collection';
+        }
+        return 'standalone';
     }
 }

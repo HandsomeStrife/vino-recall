@@ -52,21 +52,8 @@
             </svg>
             Back to Decks
         </a>
-        <div class="flex justify-between items-start">
-            <div>
-                <h1 class="text-3xl font-bold text-white">{{ $deck?->name ?? 'Deck' }}</h1>
-                @if($deck?->description)
-                    <p class="text-gray-400 mt-1">{{ $deck->description }}</p>
-                @endif
-                <div class="flex items-center gap-4 mt-2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-200 border border-gray-600">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                        {{ $cards->count() }} {{ $cards->count() === 1 ? 'Card' : 'Cards' }}
-                    </span>
-                </div>
-            </div>
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white">{{ $deck?->name ?? 'Deck' }}</h1>
             <div class="flex items-center gap-2">
                 <button wire:click="exportCards"
                         class="inline-flex items-center px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium border border-gray-600">
@@ -83,6 +70,17 @@
                     Import CSV
                 </button>
             </div>
+        </div>
+        @if($deck?->description)
+            <p class="text-gray-400 mt-1">{{ $deck->description }}</p>
+        @endif
+        <div class="flex items-center gap-4 mt-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-200 border border-gray-600">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                {{ $cards->count() }} {{ $cards->count() === 1 ? 'Card' : 'Cards' }}
+            </span>
         </div>
     </div>
 

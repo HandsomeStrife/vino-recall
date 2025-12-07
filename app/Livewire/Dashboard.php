@@ -44,7 +44,14 @@ class Dashboard extends Component
         DeckRepository $deckRepository
     ) {
         $user = $userRepository->getLoggedInUser();
-        $enrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
+        $allEnrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
+        
+        // Filter out parent decks (they have no cards, just containers)
+        // Only show decks that actually have cards for study
+        $enrolledDecks = $allEnrolledDecks->filter(function ($deck) {
+            return !$deck->is_collection;
+        });
+        
         $dueCards = $cardReviewRepository->getDueCardsForUser($user->id);
         $masteredCount = $cardReviewRepository->getMasteredCardsCount($user->id);
         $streak = $cardReviewRepository->getCurrentStreak($user->id);
@@ -100,7 +107,7 @@ class Dashboard extends Component
             ];
         });
 
-        // Get deck stats for enrolled decks
+        // Get deck stats for enrolled decks (excluding parent containers)
         $decksWithStats = $enrolledDecks->map(function ($deck) use ($cardRepository, $cardReviewRepository, $user, $dueCards) {
             $cards = $cardRepository->getByDeckId($deck->id);
             $totalCards = $cards->count();
@@ -150,6 +157,7 @@ class Dashboard extends Component
                 'nextReviewTime' => $nextReviewTime,
                 'image' => DeckImageHelper::getImagePath($deck),
                 'enrolledAt' => $deck->pivot->enrolled_at ?? now(),
+                'parentName' => $deck->parent_name,
             ];
         })->sortBy(function ($deckStat) {
             // Priority sorting:

@@ -42,7 +42,7 @@ test('library shows enrollment status', function () {
 
     Livewire::test(Library::class)
         ->assertSee('First Deck')
-        ->assertSeeHtml('✓ Enrolled')
+        ->assertSeeHtml('Enrolled')
         ->assertSee('Second Deck')
         ->assertSee('Add to My Library');
 });

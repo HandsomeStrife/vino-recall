@@ -20,6 +20,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Image</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Categories</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cards</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
@@ -28,7 +29,7 @@
             </thead>
             <tbody class="bg-gray-800 divide-y divide-gray-700">
                 @forelse($decks as $deck)
-                    <tr class="hover:bg-gray-750">
+                    <tr class="hover:bg-gray-750 {{ $deck->parent_deck_id ? 'bg-gray-850' : '' }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($deck->image_path)
                                 <img src="{{ asset('storage/' . $deck->image_path) }}" alt="{{ $deck->name }}" class="w-12 h-12 object-cover rounded-lg">
@@ -40,8 +41,41 @@
                                 </div>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ $deck->name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            <div class="flex items-center">
+                                @if($deck->parent_deck_id)
+                                    <span class="text-gray-500 mr-2">--</span>
+                                @endif
+                                {{ $deck->name }}
+                            </div>
+                            @if($deck->parent_name)
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Child of: {{ $deck->parent_name }}
+                                </div>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 text-sm text-gray-300">{{ \Illuminate\Support\Str::limit($deck->description, 60) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($deck->is_collection)
+                                <span class="inline-flex items-center px-2 py-1 bg-purple-900/50 text-purple-300 rounded text-xs font-medium">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    Collection
+                                </span>
+                            @elseif($deck->parent_deck_id)
+                                <span class="inline-flex items-center px-2 py-1 bg-blue-900/50 text-blue-300 rounded text-xs font-medium">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Child
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs font-medium">
+                                    Standalone
+                                </span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4">
                             @if($deck->categories && $deck->categories->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
@@ -56,13 +90,17 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            <a href="{{ route('admin.decks.cards', $deck->id) }}" 
-                               class="inline-flex items-center px-3 py-1 bg-gray-700 text-burgundy-400 rounded-lg hover:bg-gray-600 transition text-sm font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                </svg>
-                                {{ $deck->cards_count ?? 0 }} Cards
-                            </a>
+                            @if($deck->is_collection)
+                                <span class="text-gray-500 text-xs">N/A (Collection)</span>
+                            @else
+                                <a href="{{ route('admin.decks.cards', $deck->id) }}" 
+                                   class="inline-flex items-center px-3 py-1 bg-gray-700 text-burgundy-400 rounded-lg hover:bg-gray-600 transition text-sm font-medium">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    {{ $deck->cards_count ?? 0 }} Cards
+                                </a>
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 rounded text-xs font-medium {{ $deck->is_active ? 'bg-green-900/50 text-green-300' : 'bg-gray-700 text-gray-400' }}">
@@ -75,7 +113,7 @@
                                 Edit
                             </button>
                             <button wire:click="deleteDeck({{ $deck->id }})" 
-                                    wire:confirm="Are you sure you want to delete this deck?"
+                                    wire:confirm="Are you sure you want to delete this deck?{{ $deck->is_collection ? ' Child decks will become standalone.' : '' }}"
                                     class="px-3 py-1 bg-red-900/50 text-red-300 rounded hover:bg-red-800/50 transition text-sm">
                                 Delete
                             </button>
@@ -83,7 +121,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-400">
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-400">
                             No decks found. Create your first deck to get started.
                         </td>
                     </tr>
@@ -131,6 +169,36 @@
                                           placeholder="Optional deck description"></textarea>
                                 @error('description') <p class="mt-1 text-sm text-red-400">{{ $message }}</p> @enderror
                             </div>
+
+                            <!-- Deck Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Deck Type <span class="text-red-400">*</span></label>
+                                <select wire:model.live="deck_type"
+                                        class="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-burgundy-500 focus:border-burgundy-500">
+                                    <option value="standalone">Standalone - Regular deck with cards</option>
+                                    <option value="collection">Collection - Container for child decks (no cards)</option>
+                                    <option value="child">Child - Belongs to a collection</option>
+                                </select>
+                                @error('deck_type') <p class="mt-1 text-sm text-red-400">{{ $message }}</p> @enderror
+                            </div>
+
+                            <!-- Parent Deck (only shown when type is 'child') -->
+                            @if($deck_type === 'child')
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Parent Collection <span class="text-red-400">*</span></label>
+                                    <select wire:model="parent_deck_id"
+                                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-burgundy-500 focus:border-burgundy-500">
+                                        <option value="">Select a collection...</option>
+                                        @foreach($availableParents as $parent)
+                                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if($availableParents->isEmpty())
+                                        <p class="mt-1 text-sm text-yellow-400">No collections available. Create a collection first.</p>
+                                    @endif
+                                    @error('parent_deck_id') <p class="mt-1 text-sm text-red-400">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
 
                             <!-- Categories -->
                             <div>

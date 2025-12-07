@@ -23,6 +23,11 @@ class DeckData extends Data
         public ?int $cards_count = null,
         public ?array $category_ids = null,
         public ?Collection $categories = null,
+        public ?int $parent_deck_id = null,
+        public ?Collection $children = null,
+        public bool $is_collection = false,
+        public string $deck_type = 'standalone',
+        public ?string $parent_name = null,
     ) {}
 
     public static function fromModel(Deck $deck): self
@@ -33,6 +38,16 @@ class DeckData extends Data
         if ($deck->relationLoaded('categories')) {
             $categories = $deck->categories;
             $categoryIds = $deck->categories->pluck('id')->toArray();
+        }
+
+        $children = null;
+        if ($deck->relationLoaded('children')) {
+            $children = $deck->children->map(fn (Deck $child) => self::fromModel($child));
+        }
+
+        $parentName = null;
+        if ($deck->relationLoaded('parent') && $deck->parent !== null) {
+            $parentName = $deck->parent->name;
         }
         
         return new self(
@@ -48,6 +63,11 @@ class DeckData extends Data
             cards_count: $deck->cards_count ?? $deck->cards()->count(),
             category_ids: $categoryIds,
             categories: $categories,
+            parent_deck_id: $deck->parent_deck_id,
+            children: $children,
+            is_collection: $deck->is_collection,
+            deck_type: $deck->getDeckType(),
+            parent_name: $parentName,
         );
     }
 }

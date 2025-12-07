@@ -13,8 +13,8 @@
     <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $deckColor }};">
         <div>
             <h3 class="text-lg font-bold text-white">{{ $deck->name }}</h3>
-            @if($deck->category)
-                <span class="text-xs text-white/80">{{ ucfirst($deck->category) }}</span>
+            @if($deck->categories && $deck->categories->isNotEmpty())
+                <span class="text-xs text-white/80">{{ $deck->categories->first()->name }}</span>
             @endif
         </div>
         @if($isEnrolled)
