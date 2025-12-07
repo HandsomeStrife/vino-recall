@@ -1,9 +1,10 @@
-<div class="relative min-h-screen bg-cream-50"
+<div class="relative min-h-dvh bg-cream-50"
      x-data="studyInterface()"
      x-init="init()"
-     @keydown.window="handleKeydown($event)">
+     @keydown.window="handleKeydown($event)"
+     @fullscreenchange.window="isFullscreen = !!document.fullscreenElement">
     <!-- Top bar with Exit button and mobile-only deck info -->
-    <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-auto sm:right-4 z-10 flex items-start justify-between sm:justify-end">
+    <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-auto sm:right-4 z-10 flex items-start justify-between sm:justify-end gap-2">
         <!-- Mobile-only deck info (left side) -->
         @if($card)
         <div class="flex flex-col gap-0.5 sm:hidden">
@@ -24,13 +25,30 @@
         </div>
         @endif
         
-        <!-- Exit button -->
-        <a href="{{ $exitUrl }}" class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition font-medium text-sm sm:text-base">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Exit
-        </a>
+        <!-- Right side buttons -->
+        <div class="flex items-center gap-2">
+            <!-- Fullscreen toggle (mobile only) -->
+            <button @click="toggleFullscreen()" 
+                    class="sm:hidden inline-flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition"
+                    :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'">
+                <!-- Expand icon (when not fullscreen) -->
+                <svg x-show="!isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+                <!-- Shrink icon (when fullscreen) -->
+                <svg x-show="isFullscreen" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4m0 5H4m0 0l5-5m11 5h-5m5 0V4m0 0l-5 5M9 15v5m0-5H4m0 0l5 5m11-5h-5m0 0v5m0-5l5 5"></path>
+                </svg>
+            </button>
+            
+            <!-- Exit button -->
+            <a href="{{ $exitUrl }}" class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition font-medium text-sm sm:text-base">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Exit
+            </a>
+        </div>
     </div>
     
     <!-- Auto-progress checkbox (bottom left) -->
@@ -45,7 +63,7 @@
     </div>
     @endif
     
-    <div class="p-4 sm:p-6 md:p-8 flex items-center justify-center min-h-screen">
+    <div class="pt-14 pb-16 px-4 sm:p-6 md:p-8 flex items-start sm:items-center justify-center min-h-dvh">
         @if($card)
             <div class="max-w-2xl w-full">
                 <!-- Session Type Badge and Progress -->
@@ -350,8 +368,12 @@ function studyInterface() {
         revealed: @js($revealed),
         isSubmitting: false,
         cardId: @js($card?->id ?? null),
+        isFullscreen: false,
         
         init() {
+            // Check initial fullscreen state
+            this.isFullscreen = !!document.fullscreenElement;
+            
             // Load auto-progress preference from localStorage
             const savedAutoProgress = localStorage.getItem('vinorecall_auto_progress');
             if (savedAutoProgress !== null) {
@@ -369,6 +391,18 @@ function studyInterface() {
             // If this is a different card than the one with active countdown, cancel it
             if (window.vinoCountdownCardId !== null && window.vinoCountdownCardId !== this.cardId) {
                 this.cancelCountdown();
+            }
+        },
+        
+        toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen not supported:', err);
+                });
+            } else {
+                // Exit fullscreen
+                document.exitFullscreen();
             }
         },
         
