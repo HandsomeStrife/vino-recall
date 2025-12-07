@@ -385,6 +385,7 @@ function studyInterface() {
         isSubmitting: false,
         cardId: @js($card?->id ?? null),
         isFullscreen: false,
+        hasMultipleCorrectAnswers: @js($card?->hasMultipleCorrectAnswers() ?? false),
         
         init() {
             // Check initial fullscreen state
@@ -425,9 +426,14 @@ function studyInterface() {
         toggleAnswer(answer) {
             const index = this.selectedAnswers.indexOf(answer);
             if (index > -1) {
+                // Deselect if already selected
                 this.selectedAnswers.splice(index, 1);
-            } else {
+            } else if (this.hasMultipleCorrectAnswers) {
+                // Multi-select: add to selection
                 this.selectedAnswers.push(answer);
+            } else {
+                // Single-select: replace selection
+                this.selectedAnswers = [answer];
             }
         },
         
