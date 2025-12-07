@@ -9,8 +9,14 @@ use Domain\Deck\Models\Deck;
 
 class UpdateDeckAction
 {
-    public function execute(int $deckId, ?string $name = null, ?string $description = null, ?bool $is_active = null, ?string $category = null): DeckData
-    {
+    public function execute(
+        int $deckId,
+        ?string $name = null,
+        ?string $description = null,
+        ?bool $is_active = null,
+        ?string $image_path = null,
+        ?array $categoryIds = null
+    ): DeckData {
         $deck = Deck::findOrFail($deckId);
 
         $updateData = [];
@@ -27,12 +33,17 @@ class UpdateDeckAction
             $updateData['is_active'] = $is_active;
         }
 
-        if ($category !== null) {
-            $updateData['category'] = $category;
+        if ($image_path !== null) {
+            $updateData['image_path'] = $image_path;
         }
 
         $deck->update($updateData);
 
-        return DeckData::fromModel($deck->fresh());
+        // Sync categories if provided
+        if ($categoryIds !== null) {
+            $deck->categories()->sync($categoryIds);
+        }
+
+        return DeckData::fromModel($deck->fresh()->load('categories'));
     }
 }

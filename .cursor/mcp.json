@@ -6,7 +6,7 @@
           "TRANSPORT": "stdio",
           "DSN": "mysql://sail:password@0.0.0.0:3346/vinorecall",
           "READONLY": "true",
-          "PORT": "9090"
+          "PORT": "9091"
         }
       }
     }

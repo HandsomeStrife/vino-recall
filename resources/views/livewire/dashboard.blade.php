@@ -21,7 +21,10 @@
                             @php
                                 // Define deck colors (can be stored in deck table later)
                                 $colors = ['#9E3B4D', '#2D3F2F', '#7A2B3A', '#8D3442', '#4A5D4E'];
-                                $deckColor = $deckStat['deck']->category ? $colors[crc32($deckStat['deck']->category) % count($colors)] : $colors[$deckStat['deck']->id % count($colors)];
+                                $firstCategory = ($deckStat['deck']->categories && $deckStat['deck']->categories->isNotEmpty()) 
+                                    ? $deckStat['deck']->categories->first()->name 
+                                    : null;
+                                $deckColor = $firstCategory ? $colors[crc32($firstCategory) % count($colors)] : $colors[$deckStat['deck']->id % count($colors)];
                             @endphp
                             <x-deck-card 
                                 :deck="$deckStat['deck']"

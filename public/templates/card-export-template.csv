@@ -1,0 +1,5 @@
+question,is_multiple_choice,number_of_correct_answers,answer1,answer2,answer3,answer4
+"What is the primary grape variety in Bordeaux red wines?",true,1,Cabernet Sauvignon,Merlot,Pinot Noir,Syrah
+"Which of the following are white grape varieties?",true,2,Chardonnay,Riesling,Merlot,Cabernet Sauvignon
+"What does AOC stand for in French wine classification?",true,1,Appellation d'Origine Controlee,Association of Certified Oenologists,Agricultural Organic Certification,Approved Origin Certificate
+

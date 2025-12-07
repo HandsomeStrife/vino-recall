@@ -7,6 +7,7 @@ namespace Domain\Card\Actions;
 use Domain\Card\Data\CardData;
 use Domain\Card\Enums\CardType;
 use Domain\Card\Models\Card;
+use Illuminate\Support\Str;
 
 class CreateCardAction
 {
@@ -17,7 +18,8 @@ class CreateCardAction
         ?string $image_path = null,
         CardType $cardType = CardType::MULTIPLE_CHOICE,
         ?array $answerChoices = null,
-        ?array $correctAnswerIndices = null
+        ?array $correctAnswerIndices = null,
+        bool $isMultiSelect = false
     ): CardData {
         // Validate multiple choice fields - all cards must have valid MC data
         if ($answerChoices === null || count($answerChoices) < 2) {
@@ -37,14 +39,28 @@ class CreateCardAction
 
         $card = Card::create([
             'deck_id' => $deckId,
+            'shortcode' => $this->generateUniqueShortcode(),
             'card_type' => CardType::MULTIPLE_CHOICE->value,
             'question' => $question,
             'answer' => $answer,
             'image_path' => $image_path,
             'answer_choices' => json_encode($answerChoices),
             'correct_answer_indices' => json_encode($correctAnswerIndices),
+            'is_multi_select' => $isMultiSelect,
         ]);
 
         return CardData::fromModel($card);
+    }
+
+    /**
+     * Generate a unique 6-character shortcode.
+     */
+    private function generateUniqueShortcode(): string
+    {
+        do {
+            $shortcode = strtoupper(Str::random(6));
+        } while (Card::where('shortcode', $shortcode)->exists());
+
+        return $shortcode;
     }
 }

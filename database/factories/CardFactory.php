@@ -29,6 +29,7 @@ class CardFactory extends Factory
 
         return [
             'deck_id' => Deck::factory(),
+            'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
             'card_type' => 'multiple_choice',
             'question' => fake()->sentence(),
             'answer' => fake()->paragraph(),

@@ -53,9 +53,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn () => view('pages.admin.dashboard'))->name('dashboard');
     Route::get('/users', fn () => view('pages.admin.users'))->name('users');
-    Route::get('/cards', fn () => view('pages.admin.cards'))->name('cards');
     Route::get('/decks', fn () => view('pages.admin.decks'))->name('decks');
-    Route::get('/import', fn () => view('pages.admin.deck-import'))->name('decks.import');
+    Route::get('/decks/{deckId}/cards', fn (int $deckId) => view('pages.admin.deck-cards', ['deckId' => $deckId]))->name('decks.cards');
+    Route::get('/categories', fn () => view('pages.admin.categories'))->name('categories');
 });
 
 if (app()->environment('local')) {
@@ -67,4 +67,13 @@ if (app()->environment('local')) {
         }
         return redirect()->route('home');
     })->name('dev.auto-login');
+
+    Route::get('/dev/admin-auto-login', function () {
+        $admin = \Domain\Admin\Models\Admin::first();
+        if ($admin) {
+            \Illuminate\Support\Facades\Auth::guard('admin')->login($admin);
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    })->name('dev.admin-auto-login');
 }

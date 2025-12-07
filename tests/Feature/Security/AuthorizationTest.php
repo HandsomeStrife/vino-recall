@@ -31,7 +31,7 @@ test('guest cannot access admin routes', function () {
         'admin.dashboard',
         'admin.users',
         'admin.decks',
-        'admin.cards',
+        'admin.categories',
     ];
 
     foreach ($adminRoutes as $route) {
@@ -48,7 +48,7 @@ test('regular user cannot access admin routes', function () {
         'admin.dashboard',
         'admin.users',
         'admin.decks',
-        'admin.cards',
+        'admin.categories',
     ];
 
     foreach ($adminRoutes as $route) {
@@ -66,7 +66,7 @@ test('admin can access all admin routes', function () {
         'admin.dashboard',
         'admin.users',
         'admin.decks',
-        'admin.cards',
+        'admin.categories',
     ];
 
     foreach ($adminRoutes as $route) {

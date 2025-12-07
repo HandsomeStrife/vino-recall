@@ -26,12 +26,23 @@ class Card extends Model
      */
     protected $fillable = [
         'deck_id',
+        'shortcode',
         'card_type',
         'question',
         'answer',
         'image_path',
         'answer_choices',
         'correct_answer_indices',
+        'is_multi_select',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_multi_select' => 'boolean',
     ];
 
     public function deck(): BelongsTo

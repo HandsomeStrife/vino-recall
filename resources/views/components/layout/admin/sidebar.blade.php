@@ -14,14 +14,11 @@
             <a href="{{ route('admin.users') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.users') ? 'bg-burgundy-800' : '' }}">
                 {{ __('navigation.users') }}
             </a>
-            <a href="{{ route('admin.decks') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.decks') ? 'bg-burgundy-800' : '' }}">
+            <a href="{{ route('admin.decks') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.decks') || request()->routeIs('admin.decks.cards') ? 'bg-burgundy-800' : '' }}">
                 {{ __('navigation.decks') }}
             </a>
-            <a href="{{ route('admin.cards') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.cards') ? 'bg-burgundy-800' : '' }}">
-                {{ __('navigation.cards') }}
-            </a>
-            <a href="{{ route('admin.decks.import') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.decks.import') ? 'bg-burgundy-800' : '' }}">
-                {{ __('navigation.import_deck') }}
+            <a href="{{ route('admin.categories') }}" class="block px-4 py-2 rounded hover:bg-burgundy-800 {{ request()->routeIs('admin.categories') ? 'bg-burgundy-800' : '' }}">
+                {{ __('navigation.categories') }}
             </a>
         </nav>
         <div class="p-4 border-t border-burgundy-800">
@@ -34,4 +31,3 @@
         </div>
     @endauth
 </aside>
-

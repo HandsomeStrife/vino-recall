@@ -34,10 +34,5 @@ return [
     'multiple_choice' => 'Multiple Choice',
     'answer_choices' => 'Answer Choices',
     'correct_answer' => 'Correct Answer',
-    'import_deck' => 'Import Deck',
-    'upload_file' => 'Upload File',
-    'file_format' => 'File Format',
-    'csv' => 'CSV',
-    'apkg' => 'APKG (Anki)',
 ];
 

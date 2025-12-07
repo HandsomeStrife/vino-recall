@@ -14,12 +14,12 @@ class DeckRepository
      */
     public function getAll(): \Illuminate\Support\Collection
     {
-        return Deck::all()->map(fn (Deck $deck) => DeckData::fromModel($deck));
+        return Deck::with('categories')->withCount('cards')->get()->map(fn (Deck $deck) => DeckData::fromModel($deck));
     }
 
     public function findById(int $id): ?DeckData
     {
-        $deck = Deck::find($id);
+        $deck = Deck::with('categories')->find($id);
 
         if ($deck === null) {
             return null;
@@ -97,6 +97,22 @@ class DeckRepository
 
         return Deck::where('is_active', true)
             ->whereNotIn('id', $enrolledDeckIds)
+            ->get()
+            ->map(fn (Deck $deck) => DeckData::fromModel($deck));
+    }
+
+    /**
+     * Get decks by category
+     *
+     * @return \Illuminate\Support\Collection<int, DeckData>
+     */
+    public function getByCategory(int $categoryId): \Illuminate\Support\Collection
+    {
+        return Deck::whereHas('categories', function ($query) use ($categoryId) {
+            $query->where('category_id', $categoryId);
+        })
+            ->with('categories')
+            ->withCount('cards')
             ->get()
             ->map(fn (Deck $deck) => DeckData::fromModel($deck));
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Domain\Card\Actions\CreateCardReportAction;
 use Domain\Card\Actions\ReviewCardAction;
 use Domain\Card\Data\StudySessionConfigData;
 use Domain\Card\Enums\StudySessionType;
@@ -30,6 +31,13 @@ class StudyInterface extends Component
     public array $sessionCards = [];
 
     public int $currentCardIndex = 0;
+
+    // Report widget state
+    public bool $showReportWidget = false;
+
+    public string $reportMessage = '';
+
+    public bool $reportSubmitted = false;
 
     public function mount(
         UserRepository $userRepository,
@@ -188,7 +196,40 @@ class StudyInterface extends Component
 
         $this->revealed = false;
         $this->selectedAnswers = [];
+        $this->resetReportWidget();
         $this->loadNextCard();
+    }
+
+    public function toggleReportWidget(): void
+    {
+        $this->showReportWidget = !$this->showReportWidget;
+        if (!$this->showReportWidget) {
+            $this->resetReportWidget();
+        }
+    }
+
+    public function submitReport(CreateCardReportAction $createCardReportAction, UserRepository $userRepository): void
+    {
+        if ($this->currentCardId === null || empty(trim($this->reportMessage))) {
+            return;
+        }
+
+        $this->validate([
+            'reportMessage' => ['required', 'string', 'min:10', 'max:1000'],
+        ]);
+
+        $user = $userRepository->getLoggedInUser();
+        $createCardReportAction->execute($this->currentCardId, $user->id, $this->reportMessage);
+
+        $this->reportSubmitted = true;
+        $this->reportMessage = '';
+    }
+
+    private function resetReportWidget(): void
+    {
+        $this->showReportWidget = false;
+        $this->reportMessage = '';
+        $this->reportSubmitted = false;
     }
 
     public function render(CardRepository $cardRepository, \Domain\Deck\Repositories\DeckRepository $deckRepository)

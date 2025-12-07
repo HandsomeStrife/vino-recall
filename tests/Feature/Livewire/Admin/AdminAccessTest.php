@@ -14,7 +14,7 @@ test('admin routes are accessible to admin users', function () {
     $response = $this->get(route('admin.decks'));
     $response->assertStatus(200);
 
-    $response = $this->get(route('admin.cards'));
+    $response = $this->get(route('admin.categories'));
     $response->assertStatus(200);
 });
 

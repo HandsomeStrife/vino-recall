@@ -53,7 +53,7 @@ test('complete user journey: register, login, view dashboard, study cards', func
     $this->assertAuthenticated();
 });
 
-test('admin journey: login, manage users, create deck, create cards', function () {
+test('admin journey: login, manage users, create deck', function () {
     $admin = Admin::factory()->create([
         'email' => 'admin@test.com',
         'password' => \Illuminate\Support\Facades\Hash::make('password'),
@@ -80,8 +80,8 @@ test('admin journey: login, manage users, create deck, create cards', function (
     $response = $this->get(route('admin.decks'));
     $response->assertStatus(200);
 
-    // Access card management
-    $response = $this->get(route('admin.cards'));
+    // Access categories management
+    $response = $this->get(route('admin.categories'));
     $response->assertStatus(200);
 });
 
@@ -172,8 +172,8 @@ test('user cannot access admin routes', function () {
     $response = $this->get(route('admin.decks'));
     $response->assertRedirect(route('admin.login'));
 
-    // Attempt to access card management
-    $response = $this->get(route('admin.cards'));
+    // Attempt to access categories management
+    $response = $this->get(route('admin.categories'));
     $response->assertRedirect(route('admin.login'));
 });
 

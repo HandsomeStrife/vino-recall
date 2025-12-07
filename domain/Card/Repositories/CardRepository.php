@@ -29,6 +29,20 @@ class CardRepository
     }
 
     /**
+     * Find a card by its shortcode.
+     */
+    public function findByShortcode(string $shortcode): ?CardData
+    {
+        $card = Card::where('shortcode', strtoupper($shortcode))->first();
+
+        if ($card === null) {
+            return null;
+        }
+
+        return CardData::fromModel($card);
+    }
+
+    /**
      * @return \Illuminate\Support\Collection<int, CardData>
      */
     public function getAll(): \Illuminate\Support\Collection

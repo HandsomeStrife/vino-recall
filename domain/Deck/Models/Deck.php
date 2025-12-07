@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Deck\Models;
 
 use Domain\Card\Models\Card;
+use Domain\Category\Models\Category;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +30,6 @@ class Deck extends Model
     protected $fillable = [
         'name',
         'description',
-        'category',
         'image_path',
         'is_active',
         'created_by',
@@ -56,6 +56,12 @@ class Deck extends Model
     {
         return $this->belongsToMany(User::class, 'deck_user')
             ->withPivot('enrolled_at', 'shortcode')
+            ->withTimestamps();
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'category_deck')
             ->withTimestamps();
     }
 }

@@ -18,7 +18,8 @@ class UpdateCardAction
         ?string $image_path = null,
         ?CardType $cardType = null,
         ?array $answerChoices = null,
-        ?array $correctAnswerIndices = null
+        ?array $correctAnswerIndices = null,
+        ?bool $isMultiSelect = null
     ): CardData {
         $card = Card::findOrFail($cardId);
 
@@ -49,6 +50,10 @@ class UpdateCardAction
 
         if ($correctAnswerIndices !== null) {
             $updateData['correct_answer_indices'] = json_encode($correctAnswerIndices);
+        }
+
+        if ($isMultiSelect !== null) {
+            $updateData['is_multi_select'] = $isMultiSelect;
         }
 
         // Validate card fields

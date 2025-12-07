@@ -169,8 +169,96 @@
                             <p class="text-center text-sm text-gray-500 mt-4">Press Space or Enter to continue</p>
                         </div>
                     @endif
+                    
+                    <!-- Card Reference Code -->
+                    <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+                        <p class="text-xs text-gray-400">
+                            Code: <span class="font-mono font-medium text-gray-500">{{ $card->shortcode }}</span>
+                        </p>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Report Problem Chat Widget -->
+            @if($showReportWidget)
+                <div class="fixed bottom-4 right-4 w-80 z-50">
+                    <div class="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+                        <!-- Header -->
+                        <div class="bg-burgundy-600 px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <span class="text-white font-semibold">Report a Problem</span>
+                            </div>
+                            <button wire:click="toggleReportWidget" class="text-white/80 hover:text-white transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Body -->
+                        <div class="p-4">
+                            @if($reportSubmitted)
+                                <div class="text-center py-4">
+                                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="text-gray-800 font-medium mb-1">Thank you!</p>
+                                    <p class="text-gray-500 text-sm">Your report has been submitted. We'll review it shortly.</p>
+                                    <button wire:click="toggleReportWidget" class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                        Close
+                                    </button>
+                                </div>
+                            @else
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        Reporting card: <span class="font-mono font-semibold text-burgundy-600">{{ $card->shortcode }}</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Please describe the issue (e.g., incorrect answer, typo, unclear question)
+                                    </p>
+                                </div>
+                                
+                                <form wire:submit.prevent="submitReport">
+                                    <textarea wire:model="reportMessage" 
+                                              rows="4"
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-burgundy-500 focus:border-burgundy-500 resize-none"
+                                              placeholder="Describe the problem with this card..."></textarea>
+                                    @error('reportMessage') 
+                                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p> 
+                                    @enderror
+                                    
+                                    <div class="flex justify-end gap-2 mt-3">
+                                        <button type="button" wire:click="toggleReportWidget"
+                                                class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition">
+                                            Cancel
+                                        </button>
+                                        <button type="submit"
+                                                class="px-4 py-1.5 bg-burgundy-600 text-white text-sm font-medium rounded-lg hover:bg-burgundy-700 transition"
+                                                wire:loading.attr="disabled">
+                                            <span wire:loading.remove wire:target="submitReport">Submit Report</span>
+                                            <span wire:loading wire:target="submitReport">Sending...</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @else
+                <!-- Report Button (collapsed state) -->
+                <button wire:click="toggleReportWidget" 
+                        class="fixed bottom-4 right-4 z-50 bg-burgundy-600 text-white p-3 rounded-full shadow-lg hover:bg-burgundy-700 transition hover:scale-105"
+                        title="Report a problem with this card">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </button>
+            @endif
         @else
             <div class="text-center max-w-md">
                 <div class="mb-6">

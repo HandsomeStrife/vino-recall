@@ -16,10 +16,7 @@ test('admin routes require admin authentication', function () {
     get(route('admin.decks'))
         ->assertRedirect(route('admin.login'));
 
-    get(route('admin.cards'))
-        ->assertRedirect(route('admin.login'));
-
-    get(route('admin.decks.import'))
+    get(route('admin.categories'))
         ->assertRedirect(route('admin.login'));
 });
 
@@ -29,8 +26,7 @@ test('authenticated admin can access admin routes', function () {
     get(route('admin.dashboard'))->assertOk();
     get(route('admin.users'))->assertOk();
     get(route('admin.decks'))->assertOk();
-    get(route('admin.cards'))->assertOk();
-    get(route('admin.decks.import'))->assertOk();
+    get(route('admin.categories'))->assertOk();
 });
 
 test('regular user cannot access admin routes', function () {

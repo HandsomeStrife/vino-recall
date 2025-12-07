@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Livewire\Admin;
 
 use Domain\Admin\Repositories\AdminRepository;
+use Domain\Category\Repositories\CategoryRepository;
 use Domain\Deck\Actions\CreateDeckAction;
 use Domain\Deck\Actions\DeleteDeckAction;
 use Domain\Deck\Actions\UpdateDeckAction;
 use Domain\Deck\Repositories\DeckRepository;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class DeckManagement extends Component
 {
+    use WithFileUploads;
+
     public string $name = '';
 
     public ?string $description = null;
@@ -21,35 +25,32 @@ class DeckManagement extends Component
 
     public ?int $editingDeckId = null;
 
-    public function render(DeckRepository $deckRepository)
+    public bool $showModal = false;
+
+    public $image = null;
+
+    public ?string $existingImagePath = null;
+
+    public array $selectedCategories = [];
+
+    public function render(DeckRepository $deckRepository, CategoryRepository $categoryRepository)
     {
         $decks = $deckRepository->getAll();
+        $categories = $categoryRepository->getAll();
 
         return view('livewire.admin.deck-management', [
             'decks' => $decks,
+            'categories' => $categories,
         ]);
     }
 
-    public function createDeck(CreateDeckAction $createDeckAction, AdminRepository $adminRepository): void
+    public function openCreateModal(): void
     {
-        $this->validate([
-            'name' => ['required', 'string', 'min:3', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $admin = $adminRepository->getLoggedInAdmin();
-        $createDeckAction->execute(
-            name: $this->name,
-            description: $this->description,
-            is_active: $this->is_active,
-            created_by: $admin->id
-        );
-
-        $this->reset(['name', 'description', 'is_active']);
-        session()->flash('message', 'Deck created successfully.');
+        $this->resetForm();
+        $this->showModal = true;
     }
 
-    public function editDeck(int $deckId, DeckRepository $deckRepository): void
+    public function openEditModal(int $deckId, DeckRepository $deckRepository): void
     {
         $deck = $deckRepository->findById($deckId);
         if ($deck) {
@@ -57,7 +58,46 @@ class DeckManagement extends Component
             $this->name = $deck->name;
             $this->description = $deck->description;
             $this->is_active = $deck->is_active;
+            $this->existingImagePath = $deck->image_path;
+            $this->selectedCategories = $deck->category_ids ?? [];
+            $this->image = null;
+            $this->showModal = true;
         }
+    }
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->resetForm();
+    }
+
+    public function createDeck(CreateDeckAction $createDeckAction, AdminRepository $adminRepository): void
+    {
+        $this->validate([
+            'name' => ['required', 'string', 'min:3', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'image' => ['nullable', 'image', 'max:5120'],
+            'selectedCategories' => ['nullable', 'array'],
+            'selectedCategories.*' => ['exists:categories,id'],
+        ]);
+
+        $imagePath = null;
+        if ($this->image) {
+            $imagePath = $this->image->store('decks', 'public');
+        }
+
+        $admin = $adminRepository->getLoggedInAdmin();
+        $createDeckAction->execute(
+            name: $this->name,
+            description: $this->description,
+            is_active: $this->is_active,
+            created_by: $admin->id,
+            image_path: $imagePath,
+            categoryIds: $this->selectedCategories
+        );
+
+        $this->closeModal();
+        session()->flash('message', 'Deck created successfully.');
     }
 
     public function updateDeck(UpdateDeckAction $updateDeckAction): void
@@ -66,15 +106,26 @@ class DeckManagement extends Component
             $this->validate([
                 'name' => ['required', 'string', 'min:3', 'max:255'],
                 'description' => ['nullable', 'string', 'max:1000'],
+                'image' => ['nullable', 'image', 'max:5120'],
+                'selectedCategories' => ['nullable', 'array'],
+                'selectedCategories.*' => ['exists:categories,id'],
             ]);
+
+            $imagePath = $this->existingImagePath;
+            if ($this->image) {
+                $imagePath = $this->image->store('decks', 'public');
+            }
 
             $updateDeckAction->execute(
                 deckId: $this->editingDeckId,
                 name: $this->name,
                 description: $this->description,
-                is_active: $this->is_active
+                is_active: $this->is_active,
+                image_path: $imagePath,
+                categoryIds: $this->selectedCategories
             );
-            $this->reset(['name', 'description', 'is_active', 'editingDeckId']);
+
+            $this->closeModal();
             session()->flash('message', 'Deck updated successfully.');
         }
     }
@@ -83,5 +134,11 @@ class DeckManagement extends Component
     {
         $deleteDeckAction->execute($deckId);
         session()->flash('message', 'Deck deleted successfully.');
+    }
+
+    private function resetForm(): void
+    {
+        $this->reset(['name', 'description', 'is_active', 'editingDeckId', 'image', 'existingImagePath', 'selectedCategories']);
+        $this->is_active = true;
     }
 }

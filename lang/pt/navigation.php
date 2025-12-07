@@ -12,7 +12,7 @@ return [
     'users' => 'Users',
     'decks' => 'Decks',
     'cards' => 'Cards',
-    'import_deck' => 'Import Deck',
+    'categories' => 'Categories',
     'logout' => 'Log Out',
 ];
 
