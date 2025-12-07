@@ -131,8 +131,11 @@ class Dashboard extends Component
 
         $hasEnrolledDecks = $enrolledCollections->isNotEmpty() || $enrolledStandalone->isNotEmpty();
 
+        // Extract first name only for welcome message
+        $firstName = explode(' ', $user->name)[0];
+
         return view('livewire.dashboard', [
-            'userName' => $user->name,
+            'userName' => $firstName,
             'heroItems' => $heroItems,
             'otherItems' => $otherItems,
             'hasEnrolledDecks' => $hasEnrolledDecks,

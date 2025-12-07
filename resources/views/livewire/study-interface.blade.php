@@ -100,7 +100,7 @@
                                     @click="submitAnswers()" 
                                     :disabled="selectedAnswers.length === 0"
                                     :class="selectedAnswers.length > 0 
-                                        ? 'bg-burgundy-500 text-white hover:bg-burgundy-600 hover:scale-105' 
+                                        ? 'bg-burgundy-500 text-white hover:bg-burgundy-600 hover:scale-105 cursor-pointer' 
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
                                     class="px-8 py-3 rounded-lg transition font-semibold transform"
                                     title="Press Space or Enter">
