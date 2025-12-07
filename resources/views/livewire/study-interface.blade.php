@@ -2,9 +2,31 @@
      x-data="studyInterface()"
      x-init="init()"
      @keydown.window="handleKeydown($event)">
-    <div class="absolute top-4 right-4 z-10">
-        <a href="{{ $exitUrl }}" class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition font-medium">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <!-- Top bar with Exit button and mobile-only deck info -->
+    <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-auto sm:right-4 z-10 flex items-start justify-between sm:justify-end">
+        <!-- Mobile-only deck info (left side) -->
+        @if($card)
+        <div class="flex flex-col gap-0.5 sm:hidden">
+            @if($deck)
+                <span class="text-xs font-semibold text-burgundy-700">{{ $deck->name }}</span>
+            @endif
+            @if($sessionConfig)
+                <span class="text-xs text-gray-600">
+                    @if($sessionConfig->type->value === 'deep_study')
+                        Deep Study
+                    @elseif($sessionConfig->type->value === 'practice')
+                        Practice
+                    @else
+                        Normal Review
+                    @endif
+                </span>
+            @endif
+        </div>
+        @endif
+        
+        <!-- Exit button -->
+        <a href="{{ $exitUrl }}" class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition font-medium text-sm sm:text-base">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
             Exit
@@ -13,56 +35,58 @@
     
     <!-- Auto-progress checkbox (bottom left) -->
     @if($card)
-    <div class="fixed bottom-4 left-4 z-40">
-        <label class="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md cursor-pointer select-none">
+    <div class="fixed bottom-2 left-2 sm:bottom-4 sm:left-4 z-40">
+        <label class="flex items-center gap-1.5 sm:gap-2 bg-white/90 backdrop-blur-sm px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg shadow-md cursor-pointer select-none">
             <input type="checkbox" 
                    x-model="autoProgress" 
-                   class="w-4 h-4 text-burgundy-600 border-gray-300 rounded focus:ring-burgundy-500 cursor-pointer">
-            <span class="text-sm text-gray-700 font-medium">Auto-progress</span>
+                   class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-burgundy-600 border-gray-300 rounded focus:ring-burgundy-500 cursor-pointer">
+            <span class="text-xs sm:text-sm text-gray-700 font-medium">Auto-progress</span>
         </label>
     </div>
     @endif
     
-    <div class="p-8 flex items-center justify-center min-h-screen">
+    <div class="p-4 sm:p-6 md:p-8 flex items-center justify-center min-h-screen">
         @if($card)
             <div class="max-w-2xl w-full">
                 <!-- Session Type Badge and Progress -->
-                <div class="mb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
+                <div class="mb-2 sm:mb-4 flex items-center justify-between gap-2">
+                    <!-- Badges (hidden on mobile, shown on sm+) -->
+                    <div class="hidden sm:flex items-center gap-2 flex-wrap">
                         @if($deck)
-                            <x-badge.badge variant="primary">{{ $deck->name }}</x-badge.badge>
+                            <x-badge.badge variant="primary" class="text-sm">{{ $deck->name }}</x-badge.badge>
                         @endif
                         
                         @if($sessionConfig)
                             @if($sessionConfig->type->value === 'deep_study')
-                                <x-badge.badge variant="info">Deep Study</x-badge.badge>
+                                <x-badge.badge variant="info" class="text-sm">Deep Study</x-badge.badge>
                             @elseif($sessionConfig->type->value === 'practice')
-                                <x-badge.badge variant="warning">Practice Session</x-badge.badge>
+                                <x-badge.badge variant="warning" class="text-sm">Practice Session</x-badge.badge>
                             @else
-                                <x-badge.badge variant="success">Normal Review</x-badge.badge>
+                                <x-badge.badge variant="success" class="text-sm">Normal Review</x-badge.badge>
                             @endif
                         @endif
                     </div>
                     
+                    <!-- Progress (always visible, right-aligned on mobile) -->
                     @if($progress)
-                        <div class="text-right">
-                            <div class="text-sm font-medium text-gray-700">
+                        <div class="text-right flex-shrink-0 ml-auto">
+                            <div class="text-xs sm:text-sm font-medium text-gray-700">
                                 {{ $progress['current'] }} / {{ $progress['total'] }}
                             </div>
-                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1">
-                                <div class="h-2 bg-burgundy-500 rounded-full transition-all" 
+                            <div class="w-20 sm:w-32 h-1.5 sm:h-2 bg-gray-200 rounded-full mt-1">
+                                <div class="h-1.5 sm:h-2 bg-burgundy-500 rounded-full transition-all" 
                                      style="width: {{ $progress['percentage'] }}%"></div>
                             </div>
                         </div>
                     @endif
                 </div>
                 
-                <div class="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 transition-all duration-300" 
+                <div class="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-4 sm:p-6 md:p-8 transition-all duration-300" 
                      wire:key="card-{{ $card->id }}-{{ $revealed ? 'revealed' : 'hidden' }}">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-burgundy-900 mb-4">{{ $card->question }}</h2>
+                    <div class="text-center mb-4 sm:mb-6 md:mb-8">
+                        <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-burgundy-900 mb-2 sm:mb-4">{{ $card->question }}</h2>
                         @if($card->image_path)
-                            <img src="{{ asset('storage/' . $card->image_path) }}" alt="Card image" class="mx-auto max-h-64 rounded-lg mb-4" loading="lazy">
+                            <img src="{{ asset('storage/' . $card->image_path) }}" alt="Card image" class="mx-auto max-h-40 sm:max-h-56 md:max-h-64 rounded-lg mb-2 sm:mb-4" loading="lazy">
                         @endif
                         
                         @if($card->hasMultipleCorrectAnswers())
@@ -71,21 +95,21 @@
                     </div>
 
                     @if(!$revealed)
-                        <div class="space-y-3">
+                        <div class="space-y-2 sm:space-y-3">
                             @foreach($shuffledAnswers as $displayIndex => $answerData)
                                 <button type="button"
                                         @click="toggleAnswer('{{ addslashes($answerData['choice']) }}')" 
                                         :class="isSelected('{{ addslashes($answerData['choice']) }}') 
                                             ? 'bg-burgundy-100 border-2 border-burgundy-500 scale-[1.01]' 
                                             : 'bg-gray-100 hover:bg-burgundy-50 border-2 border-transparent hover:border-burgundy-300 hover:scale-[1.01] hover:shadow-md'"
-                                        class="w-full px-6 py-3 text-left rounded-lg transition-all duration-150 flex items-center cursor-pointer">
+                                        class="w-full px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-left rounded-lg transition-all duration-150 flex items-center cursor-pointer text-sm sm:text-base">
                                     <span :class="isSelected('{{ addslashes($answerData['choice']) }}') 
                                                 ? 'bg-burgundy-500 border-burgundy-500' 
                                                 : 'border-gray-400'"
-                                          class="flex-shrink-0 w-6 h-6 mr-3 rounded border-2 flex items-center justify-center transition-all duration-150">
+                                          class="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 rounded border-2 flex items-center justify-center transition-all duration-150">
                                         <svg x-show="isSelected('{{ addslashes($answerData['choice']) }}')" 
                                              x-cloak
-                                             class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                             class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                         </svg>
                                     </span>
@@ -95,37 +119,37 @@
                             @endforeach
                         </div>
                         
-                        <div class="text-center mt-6">
+                        <div class="text-center mt-4 sm:mt-6">
                             <button type="button"
                                     @click="submitAnswers()" 
                                     :disabled="selectedAnswers.length === 0"
                                     :class="selectedAnswers.length > 0 
                                         ? 'bg-burgundy-500 text-white hover:bg-burgundy-600 hover:scale-105 cursor-pointer' 
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
-                                    class="px-8 py-3 rounded-lg transition font-semibold transform"
+                                    class="px-6 py-2 sm:px-8 sm:py-3 rounded-lg transition font-semibold transform text-sm sm:text-base"
                                     title="Press Space or Enter">
                                 Submit Answer{{ $card->hasMultipleCorrectAnswers() ? 's' : '' }}
                             </button>
-                            <p class="text-sm text-gray-500 mt-4" x-text="selectedAnswers.length > 0 ? 'Press Space or Enter to submit' : 'Select an answer to continue'"></p>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4" x-text="selectedAnswers.length > 0 ? 'Press Space or Enter to submit' : 'Select an answer to continue'"></p>
                         </div>
                     @else
-                        <div class="space-y-3 mb-8">
+                        <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6 md:mb-8">
                             @foreach($shuffledAnswers as $displayIndex => $answerData)
                                 @php
                                     $isCorrectAnswer = in_array($answerData['originalIndex'], $card->correct_answer_indices ?? []);
                                     $wasSelected = in_array($answerData['choice'], $selectedAnswers);
                                 @endphp
-                                <div class="w-full px-6 py-3 text-left rounded-lg border-2 flex items-center
+                                <div class="w-full px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-left rounded-lg border-2 flex items-center text-sm sm:text-base
                                             {{ $isCorrectAnswer ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300' }}
                                             {{ $wasSelected && !$isCorrectAnswer ? 'bg-red-100 border-red-500' : '' }}">
-                                    <span class="flex-shrink-0 w-6 h-6 mr-3 rounded border-2 flex items-center justify-center
+                                    <span class="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 rounded border-2 flex items-center justify-center
                                                  {{ $isCorrectAnswer ? 'bg-green-500 border-green-500' : ($wasSelected ? 'bg-red-500 border-red-500' : 'border-gray-400') }}">
                                         @if($isCorrectAnswer)
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                             </svg>
                                         @elseif($wasSelected)
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
                                             </svg>
                                         @endif
@@ -134,12 +158,12 @@
                                     <span class="ml-2 flex-1">{{ $answerData['choice'] }}</span>
                                     @if($isCorrectAnswer)
                                         <!-- Correct icon -->
-                                        <svg class="w-5 h-5 text-green-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                     @elseif($wasSelected)
                                         <!-- Incorrect icon -->
-                                        <svg class="w-5 h-5 text-red-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                     @endif
@@ -147,15 +171,15 @@
                             @endforeach
                         </div>
 
-                        <div class="text-center mt-6">
+                        <div class="text-center mt-4 sm:mt-6">
                             <button type="button"
                                     @click="continueToNext()" 
-                                    class="px-8 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105"
+                                    class="px-6 py-2 sm:px-8 sm:py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold transform hover:scale-105 text-sm sm:text-base"
                                     title="Press Space or Enter">
                                 <span x-show="!autoProgress || countdown === 0">Continue</span>
                                 <span x-show="autoProgress && countdown > 0" x-text="'Continue (' + countdown + ')'"></span>
                             </button>
-                            <p class="text-center text-sm text-gray-500 mt-4" x-text="autoProgress && countdown > 0 ? 'Auto-advancing in ' + countdown + '...' : 'Press Space or Enter to continue'"></p>
+                            <p class="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4" x-text="autoProgress && countdown > 0 ? 'Auto-advancing in ' + countdown + '...' : 'Press Space or Enter to continue'"></p>
                         </div>
                     @endif
                 </div>
