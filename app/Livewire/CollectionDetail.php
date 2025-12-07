@@ -61,15 +61,8 @@ class CollectionDetail extends Component
 
             return $this->buildChildDeckStats($deck, $shortcode, $cardRepository, $cardReviewRepository, $user, $deckRepository);
         })->sortBy(function ($stat) {
-            // Sort by due cards descending, then new cards
-            if ($stat['dueCards'] > 0) {
-                return [1, -$stat['dueCards']];
-            }
-            if ($stat['newCards'] > 0) {
-                return [2, -$stat['newCards']];
-            }
-
-            return [3, 0];
+            // Sort alphabetically by deck name
+            return $stat['deck']->name;
         })->values();
 
         // Aggregate collection stats with stage-based progress

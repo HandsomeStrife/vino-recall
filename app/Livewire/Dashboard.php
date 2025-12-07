@@ -50,7 +50,6 @@ class Dashboard extends Component
         $user = $userRepository->getLoggedInUser();
         $allEnrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
         $dueCards = $cardReviewRepository->getDueCardsForUser($user->id);
-        $masteredCount = $cardReviewRepository->getMasteredCardsCount($user->id);
         $streak = $cardReviewRepository->getCurrentStreak($user->id);
         $recentActivity = $cardReviewRepository->getRecentActivity($user->id, 5);
         $mistakes = $cardReviewRepository->getMistakes($user->id, 5);
@@ -131,6 +130,9 @@ class Dashboard extends Component
 
         $hasEnrolledDecks = $enrolledCollections->isNotEmpty() || $enrolledStandalone->isNotEmpty();
 
+        // Calculate total new cards across all enrolled decks
+        $totalNewCards = $allItemsWithStats->sum('newCards');
+
         // Extract first name only for welcome message
         $firstName = explode(' ', $user->name)[0];
 
@@ -140,7 +142,7 @@ class Dashboard extends Component
             'otherItems' => $otherItems,
             'hasEnrolledDecks' => $hasEnrolledDecks,
             'dueCardsCount' => $dueCards->count(),
-            'masteredCount' => $masteredCount,
+            'newCardsCount' => $totalNewCards,
             'streak' => $streak,
             'recentActivityWithCards' => $recentActivityWithCards,
             'mistakesWithCards' => $mistakesWithCards,

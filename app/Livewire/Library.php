@@ -20,9 +20,16 @@ class Library extends Component
 {
     public ?int $categoryId = null;
 
+    public string $activeTab = 'enrolled';
+
     public function filterByCategory(?int $categoryId): void
     {
         $this->categoryId = $categoryId;
+    }
+
+    public function switchTab(string $tab): void
+    {
+        $this->activeTab = $tab;
     }
 
     public function enrollInDeck(int $deckId, EnrollUserInDeckAction $enrollAction, UserRepository $userRepository): void
@@ -49,51 +56,93 @@ class Library extends Component
     ) {
         $user = $userRepository->getLoggedInUser();
 
-        // Get active decks (only parent + standalone, with children loaded)
-        $decks = $deckRepository->getActive();
-
         // Get all categories for the filter
         $categories = $categoryRepository->getAll();
 
-        // Build deck stats and apply category filter
-        $decksWithStats = $decks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
+        // Get enrolled decks and available decks
+        $enrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
+        $availableDecks = $deckRepository->getAvailableDecks($user->id);
+
+        // Build stats for enrolled decks
+        $enrolledWithStats = $enrolledDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
+            return $this->buildDeckStatsWithShortcode($deck, $cardRepository, $user, $deckRepository);
+        });
+
+        // Build stats for available decks
+        $availableWithStats = $availableDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
             return $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
         });
 
         // Apply category filter if selected
         if ($this->categoryId !== null) {
-            $decksWithStats = $decksWithStats->filter(function ($deckStat) {
-                $deck = $deckStat['deck'];
+            $enrolledWithStats = $enrolledWithStats->filter(function ($deckStat) {
+                return $this->matchesCategory($deckStat);
+            });
 
-                // Check if deck has this category
-                if ($deck->category_ids && in_array($this->categoryId, $deck->category_ids)) {
-                    return true;
-                }
-
-                // For collections, check if any children have this category
-                if ($deckStat['isParent'] && !empty($deckStat['children'])) {
-                    foreach ($deckStat['children'] as $childStat) {
-                        $childDeck = $childStat['deck'];
-                        if ($childDeck->category_ids && in_array($this->categoryId, $childDeck->category_ids)) {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
+            $availableWithStats = $availableWithStats->filter(function ($deckStat) {
+                return $this->matchesCategory($deckStat);
             });
         }
 
-        // Separate collections and standalone decks
-        $collections = $decksWithStats->filter(fn ($stat) => $stat['isParent']);
-        $standaloneDecks = $decksWithStats->filter(fn ($stat) => !$stat['isParent']);
+        // Separate collections and standalone decks for both enrolled and available
+        $enrolledCollections = $enrolledWithStats->filter(fn ($stat) => $stat['isParent']);
+        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => !$stat['isParent']);
+        $availableCollections = $availableWithStats->filter(fn ($stat) => $stat['isParent']);
+        $availableStandalone = $availableWithStats->filter(fn ($stat) => !$stat['isParent']);
 
         return view('livewire.library', [
-            'collections' => $collections,
-            'standaloneDecks' => $standaloneDecks,
+            'enrolledCollections' => $enrolledCollections,
+            'enrolledStandalone' => $enrolledStandalone,
+            'availableCollections' => $availableCollections,
+            'availableStandalone' => $availableStandalone,
             'categories' => $categories,
             'selectedCategoryId' => $this->categoryId,
         ]);
+    }
+
+    private function matchesCategory(array $deckStat): bool
+    {
+        $deck = $deckStat['deck'];
+
+        // Check if deck has this category
+        if ($deck->category_ids && in_array($this->categoryId, $deck->category_ids)) {
+            return true;
+        }
+
+        // For collections, check if any children have this category
+        if ($deckStat['isParent'] && !empty($deckStat['children'])) {
+            foreach ($deckStat['children'] as $childStat) {
+                $childDeck = $childStat['deck'];
+                if ($childDeck->category_ids && in_array($this->categoryId, $childDeck->category_ids)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function buildDeckStatsWithShortcode(
+        DeckData $deck,
+        CardRepository $cardRepository,
+        $user,
+        DeckRepository $deckRepository
+    ): array {
+        $stats = $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
+
+        // Get shortcode if this is a standalone deck (not a collection)
+        if (!$deck->is_collection) {
+            $userModel = \Domain\User\Models\User::find($user->id);
+            $enrolledDeck = $userModel->enrolledDecks()
+                ->where('deck_id', $deck->id)
+                ->first();
+
+            $stats['shortcode'] = $enrolledDeck ? $enrolledDeck->pivot->shortcode : null;
+        } else {
+            $stats['shortcode'] = null;
+        }
+
+        return $stats;
     }
 
     private function buildDeckStats(
@@ -145,6 +194,7 @@ class Library extends Component
                 'isParent' => true,
                 'children' => $childStats,
                 'childCount' => count($childStats),
+                'image' => DeckImageHelper::getImagePath($deck),
             ];
         }
 
@@ -161,6 +211,7 @@ class Library extends Component
             'isParent' => $isParent,
             'children' => [],
             'childCount' => 0,
+            'image' => DeckImageHelper::getImagePath($deck),
         ];
     }
 

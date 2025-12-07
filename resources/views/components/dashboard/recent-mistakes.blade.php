@@ -30,9 +30,7 @@
         @endif
     @else
         <div class="text-center py-12">
-            <svg class="h-16 w-16 text-dark-green-900 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <img src="{{ asset('img/you-go.png') }}" alt="No recent mistakes" class="w-32 h-32 mx-auto mb-4">
             <p class="text-gray-600 font-medium">No recent mistakes</p>
             <p class="text-sm text-gray-500 mt-1">Keep up the great work!</p>
         </div>

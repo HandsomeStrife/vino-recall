@@ -67,85 +67,82 @@
                 <p class="text-gray-600">No decks in this collection yet.</p>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 @foreach($childDecksWithStats as $deckStat)
                     @php
                         $colors = ['#9E3B4D', '#2D3F2F', '#7A2B3A', '#8D3442', '#4A5D4E'];
                         $deckColor = $colors[$deckStat['deck']->id % count($colors)];
                     @endphp
                     
-                    <div class="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-                        <!-- Deck Header -->
-                        <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $deckColor }};">
-                            <h3 class="text-lg font-bold text-white">{{ $deckStat['deck']->name }}</h3>
-                            @if($deckStat['isEnrolled'] && $deckStat['shortcode'])
-                                <a href="{{ route('deck.stats', ['shortcode' => $deckStat['shortcode']]) }}" 
-                                   class="p-2 hover:bg-white/20 rounded-lg transition-colors" 
-                                   title="View Stats">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                    </svg>
-                                </a>
-                            @endif
+                    <div class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full">
+                        <!-- Colored Title Banner -->
+                        <div class="px-6 py-3" style="background-color: {{ $deckColor }};">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">{{ $deckStat['deck']->name }}</h3>
+                            </div>
                         </div>
                         
-                        <!-- Deck Content -->
-                        <div class="p-6">
-                            @if($deckStat['deck']->description)
-                                <p class="text-gray-600 text-sm mb-4">{{ $deckStat['deck']->description }}</p>
-                            @endif
-                            
-                            <!-- Stats Grid -->
-                            <div class="grid grid-cols-3 gap-4 mb-4">
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold {{ $deckStat['dueCards'] > 0 ? 'text-burgundy-500' : 'text-gray-600' }}">
-                                        {{ $deckStat['dueCards'] }}
+                        <div class="flex relative flex-1">
+                            <!-- Content Section -->
+                            <div class="flex-1 p-6 pr-64 flex flex-col">
+                                <div class="flex-1">
+                                    @if($deckStat['deck']->description)
+                                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $deckStat['deck']->description }}</p>
+                                    @endif
+                                    
+                                    <!-- Stats Grid -->
+                                    <div class="grid grid-cols-3 gap-2 mb-4">
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold {{ $deckStat['dueCards'] > 0 ? 'text-burgundy-500' : 'text-gray-600' }}">
+                                                {{ $deckStat['dueCards'] }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">Due</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold text-gray-600">{{ $deckStat['newCards'] }}</div>
+                                            <div class="text-xs text-gray-500">New</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold text-gray-600">{{ $deckStat['totalCards'] }}</div>
+                                            <div class="text-xs text-gray-500">Total</div>
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-gray-500">Due</div>
+                                    
+                                    @if($deckStat['progress'] > 0)
+                                        <div class="text-sm text-gray-600 mb-2">{{ $deckStat['progress'] }}% complete</div>
+                                    @endif
+                                    
+                                    @if($deckStat['reviewedCount'] > 0)
+                                        <div class="text-sm text-gray-500">{{ $deckStat['retentionRate'] }}% Retention Rate</div>
+                                    @endif
                                 </div>
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-gray-600">{{ $deckStat['newCards'] }}</div>
-                                    <div class="text-xs text-gray-500">New</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-gray-600">{{ $deckStat['totalCards'] }}</div>
-                                    <div class="text-xs text-gray-500">Total</div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="mt-auto pt-4 flex flex-col gap-2">
+                                    @if($deckStat['isEnrolled'] && $deckStat['shortcode'])
+                                        <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
+                                           class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                            Start Session
+                                        </a>
+                                        <a href="{{ route('deck.stats', $deckStat['shortcode']) }}" 
+                                           class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
+                                            View Stats
+                                        </a>
+                                    @else
+                                        <div class="text-center text-gray-500 text-sm py-2">
+                                            Enroll in the collection to study
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
-
-                            <!-- Progress Bar -->
-                            <div class="mb-4">
-                                <div class="flex justify-between text-sm text-gray-600 mb-1">
-                                    <span>Progress</span>
-                                    <span>{{ $deckStat['progress'] }}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="h-2 rounded-full" style="width: {{ $deckStat['progress'] }}%; background-color: {{ $deckColor }};"></div>
+                            
+                            <!-- Diagonal Image Section -->
+                            <div class="absolute top-0 right-0 bottom-0 w-56 overflow-hidden pointer-events-none">
+                                <div class="absolute inset-0 bg-cover bg-center" 
+                                     style="background-image: url('{{ $deckStat['image'] }}'); 
+                                            clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);">
                                 </div>
                             </div>
-
-                            <!-- Retention Rate -->
-                            @if($deckStat['reviewedCount'] > 0)
-                                <div class="text-sm text-gray-600 mb-4">
-                                    {{ $deckStat['retentionRate'] }}% Retention Rate
-                                </div>
-                            @endif
-
-                            <!-- Action Button -->
-                            @if($deckStat['isEnrolled'] && $deckStat['shortcode'])
-                                <x-study-session-modal 
-                                    :deckId="$deckStat['shortcode']" 
-                                    :deckName="$deckStat['deck']->name"
-                                    :dueCount="$deckStat['dueCards']"
-                                    :newCount="$deckStat['newCards']"
-                                    :reviewedCount="$deckStat['reviewedCount']"
-                                    :totalCount="$deckStat['dueCards'] + $deckStat['newCards']"
-                                    class="w-full" />
-                            @else
-                                <div class="text-center text-gray-500 text-sm py-2">
-                                    Enroll in the collection to study
-                                </div>
-                            @endif
                         </div>
                     </div>
                 @endforeach
