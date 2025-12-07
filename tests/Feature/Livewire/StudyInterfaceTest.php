@@ -121,10 +121,17 @@ test('study interface creates review record after submission', function () {
         ->call('submitAnswers', ['Correct'])
         ->call('continue');
 
-    $this->assertDatabaseHas('card_reviews', [
+    // Review history stores correctness info
+    $this->assertDatabaseHas('review_history', [
         'user_id' => $this->user->id,
         'card_id' => $card->id,
         'is_correct' => true,
+    ]);
+    
+    // Card review stores SRS state
+    $this->assertDatabaseHas('card_reviews', [
+        'user_id' => $this->user->id,
+        'card_id' => $card->id,
     ]);
 });
 
@@ -141,7 +148,8 @@ test('study interface records incorrect answer', function () {
         ->call('submitAnswers', ['Wrong'])
         ->call('continue');
 
-    $this->assertDatabaseHas('card_reviews', [
+    // Review history stores correctness info
+    $this->assertDatabaseHas('review_history', [
         'user_id' => $this->user->id,
         'card_id' => $card->id,
         'is_correct' => false,
@@ -157,21 +165,32 @@ test('practice session does not create new SRS review if one exists', function (
         'correct_answer_indices' => json_encode([1]),
     ]);
     
-    // Create existing SRS review
+    // Create existing SRS review at stage 4
     CardReview::factory()->create([
         'user_id' => $this->user->id,
         'card_id' => $card->id,
-        'is_practice' => false,
-        'ease_factor' => 2.5,
+        'srs_stage' => 4,
         'next_review_at' => now()->addDay(),
     ]);
+
+    $originalStage = CardReview::where('user_id', $this->user->id)
+        ->where('card_id', $card->id)
+        ->first()
+        ->srs_stage;
 
     Livewire::test(StudyInterface::class, ['type' => 'practice', 'deck' => 'TESTCODE'])
         ->call('submitAnswers', ['Wrong'])
         ->call('continue');
 
-    // Should only have 1 review (the original)
+    // Should only have 1 review (the original) - practice doesn't create duplicates
     expect(CardReview::where('user_id', $this->user->id)->where('card_id', $card->id)->count())->toBe(1);
+    
+    // SRS stage should remain unchanged in practice mode
+    $currentStage = CardReview::where('user_id', $this->user->id)
+        ->where('card_id', $card->id)
+        ->first()
+        ->srs_stage;
+    expect($currentStage)->toBe($originalStage);
 });
 
 test('study interface offers to load more cards after normal session completes', function () {

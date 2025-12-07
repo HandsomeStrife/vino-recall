@@ -99,7 +99,10 @@
                     @endif
                 </div>
                 
-                <div class="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-4 sm:p-6 md:p-8 transition-all duration-300" 
+                <div class="bg-white rounded-lg border-2 p-4 sm:p-6 md:p-8 transition-all duration-300
+                            {{ $revealed && $isCorrect === true ? 'border-green-500 shadow-[4px_4px_0px_0px_rgba(34,197,94,1)]' : '' }}
+                            {{ $revealed && $isCorrect === false ? 'border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)]' : '' }}
+                            {{ !$revealed || $isCorrect === null ? 'border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : '' }}" 
                      wire:key="card-{{ $card->id }}-{{ $revealed ? 'revealed' : 'hidden' }}">
                     <div class="text-center mb-4 sm:mb-6 md:mb-8">
                         <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-burgundy-900 mb-2 sm:mb-4">{{ $card->question }}</h2>
@@ -156,17 +159,27 @@
                                 @php
                                     $isCorrectAnswer = in_array($answerData['originalIndex'], $card->correct_answer_indices ?? []);
                                     $wasSelected = in_array($answerData['choice'], $selectedAnswers);
+                                    $missedCorrect = $isCorrectAnswer && !$wasSelected;
                                 @endphp
                                 <div class="w-full px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-left rounded-lg border-2 flex items-center text-sm sm:text-base
-                                            {{ $isCorrectAnswer ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300' }}
-                                            {{ $wasSelected && !$isCorrectAnswer ? 'bg-red-100 border-red-500' : '' }}">
+                                            {{ $isCorrectAnswer && $wasSelected ? 'bg-green-100 border-green-500' : '' }}
+                                            {{ $missedCorrect ? 'bg-amber-100 border-amber-500' : '' }}
+                                            {{ $wasSelected && !$isCorrectAnswer ? 'bg-red-100 border-red-500' : '' }}
+                                            {{ !$isCorrectAnswer && !$wasSelected ? 'bg-gray-100 border-gray-300' : '' }}">
                                     <span class="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 rounded border-2 flex items-center justify-center
-                                                 {{ $isCorrectAnswer ? 'bg-green-500 border-green-500' : ($wasSelected ? 'bg-red-500 border-red-500' : 'border-gray-400') }}">
-                                        @if($isCorrectAnswer)
+                                                 {{ $isCorrectAnswer && $wasSelected ? 'bg-green-500 border-green-500' : '' }}
+                                                 {{ $missedCorrect ? 'bg-amber-500 border-amber-500' : '' }}
+                                                 {{ $wasSelected && !$isCorrectAnswer ? 'bg-red-500 border-red-500' : '' }}
+                                                 {{ !$isCorrectAnswer && !$wasSelected ? 'border-gray-400' : '' }}">
+                                        @if($isCorrectAnswer && $wasSelected)
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                             </svg>
-                                        @elseif($wasSelected)
+                                        @elseif($missedCorrect)
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        @elseif($wasSelected && !$isCorrectAnswer)
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
                                             </svg>
@@ -174,12 +187,15 @@
                                     </span>
                                     <span class="font-semibold">{{ chr(65 + $displayIndex) }}.</span>
                                     <span class="ml-2 flex-1">{{ $answerData['choice'] }}</span>
-                                    @if($isCorrectAnswer)
+                                    @if($isCorrectAnswer && $wasSelected)
                                         <!-- Correct icon -->
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
-                                    @elseif($wasSelected)
+                                    @elseif($missedCorrect)
+                                        <!-- Missed indicator -->
+                                        <span class="text-xs font-medium text-amber-700 ml-2 flex-shrink-0">Missed</span>
+                                    @elseif($wasSelected && !$isCorrectAnswer)
                                         <!-- Incorrect icon -->
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>

@@ -120,6 +120,7 @@ test('can update a card with new answer choices', function (): void {
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'What is the capital of France?',
         'answer' => 'Paris',
@@ -145,6 +146,7 @@ test('can review a card with correct single answer', function (): void {
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'What is the capital of France?',
         'answer' => 'Paris',
@@ -182,6 +184,7 @@ test('can review a card with incorrect single answer', function (): void {
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'What is the capital of France?',
         'answer' => 'Paris',
@@ -217,6 +220,7 @@ test('multi-answer card requires all correct answers selected', function (): voi
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'Which are red grapes?',
         'answer' => 'Merlot, Syrah',
@@ -245,6 +249,7 @@ test('multi-answer card is correct when all answers selected', function (): void
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'Which are red grapes?',
         'answer' => 'Merlot, Syrah',
@@ -272,6 +277,7 @@ test('multi-answer card is incorrect when extra wrong answer selected', function
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'Which are red grapes?',
         'answer' => 'Merlot, Syrah',
@@ -318,6 +324,7 @@ test('review with no answer selected is incorrect', function (): void {
 
     $card = Card::create([
         'deck_id' => $deck->id,
+        'shortcode' => strtoupper(\Illuminate\Support\Str::random(6)),
         'card_type' => 'multiple_choice',
         'question' => 'What is the capital of France?',
         'answer' => 'Paris',
