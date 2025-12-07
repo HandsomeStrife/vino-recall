@@ -427,8 +427,8 @@ function studyInterface() {
         
         toggleAnswer(answer) {
             const index = this.selectedAnswers.indexOf(answer);
-            // Read multi-select state from data attribute (updates with each card)
-            const hasMultipleCorrect = this.$el.dataset.hasMultipleCorrect === 'true';
+            // Read multi-select state from data attribute on the root component element
+            const hasMultipleCorrect = this.$root.dataset.hasMultipleCorrect === 'true';
             
             if (index > -1) {
                 // Deselect if already selected
