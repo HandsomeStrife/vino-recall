@@ -2,7 +2,10 @@
      x-data="studyInterface()"
      x-init="init()"
      @keydown.window="handleKeydown($event)"
-     @fullscreenchange.window="isFullscreen = !!document.fullscreenElement">
+     @fullscreenchange.window="isFullscreen = !!document.fullscreenElement"
+     data-has-multiple-correct="{{ $card?->hasMultipleCorrectAnswers() ? 'true' : 'false' }}"
+     wire:key="study-container-{{ $card?->id ?? 'none' }}"
+>
     <!-- Top bar with Exit button and mobile-only deck info -->
     <div class="absolute top-2 left-2 right-2 sm:top-4 sm:left-auto sm:right-4 z-10 flex items-start justify-between sm:justify-end gap-2">
         <!-- Mobile-only deck info (left side) -->
@@ -385,7 +388,6 @@ function studyInterface() {
         isSubmitting: false,
         cardId: @js($card?->id ?? null),
         isFullscreen: false,
-        hasMultipleCorrectAnswers: @js($card?->hasMultipleCorrectAnswers() ?? false),
         
         init() {
             // Check initial fullscreen state
@@ -425,10 +427,13 @@ function studyInterface() {
         
         toggleAnswer(answer) {
             const index = this.selectedAnswers.indexOf(answer);
+            // Read multi-select state from data attribute (updates with each card)
+            const hasMultipleCorrect = this.$el.dataset.hasMultipleCorrect === 'true';
+            
             if (index > -1) {
                 // Deselect if already selected
                 this.selectedAnswers.splice(index, 1);
-            } else if (this.hasMultipleCorrectAnswers) {
+            } else if (hasMultipleCorrect) {
                 // Multi-select: add to selection
                 this.selectedAnswers.push(answer);
             } else {
