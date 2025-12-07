@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace Domain\Card\Models;
 
-use Domain\Card\Enums\SrsStage;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Represents the SRS state for a user-card pair.
- * One record per user-card combination.
+ * Log of all review events for accuracy calculation and analytics.
+ * Multiple records per user-card pair (one per review event).
  */
-class CardReview extends Model
+class ReviewHistory extends Model
 {
     use HasFactory;
 
+    protected $table = 'review_history';
+
     protected static function newFactory()
     {
-        return \Database\Factories\CardReviewFactory::new();
+        return \Database\Factories\ReviewHistoryFactory::new();
     }
 
     /**
@@ -29,15 +30,21 @@ class CardReview extends Model
     protected $fillable = [
         'user_id',
         'card_id',
-        'srs_stage',
-        'next_review_at',
+        'is_correct',
+        'previous_stage',
+        'new_stage',
+        'is_practice',
+        'reviewed_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'srs_stage' => 'integer',
-            'next_review_at' => 'datetime',
+            'is_correct' => 'boolean',
+            'previous_stage' => 'integer',
+            'new_stage' => 'integer',
+            'is_practice' => 'boolean',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -50,20 +57,5 @@ class CardReview extends Model
     {
         return $this->belongsTo(Card::class);
     }
-
-    /**
-     * Check if this card is mastered (stage >= threshold).
-     */
-    public function isMastered(): bool
-    {
-        return SrsStage::isMastered($this->srs_stage);
-    }
-
-    /**
-     * Get the SrsStage enum for this card.
-     */
-    public function getSrsStageEnum(): SrsStage
-    {
-        return SrsStage::fromStage($this->srs_stage);
-    }
 }
+

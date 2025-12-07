@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace Domain\Card\Actions;
 
 use Domain\Card\Data\CardReviewData;
-use Domain\Card\Enums\CardRating;
+use Domain\Card\Data\ReviewHistoryData;
+use Domain\Card\Enums\SrsStage;
 use Domain\Card\Models\Card;
 use Domain\Card\Models\CardReview;
+use Domain\Card\Models\ReviewHistory;
 
+/**
+ * Records a card review and updates SRS state using WaniKani-style stage progression.
+ */
 class ReviewCardAction
 {
-    private const INITIAL_EASE_FACTOR = 2.5;
-
-    private const MIN_EASE_FACTOR = 1.3;
-
-    private const INCORRECT_INTERVAL_HOURS = 4;
-
     /**
+     * Execute a card review.
+     *
      * @param array<string>|null $selectedAnswers Array of selected answer strings for multi-answer support
      */
     public function execute(int $userId, int $cardId, ?array $selectedAnswers = null, bool $isPractice = false): CardReviewData
@@ -26,99 +27,96 @@ class ReviewCardAction
 
         // Determine if answer is correct
         $isCorrect = $this->isAnswerCorrect($card, $selectedAnswers);
-        $rating = $isCorrect ? CardRating::CORRECT : CardRating::INCORRECT;
 
-        // Store selected answers as JSON for review history
-        $selectedAnswerJson = $selectedAnswers !== null ? json_encode($selectedAnswers) : null;
-
+        // Get existing SRS state (or default to stage 0)
         $review = CardReview::where('user_id', $userId)
             ->where('card_id', $cardId)
             ->first();
 
+        $currentStage = $review?->srs_stage ?? SrsStage::STAGE_MIN;
+
+        // Calculate new stage based on correctness
+        $newStage = $isCorrect
+            ? SrsStage::calculateNewStageOnCorrect($currentStage)
+            : SrsStage::calculateNewStageOnIncorrect($currentStage);
+
+        // Log the review to history (always, even for practice)
+        $this->logReviewHistory($userId, $cardId, $isCorrect, $currentStage, $newStage, $isPractice);
+
+        // For practice mode: don't update SRS state
         if ($isPractice) {
-            // For practice sessions, if no SRS review exists yet, create a practice record
-            // Otherwise, just return a virtual practice response without persisting
-            // (to avoid unique constraint violation on user_id + card_id)
+            // If no review exists yet, create one at stage 0 (but don't advance)
+            // This ensures the card shows as "seen" but practice doesn't affect progression
             if ($review === null) {
-                $practiceReview = CardReview::create([
+                $review = CardReview::create([
                     'user_id' => $userId,
                     'card_id' => $cardId,
-                    'rating' => $rating->value,
-                    'is_correct' => $isCorrect,
-                    'is_practice' => true,
-                    'selected_answer' => $selectedAnswerJson,
-                    'ease_factor' => self::INITIAL_EASE_FACTOR,
-                    'next_review_at' => now()->addDay(),
+                    'srs_stage' => SrsStage::STAGE_MIN,
+                    'next_review_at' => null,
                 ]);
-
-                return CardReviewData::fromModel($practiceReview);
             }
 
-            // Return a virtual practice response based on existing review
-            // This doesn't persist a new record but provides feedback
-            return new CardReviewData(
-                id: $review->id,
-                user_id: $userId,
-                card_id: $cardId,
-                rating: $rating->value,
-                is_correct: $isCorrect,
-                is_practice: true,
-                selected_answer: $selectedAnswerJson,
-                next_review_at: $review->next_review_at->toDateTimeString(),
-                ease_factor: (string) $review->ease_factor,
-                created_at: now()->toDateTimeString(),
-                updated_at: now()->toDateTimeString(),
-            );
+            return CardReviewData::fromModel($review);
         }
 
-        $easeFactor = $review?->ease_factor ?? self::INITIAL_EASE_FACTOR;
+        // Calculate next review time based on new stage
+        $nextReviewAt = $this->calculateNextReviewAt($newStage);
 
-        // Calculate next interval based on correctness and review history
-        if ($isCorrect) {
-            // Increase ease factor for correct answers
-            $easeFactor = min($easeFactor + 0.1, 3.0);
-
-            // Calculate exponentially increasing intervals
-            if ($review === null) {
-                // First review correct: 1 day
-                $nextReviewAt = now()->addDay();
-            } else {
-                // Subsequent reviews: multiply previous interval by ease factor
-                $daysSinceLastReview = $review->created_at->diffInDays(now());
-                $nextIntervalDays = max(1, (int) ($daysSinceLastReview * $easeFactor));
-                $nextReviewAt = now()->addDays($nextIntervalDays);
-            }
-        } else {
-            // Decrease ease factor for incorrect answers
-            $easeFactor = max($easeFactor - 0.2, self::MIN_EASE_FACTOR);
-
-            // Incorrect answers: review in 4 hours
-            $nextReviewAt = now()->addHours(self::INCORRECT_INTERVAL_HOURS);
-        }
-
+        // Create or update the SRS state
         if ($review === null) {
             $review = CardReview::create([
                 'user_id' => $userId,
                 'card_id' => $cardId,
-                'rating' => $rating->value,
-                'is_correct' => $isCorrect,
-                'is_practice' => false,
-                'selected_answer' => $selectedAnswerJson,
-                'ease_factor' => $easeFactor,
+                'srs_stage' => $newStage,
                 'next_review_at' => $nextReviewAt,
             ]);
         } else {
             $review->update([
-                'rating' => $rating->value,
-                'is_correct' => $isCorrect,
-                'is_practice' => false,
-                'selected_answer' => $selectedAnswerJson,
-                'ease_factor' => $easeFactor,
+                'srs_stage' => $newStage,
                 'next_review_at' => $nextReviewAt,
             ]);
         }
 
         return CardReviewData::fromModel($review->fresh());
+    }
+
+    /**
+     * Log a review event to the history table.
+     */
+    private function logReviewHistory(
+        int $userId,
+        int $cardId,
+        bool $isCorrect,
+        int $previousStage,
+        int $newStage,
+        bool $isPractice
+    ): ReviewHistoryData {
+        $history = ReviewHistory::create([
+            'user_id' => $userId,
+            'card_id' => $cardId,
+            'is_correct' => $isCorrect,
+            'previous_stage' => $previousStage,
+            'new_stage' => $isPractice ? $previousStage : $newStage, // Practice doesn't change stage
+            'is_practice' => $isPractice,
+            'reviewed_at' => now(),
+        ]);
+
+        return ReviewHistoryData::fromModel($history);
+    }
+
+    /**
+     * Calculate the next review datetime based on the new stage.
+     */
+    private function calculateNextReviewAt(int $stage): ?\Carbon\Carbon
+    {
+        $interval = SrsStage::intervalForStage($stage);
+
+        if ($interval === null) {
+            // Stage 0 or 9 (Wine God) - no scheduled review
+            return null;
+        }
+
+        return now()->add($interval);
     }
 
     /**

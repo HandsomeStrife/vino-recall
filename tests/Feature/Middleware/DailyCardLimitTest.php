@@ -13,8 +13,8 @@ test('free user has daily card limit', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    // Free users should be able to access study page
-    $response = $this->get(route('study'));
+    // Free users should be able to access enrolled page
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 
@@ -29,7 +29,7 @@ test('basic plan user has higher daily limit', function () {
 
     $this->actingAs($user);
 
-    $response = $this->get(route('study'));
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 
@@ -56,7 +56,7 @@ test('premium user has unlimited cards', function () {
     }
 
     // Premium users should still be able to study
-    $response = $this->get(route('study'));
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 
@@ -77,7 +77,7 @@ test('card reviews from yesterday do not count toward today limit', function () 
     }
 
     // Today's limit should not be affected by yesterday's reviews
-    $response = $this->get(route('study'));
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 
@@ -99,7 +99,7 @@ test('plan names determine daily limits', function () {
         $this->actingAs($user);
 
         // Verify user can study
-        $response = $this->get(route('study'));
+        $response = $this->get(route('enrolled'));
         $response->assertStatus(200);
     }
 });
@@ -116,7 +116,7 @@ test('inactive subscription reverts to free tier limits', function () {
     $this->actingAs($user);
 
     // Should have free tier limits (10 cards)
-    $response = $this->get(route('study'));
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 
@@ -132,7 +132,7 @@ test('unknown plan defaults to free tier limits', function () {
     $this->actingAs($user);
 
     // Should default to free tier
-    $response = $this->get(route('study'));
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
 

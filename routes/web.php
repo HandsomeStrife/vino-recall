@@ -43,11 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', fn () => view('pages.dashboard'))->name('dashboard');
-    Route::get('/study', fn () => view('pages.study'))->name('study');
+    Route::get('/study/{type}/{deck}', fn (string $type, string $deck) => view('pages.study', ['type' => $type, 'deck' => $deck]))->name('study')->where(['type' => 'normal|deep_study|practice', 'deck' => '[A-Za-z0-9]{8}']);
     Route::get('/library', fn () => view('pages.library'))->name('library');
+    Route::get('/enrolled', fn () => view('pages.enrolled'))->name('enrolled');
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
     Route::get('/subscription', fn () => view('pages.subscription'))->name('subscription');
     Route::get('/deck/{shortcode}/stats', fn (string $shortcode) => view('pages.deck-stats', ['shortcode' => $shortcode]))->name('deck.stats');
+    Route::get('/collection/{id}', fn (int $id) => view('pages.collection', ['collectionId' => $id]))->name('collection.show');
 });
 
 Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->prefix('admin')->name('admin.')->group(function () {

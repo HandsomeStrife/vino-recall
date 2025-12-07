@@ -3,7 +3,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- About Section -->
             <div>
-                <h3 class="text-lg font-bold mb-4">VinoRecall</h3>
+                <h3 class="flex items-center gap-2 mb-4">
+                    <x-logo class="w-8 h-8 fill-current" />
+                    <span class="text-xl font-bold font-heading">VinoRecall</span>
+                </h3>
                 <p class="text-cream-200 text-sm">
                     Master wine knowledge through spaced repetition. Your path to WSET certification starts here.
                 </p>

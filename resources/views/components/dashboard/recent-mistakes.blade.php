@@ -16,7 +16,7 @@
                         @if($item['card'])
                             <p class="text-sm font-medium text-gray-900 truncate">{{ \Illuminate\Support\Str::limit($item['card']->question, 60) }}</p>
                             <p class="text-xs text-gray-500 mt-1">
-                                {{ \Carbon\Carbon::parse($item['review']->created_at)->format('M d, g:i A') }}
+                                {{ \Carbon\Carbon::parse($item['history']->reviewed_at)->format('M d, g:i A') }}
                             </p>
                         @endif
                     </div>
@@ -24,7 +24,7 @@
             @endforeach
         </div>
         @if($dueCardsCount > 0)
-            <a href="{{ route('study') }}" class="mt-4 block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
+            <a href="{{ route('enrolled') }}" class="mt-4 block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
                 Review Mistakes
             </a>
         @endif
@@ -38,9 +38,3 @@
         </div>
     @endif
 </div>
-
-
-
-
-
-

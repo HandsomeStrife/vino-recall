@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Domain\Card\Enums\SrsStage;
 use Domain\Card\Models\CardReview;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Category\Repositories\CategoryRepository;
@@ -11,7 +12,6 @@ use Domain\Deck\Actions\EnrollUserInDeckAction;
 use Domain\Deck\Actions\UnenrollUserFromDeckAction;
 use Domain\Deck\Data\DeckData;
 use Domain\Deck\Helpers\DeckImageHelper;
-use Domain\Deck\Models\Deck;
 use Domain\Deck\Repositories\DeckRepository;
 use Domain\User\Repositories\UserRepository;
 use Livewire\Component;
@@ -64,12 +64,12 @@ class Library extends Component
         if ($this->categoryId !== null) {
             $decksWithStats = $decksWithStats->filter(function ($deckStat) {
                 $deck = $deckStat['deck'];
-                
+
                 // Check if deck has this category
                 if ($deck->category_ids && in_array($this->categoryId, $deck->category_ids)) {
                     return true;
                 }
-                
+
                 // For collections, check if any children have this category
                 if ($deckStat['isParent'] && !empty($deckStat['children'])) {
                     foreach ($deckStat['children'] as $childStat) {
@@ -79,7 +79,7 @@ class Library extends Component
                         }
                     }
                 }
-                
+
                 return false;
             });
         }
@@ -108,13 +108,13 @@ class Library extends Component
         if ($isParent && $children !== null && $children->isNotEmpty()) {
             // For parent decks, aggregate stats from all children
             $totalCards = 0;
-            $reviewedCount = 0;
+            $stageSum = 0;
             $childStats = [];
 
             foreach ($children as $childDeck) {
                 $childCardStats = $this->getCardStats($childDeck, $cardRepository, $user);
                 $totalCards += $childCardStats['totalCards'];
-                $reviewedCount += $childCardStats['reviewedCount'];
+                $stageSum += $childCardStats['stageSum'];
 
                 $isChildEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $childDeck->id);
 
@@ -131,11 +131,16 @@ class Library extends Component
             // Check if user is enrolled in parent (which means enrolled in all children)
             $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $deck->id);
 
+            // Calculate stage-based progress for collection
+            $progress = $totalCards > 0
+                ? (int) round(($stageSum / SrsStage::STAGE_MAX / $totalCards) * 100)
+                : 0;
+
             return [
                 'deck' => $deck,
                 'totalCards' => $totalCards,
-                'reviewedCount' => $reviewedCount,
-                'progress' => $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0,
+                'reviewedCount' => $totalCards - $this->getNewCardsCount($children, $cardRepository, $user),
+                'progress' => $progress,
                 'isEnrolled' => $isEnrolled,
                 'isParent' => true,
                 'children' => $childStats,
@@ -169,10 +174,36 @@ class Library extends Component
             ->toArray();
         $reviewedCount = $cards->filter(fn ($card) => in_array($card->id, $reviewedCardIds))->count();
 
+        // Calculate stage-based progress
+        $cardIds = $cards->pluck('id')->toArray();
+        $stageSum = CardReview::where('user_id', $user->id)
+            ->whereIn('card_id', $cardIds)
+            ->sum('srs_stage');
+
+        $progress = $totalCards > 0
+            ? (int) round(($stageSum / SrsStage::STAGE_MAX / $totalCards) * 100)
+            : 0;
+
         return [
             'totalCards' => $totalCards,
             'reviewedCount' => $reviewedCount,
-            'progress' => $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0,
+            'stageSum' => $stageSum,
+            'progress' => $progress,
         ];
+    }
+
+    private function getNewCardsCount($children, CardRepository $cardRepository, $user): int
+    {
+        $reviewedCardIds = CardReview::where('user_id', $user->id)
+            ->pluck('card_id')
+            ->toArray();
+
+        $newCount = 0;
+        foreach ($children as $childDeck) {
+            $cards = $cardRepository->getByDeckId($childDeck->id);
+            $newCount += $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+        }
+
+        return $newCount;
     }
 }

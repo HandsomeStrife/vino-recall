@@ -18,7 +18,7 @@ beforeEach(function () {
     
     // Enroll user in deck
     $this->user->enrolledDecks()->attach($this->deck->id, [
-        'shortcode' => 'testcode',
+        'shortcode' => 'TESTCODE',
         'enrolled_at' => now(),
     ]);
 });
@@ -30,8 +30,7 @@ test('study interface shows card when available', function () {
         'answer' => 'Test Answer',
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
         ->assertSee('Test Question');
 });
 
@@ -41,31 +40,9 @@ test('study interface shows select all that apply for multi-answer cards', funct
         'question' => 'Multi Answer Question',
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
         ->assertSee('Multi Answer Question')
         ->assertSee('Select all that apply');
-});
-
-test('study interface can toggle answer selection', function () {
-    $card = Card::factory()->create([
-        'deck_id' => $this->deck->id,
-        'question' => 'Test Question',
-        'answer_choices' => json_encode(['Option A', 'Option B', 'Option C', 'Option D']),
-        'correct_answer_indices' => json_encode([1]),
-    ]);
-
-    $component = Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
-        ->assertSet('selectedAnswers', [])
-        ->call('toggleAnswer', 'Option A')
-        ->assertSet('selectedAnswers', ['Option A'])
-        ->call('toggleAnswer', 'Option B')
-        ->assertSet('selectedAnswers', ['Option A', 'Option B'])
-        ->call('toggleAnswer', 'Option A');
-        
-    // After toggling A off, only B should remain
-    expect($component->get('selectedAnswers'))->toContain('Option B');
 });
 
 test('study interface can submit answers and reveal result', function () {
@@ -77,12 +54,12 @@ test('study interface can submit answers and reveal result', function () {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
+    // submitAnswers now accepts an array of answers from Alpine
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
         ->assertSet('revealed', false)
-        ->call('toggleAnswer', 'Correct Answer')
-        ->call('submitAnswers')
-        ->assertSet('revealed', true);
+        ->call('submitAnswers', ['Correct Answer'])
+        ->assertSet('revealed', true)
+        ->assertSet('selectedAnswers', ['Correct Answer']);
 });
 
 test('study interface continues to next card after review', function () {
@@ -95,11 +72,9 @@ test('study interface continues to next card after review', function () {
         'question' => 'Question 2',
     ]);
 
-    $component = Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
+    $component = Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
         ->assertSee('Question 1')
-        ->call('toggleAnswer', 'Option B')
-        ->call('submitAnswers')
+        ->call('submitAnswers', ['Option B'])
         ->call('continue')
         ->assertSet('revealed', false)
         ->assertSet('selectedAnswers', []);
@@ -114,10 +89,8 @@ test('study interface shows completion message when all cards done', function ()
         'question' => 'Only Question',
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
-        ->call('toggleAnswer', 'Option B')
-        ->call('submitAnswers')
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
+        ->call('submitAnswers', ['Option B'])
         ->call('continue')
         ->assertSee('Deep Study Complete');
 });
@@ -128,10 +101,9 @@ test('study interface does not submit when no answer selected', function () {
         'question' => 'Test Question',
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
         ->assertSet('selectedAnswers', [])
-        ->call('submitAnswers')
+        ->call('submitAnswers', [])
         // Should not reveal because no answers selected
         ->assertSet('revealed', false);
 });
@@ -145,10 +117,8 @@ test('study interface creates review record after submission', function () {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
-        ->call('toggleAnswer', 'Correct')
-        ->call('submitAnswers')
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
+        ->call('submitAnswers', ['Correct'])
         ->call('continue');
 
     $this->assertDatabaseHas('card_reviews', [
@@ -167,10 +137,8 @@ test('study interface records incorrect answer', function () {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'deep_study'])
-        ->test(StudyInterface::class)
-        ->call('toggleAnswer', 'Wrong')
-        ->call('submitAnswers')
+    Livewire::test(StudyInterface::class, ['type' => 'deep_study', 'deck' => 'TESTCODE'])
+        ->call('submitAnswers', ['Wrong'])
         ->call('continue');
 
     $this->assertDatabaseHas('card_reviews', [
@@ -198,12 +166,32 @@ test('practice session does not create new SRS review if one exists', function (
         'next_review_at' => now()->addDay(),
     ]);
 
-    Livewire::withQueryParams(['deck' => 'testcode', 'session_type' => 'practice'])
-        ->test(StudyInterface::class)
-        ->call('toggleAnswer', 'Wrong')
-        ->call('submitAnswers')
+    Livewire::test(StudyInterface::class, ['type' => 'practice', 'deck' => 'TESTCODE'])
+        ->call('submitAnswers', ['Wrong'])
         ->call('continue');
 
     // Should only have 1 review (the original)
     expect(CardReview::where('user_id', $this->user->id)->where('card_id', $card->id)->count())->toBe(1);
+});
+
+test('study interface offers to load more cards after normal session completes', function () {
+    // Create 2 cards (less than default batch size)
+    $card1 = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Question 1',
+    ]);
+    $card2 = Card::factory()->singleCorrectAnswer()->create([
+        'deck_id' => $this->deck->id,
+        'question' => 'Question 2',
+    ]);
+
+    // Complete both cards
+    $component = Livewire::test(StudyInterface::class, ['type' => 'normal', 'deck' => 'TESTCODE'])
+        ->call('submitAnswers', ['Option B'])
+        ->call('continue')
+        ->call('submitAnswers', ['Option B'])
+        ->call('continue');
+        
+    // Session should be complete
+    expect($component->get('sessionComplete'))->toBeTrue();
 });

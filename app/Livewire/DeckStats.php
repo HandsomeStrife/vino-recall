@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Domain\Card\Actions\ResetDeckReviewsAction;
+use Domain\Card\Enums\SrsStage;
+use Domain\Card\Models\CardReview;
+use Domain\Card\Models\ReviewHistory;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
 use Domain\Deck\Repositories\DeckRepository;
@@ -14,19 +18,45 @@ class DeckStats extends Component
 {
     public int $deckId;
 
+    public bool $showResetConfirmation = false;
+
     public function mount(string $shortcode, UserRepository $userRepository, DeckRepository $deckRepository): void
     {
         // Find deck by shortcode
         $user = $userRepository->getLoggedInUser();
         $deck = $deckRepository->findByShortcode($user->id, $shortcode);
-        
+
         if (!$deck) {
             $this->redirect(route('library'));
-            
+
             return;
         }
-        
+
         $this->deckId = $deck->id;
+    }
+
+    public function confirmReset(): void
+    {
+        $this->showResetConfirmation = true;
+    }
+
+    public function cancelReset(): void
+    {
+        $this->showResetConfirmation = false;
+    }
+
+    public function resetDeckProgress(): void
+    {
+        $user = (new UserRepository())->getLoggedInUser();
+
+        $result = (new ResetDeckReviewsAction())->execute($user->id, $this->deckId);
+
+        $this->showResetConfirmation = false;
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Deck progress has been reset. You can start fresh!',
+        ]);
     }
 
     public function render(
@@ -45,19 +75,19 @@ class DeckStats extends Component
         $cards = $cardRepository->getByDeckId($this->deckId);
         $totalCards = $cards->count();
 
-        // Get all reviews for this deck
-        $allReviews = \Domain\Card\Models\CardReview::where('user_id', $user->id)
+        // Get SRS state for cards in this deck
+        $cardReviews = CardReview::where('user_id', $user->id)
             ->whereHas('card', function ($query) {
                 $query->where('deck_id', $this->deckId);
             })
             ->get();
 
-        $reviewedCardIds = $allReviews->pluck('card_id')->toArray();
+        $reviewedCardIds = $cardReviews->pluck('card_id')->toArray();
         $reviewedCount = count($reviewedCardIds);
         $newCardsCount = $totalCards - $reviewedCount;
 
-        // Count mastered cards (ease_factor >= 2.0)
-        $masteredCount = $allReviews->where('ease_factor', '>=', 2.0)->count();
+        // Count mastered cards (srs_stage >= MASTERED_THRESHOLD)
+        $masteredCount = $cardReviews->filter(fn ($review) => SrsStage::isMastered($review->srs_stage))->count();
 
         // Count learning cards (reviewed but not mastered)
         $learningCount = $reviewedCount - $masteredCount;
@@ -69,29 +99,28 @@ class DeckStats extends Component
             });
         $dueCardsCount = $dueCards->count();
 
-        // Calculate progress percentage
-        $progress = $totalCards > 0 ? (int) (($reviewedCount / $totalCards) * 100) : 0;
+        // Calculate progress using stage-based formula
+        // progress = sum(srs_stage / STAGE_MAX) / total_cards * 100
+        $progress = $cardReviewRepository->getProgress($user->id, $this->deckId, $totalCards);
 
-        // Calculate accuracy rate (correct answers / total reviews)
-        $totalReviewActions = $allReviews->count();
-        $correctReviews = $allReviews->whereIn('rating', ['good', 'easy'])->count();
-        $accuracyRate = $totalReviewActions > 0 ? (int) (($correctReviews / $totalReviewActions) * 100) : 0;
+        // Calculate accuracy rate from review history (excludes practice)
+        $accuracyRate = $cardReviewRepository->getAccuracy($user->id, $this->deckId);
 
-        // Calculate mastery rate (mastered cards / total cards)
-        $masteryRate = $totalCards > 0 ? (($masteredCount / $totalCards) * 100) : 0.0;
+        // Calculate mastery rate (cards with stage >= 7 / total cards)
+        $masteryRate = $cardReviewRepository->getMasteryRate($user->id, $this->deckId, $totalCards);
 
-        // Recent activity for this deck
-        $recentActivity = \Domain\Card\Models\CardReview::where('user_id', $user->id)
+        // Recent activity from review history for this deck
+        $recentActivity = ReviewHistory::where('user_id', $user->id)
             ->whereHas('card', function ($query) {
                 $query->where('deck_id', $this->deckId);
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('reviewed_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(function ($review) use ($cardRepository) {
+            ->map(function ($history) use ($cardRepository) {
                 return [
-                    'review' => \Domain\Card\Data\CardReviewData::fromModel($review),
-                    'card' => $cardRepository->findById($review->card_id),
+                    'history' => \Domain\Card\Data\ReviewHistoryData::fromModel($history),
+                    'card' => $cardRepository->findById($history->card_id),
                 ];
             });
 

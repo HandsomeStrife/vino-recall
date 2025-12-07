@@ -1,0 +1,340 @@
+---
+alwaysApply: true
+---
+
+# WSET SRS Specification (Wine-Themed WaniKani-Style System)
+
+> **Purpose**  
+> This document defines exactly how our spaced repetition system (SRS) works and how deck metrics must be calculated.  
+> Implementations and refactors MUST follow this spec. Do not invent alternative rules or formulas.
+
+---
+
+## 1. Core Concepts
+
+- Each **card** has a discrete **SRS stage** (integer) and a **next_review_at** datetime.
+- Reviews promote or demote the SRS stage.
+- All dashboard metrics are derived from:
+  - card SRS stages
+  - the review log
+
+We are **not** implementing SM-2/Anki style ease-based scheduling.  
+`ease_factor` may exist for future tuning but MUST NOT be used for mastery or progress.
+
+---
+
+## 2. Wine-Themed SRS Stages
+
+We use a 10-stage system (0–9). The **integer stage is authoritative**; the names are cosmetic.
+
+| Stage | Name (Wine-themed) | Description                               |
+| ----- | ------------------ | ----------------------------------------- |
+| 0     | Uncorked           | Brand new, never reviewed                 |
+| 1     | Hobbyist I         | First exposure                            |
+| 2     | Hobbyist II        | Early casual learner                      |
+| 3     | Student I          | Structured study begins                   |
+| 4     | Student II         | Late short-term, concepts taking hold     |
+| 5     | Connoisseur I      | Medium interval, solid familiarity        |
+| 6     | Connoisseur II     | Long interval, very comfortable           |
+| 7     | Professor          | Expert level recall                       |
+| 8     | Sommelier          | Deep, intuitive mastery                   |
+| 9     | Wine God           | “Burned” – considered permanently learned |
+
+```text
+SRS_STAGE_MIN = 0
+SRS_STAGE_MAX = 9
+MASTERED_STAGE_THRESHOLD = 7  # Professor / Sommelier / Wine God
+````
+
+A card is **“mastered”** if `stage >= MASTERED_STAGE_THRESHOLD`.
+
+These names/descriptions should be references in a PHP Enum, so that they can easily be changed at a later date. The stage number is the only thing that should be stored in the database.
+
+---
+
+## 3. Review Intervals
+
+Intervals are assigned based on the **new stage after** a review.
+
+These are approximate WaniKani-style and can be implemented as constants:
+
+```text
+Stage 0 (Uncorked)    : no interval (not scheduled)
+Stage 1 (Hobbyist I)  : +4 hours
+Stage 2 (Hobbyist II) : +8 hours
+Stage 3 (Student I)   : +23 hours
+Stage 4 (Student II)  : +47 hours
+Stage 5 (Connoisseur I)  : +7 days
+Stage 6 (Connoisseur II) : +14 days
+Stage 7 (Professor)      : +30 days
+Stage 8 (Sommelier)      : +120 days
+Stage 9 (Wine God)       : null / no further reviews (retired)
+```
+
+Pseudocode:
+
+```php
+function intervalForStage(int $stage): ?DateInterval {
+    return match ($stage) {
+        1 => new DateInterval('PT4H'),      // 4 hours
+        2 => new DateInterval('PT8H'),      // 8 hours
+        3 => new DateInterval('PT23H'),     // 23 hours
+        4 => new DateInterval('PT47H'),     // 47 hours
+        5 => new DateInterval('P7D'),       // 7 days
+        6 => new DateInterval('P14D'),      // 14 days
+        7 => new DateInterval('P30D'),      // 30 days
+        8 => new DateInterval('P120D'),     // 120 days
+        9 => null,                          // Wine God – retired
+        default => null,
+    };
+}
+```
+
+---
+
+## 4. Stage Promotion & Demotion Rules
+
+All promotion/demotion is based on integer `srs_stage`.
+
+### 4.1 On Correct Answer
+
+```php
+$newStage = min($currentStage + 1, SRS_STAGE_MAX);
+```
+
+### 4.2 On Incorrect Answer
+
+We punish higher stages more heavily:
+
+```php
+if ($currentStage >= 5) {
+    // Connoisseur or higher – knock them down harder
+    $newStage = max($currentStage - 2, 1);
+} elseif ($currentStage > 1) {
+    // Mid learning area
+    $newStage = $currentStage - 1;
+} else {
+    // Stays in early learning
+    $newStage = 1;
+}
+```
+
+### 4.3 After Every Review
+
+```php
+$card->srs_stage = $newStage;
+$interval = intervalForStage($newStage);
+
+if ($interval === null) {
+    $card->next_review_at = null; // Wine God – no further reviews
+} else {
+    $card->next_review_at = now() + $interval;
+}
+```
+
+---
+
+## 5. Data Model Assumptions
+
+You can adapt column names, but the **semantics** must match.
+
+**cards**
+
+* `id`
+* `deck_id`
+* `srs_stage` (int, 0–9, default 0 for new cards)
+* `next_review_at` (datetime, nullable)
+* other card metadata (front, back, etc.)
+
+**card_reviews**
+
+* `id`
+* `card_id`
+* `was_correct` (bool) **or** `rating` enum with at least `correct` / `incorrect`
+* `reviewed_at` (datetime)
+* (optional) `ease_factor` (FLOAT) – can be stored but MUST NOT be used for mastery/progress/accuracy.
+
+---
+
+## 6. Metrics Definitions
+
+All metrics MUST be calculated using the rules below.
+Do not introduce alternative interpretations.
+
+### 6.1 Accuracy
+
+Accuracy is **purely review performance** over a time window.
+
+```php
+$totalReviews   = count($reviewsInWindow);
+$correctReviews = count($reviewsInWindow->where('was_correct', true));
+
+$accuracy = $totalReviews > 0
+    ? ($correctReviews / $totalReviews) * 100
+    : 0;
+```
+
+* Time window can be “all time”, “today”, “last 7 days” etc. but must be explicitly chosen by the caller.
+* **Do not** filter by SRS stage or card type. Every review counts.
+
+**Invariant:**
+
+> If the user reviews 13 cards once and gets all 13 correct,
+> `accuracy` for that window MUST be 100%.
+
+---
+
+### 6.2 Mastery Rate
+
+Mastery rate is based on **card stages**, not on ease, intervals, or number of times seen.
+
+```php
+$totalCards = count($cards);
+$masteredCards = $cards->where('srs_stage', '>=', MASTERED_STAGE_THRESHOLD)->count();
+
+$masteryRate = $totalCards > 0
+    ? ($masteredCards / $totalCards) * 100
+    : 0;
+```
+
+With the threshold defined above:
+
+```text
+MASTERED_STAGE_THRESHOLD = 7  // Professor / Sommelier / Wine God
+```
+
+A card cannot be “mastered” after a single correct answer because:
+
+* New card: stage sequence with only correct answers is
+  0 → 1 → 2 → 3 → 4 → 5 → 6 → 7
+* So minimum **7 correct reviews** required to be counted as mastered.
+
+**Invariant:**
+
+> No card should be counted as mastered after fewer than 7 correct reviews from stage 0.
+
+---
+
+### 6.3 Overall Progress
+
+Progress measures **how far through the SRS journey the deck is**, not just “have I seen every card once”.
+
+For a deck with `N` cards:
+
+```php
+$progress = $totalCards > 0
+    ? (array_sum(
+          $cards->map(fn($card) => $card->srs_stage / SRS_STAGE_MAX)->all()
+      ) / $totalCards) * 100
+    : 0;
+```
+
+Interpretation:
+
+* Each card contributes between 0 and 1 based on its stage (`stage / 9`).
+* The deck’s progress is the average of those contributions.
+
+This ensures:
+
+* **Brand new deck (all Uncorked):**
+
+  ```text
+  all srs_stage = 0
+  → progress = 0%
+  ```
+
+* **Every card seen once and answered correctly (all Hobbyist I, stage 1):**
+
+  ```text
+  per-card contribution = 1/9 ≈ 0.111...
+  → progress ≈ 11.1%, NOT 100%
+  ```
+
+* **All cards Wine God (stage 9):**
+
+  ```text
+  per-card contribution = 9/9 = 1
+  → progress = 100%
+  ```
+
+**Invariant:**
+
+> Progress MUST NOT be “have I seen every card at least once?”.
+> It MUST be stage-based as described above.
+
+---
+
+## 7. Example Scenarios (Acceptance Criteria)
+
+Implementations should satisfy these scenarios exactly.
+
+### Scenario A – New Deck, First Perfect Session
+
+* Deck: 10 cards, all `srs_stage = 0 (Uncorked)` initially.
+* User reviews all 10 cards for the first time.
+* All answers are correct.
+
+**Expected after the session:**
+
+* Each card:
+
+  * `srs_stage = 1 (Hobbyist I)`
+  * `next_review_at ≈ now + 4 hours`
+* Metrics (for “all time” window):
+
+```text
+accuracy    = 100%   (10 correct / 10 total)
+masteryRate = 0%     (no card at stage >= 7)
+progress    ≈ 11.1%  (stage 1/9 for all cards)
+```
+
+### Scenario B – Single Card Reaching Professor
+
+* Single card in the deck.
+* Starting from `srs_stage = 0`, the user answers correctly 7 times in a row (at the scheduled times).
+
+Final stage sequence:
+`0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 (Professor)`.
+
+**Expected at the end:**
+
+```text
+card.srs_stage = 7 (Professor)
+card.next_review_at ≈ now + 30 days
+
+masteryRate = 100%   (1/1 card mastered)
+progress    ≈ 77.8%  (7/9 * 100)
+```
+
+### Scenario C – Regression from Higher Stage
+
+* Card currently at `srs_stage = 6 (Connoisseur II)`.
+* User answers incorrectly.
+
+**Expected:**
+
+```text
+newStage = max(6 - 2, 1) = 4 (Student II)
+card.srs_stage = 4
+card.next_review_at ≈ now + 47 hours
+```
+
+The card is **no longer mastered** because `stage = 4 < 7`.
+
+---
+
+## 8. Implementation Notes
+
+* Any existing `ease_factor` or similar fields may be retained in the schema but MUST NOT influence:
+
+  * SRS stage transitions
+  * `accuracy`
+  * `masteryRate`
+  * `progress`
+* All future scheduling logic must be expressible solely in terms of:
+
+  * integer `srs_stage`
+  * `intervalForStage(stage)`
+  * recorded correctness in `card_reviews`.
+
+---

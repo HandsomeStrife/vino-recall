@@ -9,22 +9,7 @@
     showAdvanced: false,
     
     startSession() {
-        const config = {
-            type: this.sessionType,
-            cardLimit: this.cardLimit,
-            statusFilters: this.statusFilters,
-            randomOrder: this.randomOrder
-        };
-        
-        const params = new URLSearchParams({
-            deck: '{{ $deckId }}',
-            session_type: this.sessionType,
-            card_limit: this.cardLimit || '',
-            status_filters: this.statusFilters.join(','),
-            random_order: this.randomOrder ? '1' : '0'
-        });
-        
-        window.location.href = '/study?' + params.toString();
+        window.location.href = '/study/' + this.sessionType + '/{{ $deckId }}';
     },
     
     toggleFilter(filter) {

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Domain\Card\Repositories;
 
 use Domain\Card\Data\CardData;
+use Domain\Card\Enums\SrsStage;
 use Domain\Card\Models\Card;
+use Domain\Card\Models\CardReview;
+use Domain\Card\Models\ReviewHistory;
 
 class CardRepository
 {
@@ -60,7 +63,7 @@ class CardRepository
      */
     public function getNewCardsForUser(int $userId, ?int $deckId = null, ?int $limit = null): \Illuminate\Support\Collection
     {
-        $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+        $reviewedCardIds = CardReview::where('user_id', $userId)
             ->pluck('card_id')
             ->toArray();
 
@@ -163,11 +166,13 @@ class CardRepository
         foreach ($statusFilters as $filter) {
             switch ($filter) {
                 case 'mistakes':
-                    // Cards marked as incorrect in reviews
-                    $mistakeCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+                    // Cards that have been answered incorrectly (from review_history)
+                    $mistakeCardIds = ReviewHistory::where('user_id', $userId)
                         ->where('is_correct', false)
+                        ->where('is_practice', false)
                         ->whereHas('card', fn ($q) => $q->whereIn('deck_id', $deckIds))
                         ->pluck('card_id')
+                        ->unique()
                         ->toArray();
 
                     $mistakeCards = Card::whereIn('id', $mistakeCardIds)
@@ -178,9 +183,9 @@ class CardRepository
                     break;
 
                 case 'mastered':
-                    // Cards with high ease factor (>= 2.5)
-                    $masteredCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
-                        ->where('ease_factor', '>=', 2.5)
+                    // Cards with srs_stage >= MASTERED_THRESHOLD
+                    $masteredCardIds = CardReview::where('user_id', $userId)
+                        ->where('srs_stage', '>=', SrsStage::MASTERED_THRESHOLD)
                         ->whereHas('card', fn ($q) => $q->whereIn('deck_id', $deckIds))
                         ->pluck('card_id')
                         ->toArray();
@@ -194,7 +199,7 @@ class CardRepository
 
                 case 'new':
                     // Cards never reviewed
-                    $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+                    $reviewedCardIds = CardReview::where('user_id', $userId)
                         ->pluck('card_id')
                         ->toArray();
 
@@ -226,13 +231,14 @@ class CardRepository
             ->map(fn (Card $card) => CardData::fromModel($card));
 
         // Prioritize due cards first, then new cards
-        $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+        $reviewedCardIds = CardReview::where('user_id', $userId)
             ->whereHas('card', fn ($q) => $q->whereIn('deck_id', $deckIds))
             ->pluck('card_id')
             ->toArray();
 
-        $dueCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+        $dueCardIds = CardReview::where('user_id', $userId)
             ->where('next_review_at', '<=', now())
+            ->where('srs_stage', '<', SrsStage::STAGE_MAX) // Not Wine God (retired)
             ->whereHas('card', fn ($q) => $q->whereIn('deck_id', $deckIds))
             ->pluck('card_id')
             ->toArray();
@@ -273,9 +279,10 @@ class CardRepository
     {
         $cards = collect();
 
-        // Get due cards
-        $dueCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+        // Get due cards (not retired)
+        $dueCardIds = CardReview::where('user_id', $userId)
             ->where('next_review_at', '<=', now())
+            ->where('srs_stage', '<', SrsStage::STAGE_MAX) // Not Wine God (retired)
             ->whereHas('card', fn ($q) => $q->whereIn('deck_id', $deckIds))
             ->orderBy('next_review_at', 'asc')
             ->pluck('card_id')
@@ -308,7 +315,7 @@ class CardRepository
      */
     private function getNewCardsForDeckIds(int $userId, array $deckIds, ?int $limit = null): \Illuminate\Support\Collection
     {
-        $reviewedCardIds = \Domain\Card\Models\CardReview::where('user_id', $userId)
+        $reviewedCardIds = CardReview::where('user_id', $userId)
             ->pluck('card_id')
             ->toArray();
 

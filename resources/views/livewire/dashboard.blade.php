@@ -12,30 +12,43 @@
                 @endif
             </div>
 
-            <!-- Hero Deck Cards -->
-            @if($hasEnrolledDecks && $heroDecks->isNotEmpty())
+            <!-- Hero Deck/Collection Cards -->
+            @if($hasEnrolledDecks && $heroItems->isNotEmpty())
                 <div>
                     <h2 class="text-xl font-bold text-white mb-4">Today's Focus</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach($heroDecks as $deckStat)
+                        @foreach($heroItems as $item)
                             @php
-                                // Define deck colors (can be stored in deck table later)
                                 $colors = ['#9E3B4D', '#2D3F2F', '#7A2B3A', '#8D3442', '#4A5D4E'];
-                                $firstCategory = ($deckStat['deck']->categories && $deckStat['deck']->categories->isNotEmpty()) 
-                                    ? $deckStat['deck']->categories->first()->name 
+                                $firstCategory = ($item['deck']->categories && $item['deck']->categories->isNotEmpty()) 
+                                    ? $item['deck']->categories->first()->name 
                                     : null;
-                                $deckColor = $firstCategory ? $colors[crc32($firstCategory) % count($colors)] : $colors[$deckStat['deck']->id % count($colors)];
+                                $deckColor = $firstCategory ? $colors[crc32($firstCategory) % count($colors)] : $colors[$item['deck']->id % count($colors)];
                             @endphp
-                            <x-deck-card 
-                                :deck="$deckStat['deck']"
-                                :deckColor="$deckColor"
-                                :image="$deckStat['image']"
-                                :dueCards="$deckStat['dueCards']"
-                                :newCards="$deckStat['newCards']"
-                                :reviewedCount="$deckStat['reviewedCount']"
-                                :retentionRate="$deckStat['retentionRate']"
-                                :nextReviewTime="$deckStat['nextReviewTime']"
-                            />
+                            
+                            @if($item['type'] === 'collection')
+                                <x-collection-card 
+                                    :collection="$item['deck']"
+                                    :collectionColor="$deckColor"
+                                    :image="$item['image']"
+                                    :dueCards="$item['dueCards']"
+                                    :newCards="$item['newCards']"
+                                    :totalCards="$item['totalCards']"
+                                    :childCount="$item['childCount']"
+                                    :progress="$item['progress']"
+                                />
+                            @else
+                                <x-deck-card 
+                                    :deck="$item['deck']"
+                                    :deckColor="$deckColor"
+                                    :image="$item['image']"
+                                    :dueCards="$item['dueCards']"
+                                    :newCards="$item['newCards']"
+                                    :reviewedCount="$item['reviewedCount']"
+                                    :retentionRate="$item['retentionRate']"
+                                    :nextReviewTime="$item['nextReviewTime'] ?? null"
+                                />
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -87,14 +100,14 @@
 
                 <!-- Right Sidebar (1 column) -->
                 <div class="lg:col-span-1 space-y-6">
-                    @if($otherDecks->isNotEmpty())
-                        <x-dashboard.other-decks :otherDecks="$otherDecks" />
+                    @if($otherItems->isNotEmpty())
+                        <x-dashboard.other-items :otherItems="$otherItems" />
                     @endif
                 </div>
             </div>
         @endif
 
-        <!-- Other Decks -->
+        <!-- Available Decks -->
         @if($availableDecks->isNotEmpty())
             <x-dashboard.available-decks :availableDecks="$availableDecks" />
         @endif

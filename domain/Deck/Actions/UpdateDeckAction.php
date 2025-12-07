@@ -7,6 +7,7 @@ namespace Domain\Deck\Actions;
 use Domain\Deck\Data\DeckData;
 use Domain\Deck\Exceptions\DeckHierarchyException;
 use Domain\Deck\Models\Deck;
+use Illuminate\Support\Str;
 
 class UpdateDeckAction
 {
@@ -22,6 +23,7 @@ class UpdateDeckAction
         ?bool $is_collection = null
     ): DeckData {
         $deck = Deck::findOrFail($deckId);
+        $previousParentId = $deck->parent_deck_id;
 
         $updateData = [];
 
@@ -54,12 +56,14 @@ class UpdateDeckAction
 
         // Handle parent deck assignment (only if not a collection)
         $willBeCollection = $is_collection ?? $deck->is_collection;
+        $newParentId = null;
         
         if ($clear_parent && !$willBeCollection) {
             $updateData['parent_deck_id'] = null;
         } elseif ($parent_deck_id !== null && !$willBeCollection) {
             $this->validateParentAssignment($deck, $parent_deck_id);
             $updateData['parent_deck_id'] = $parent_deck_id;
+            $newParentId = $parent_deck_id;
         }
 
         $deck->update($updateData);
@@ -69,7 +73,51 @@ class UpdateDeckAction
             $deck->categories()->sync($categoryIds);
         }
 
+        // Auto-enroll users if deck was added to a collection
+        if ($newParentId !== null && $previousParentId !== $newParentId) {
+            $this->autoEnrollCollectionSubscribers($deck, $newParentId);
+        }
+
         return DeckData::fromModel($deck->fresh()->load(['categories', 'parent', 'children']));
+    }
+
+    /**
+     * Auto-enroll all users subscribed to the parent collection in the new child deck.
+     */
+    private function autoEnrollCollectionSubscribers(Deck $childDeck, int $parentDeckId): void
+    {
+        $parentDeck = Deck::find($parentDeckId);
+        
+        if ($parentDeck === null) {
+            return;
+        }
+
+        // Get all users enrolled in the parent collection
+        $enrolledUsers = $parentDeck->enrolledUsers()->get();
+
+        foreach ($enrolledUsers as $user) {
+            // Check if user is already enrolled in this child deck
+            $alreadyEnrolled = $user->enrolledDecks()->where('deck_id', $childDeck->id)->exists();
+            
+            if (!$alreadyEnrolled) {
+                // Generate unique shortcode
+                $shortcode = $this->generateUniqueShortcode();
+                
+                $user->enrolledDecks()->attach($childDeck->id, [
+                    'enrolled_at' => now(),
+                    'shortcode' => $shortcode,
+                ]);
+            }
+        }
+    }
+
+    private function generateUniqueShortcode(): string
+    {
+        do {
+            $shortcode = strtoupper(Str::random(8));
+        } while (\DB::table('deck_user')->where('shortcode', $shortcode)->exists());
+
+        return $shortcode;
     }
 
     private function validateCollectionChange(Deck $deck, bool $isCollection): void

@@ -10,6 +10,7 @@ use Domain\Card\Data\StudySessionConfigData;
 use Domain\Card\Enums\StudySessionType;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
+use Domain\Deck\Repositories\DeckRepository;
 use Domain\User\Repositories\UserRepository;
 use Livewire\Component;
 
@@ -22,6 +23,8 @@ class StudyInterface extends Component
     public ?int $deckId = null;
 
     public ?string $deckShortcode = null;
+
+    public string $exitUrl = '';
 
     /** @var array<string> */
     public array $selectedAnswers = [];
@@ -39,62 +42,75 @@ class StudyInterface extends Component
 
     public bool $reportSubmitted = false;
 
+    // Shuffled answers cache (persists per card to avoid re-shuffling)
+    public array $shuffledAnswersCache = [];
+
+    public ?int $shuffledForCardId = null;
+
+    // Session completion state
+    public bool $sessionComplete = false;
+
+    public bool $hasMoreCards = false;
+
+    public int $cardsReviewedThisSession = 0;
+
     public function mount(
+        string $type,
+        string $deck,
         UserRepository $userRepository,
         CardReviewRepository $cardReviewRepository,
         CardRepository $cardRepository,
-        \Domain\Deck\Repositories\DeckRepository $deckRepository
+        DeckRepository $deckRepository
     ): void {
-        // Validate query parameters
-        $validated = request()->validate([
-            'deck' => ['required', 'string', 'size:8', 'alpha_num'],
-            'session_type' => ['sometimes', 'string', 'in:normal,deep_study,practice'],
-            'card_limit' => ['sometimes', 'integer', 'min:1', 'max:1000'],
-            'status_filters' => ['sometimes', 'string'],
-            'random_order' => ['sometimes', 'in:0,1'],
-        ]);
-
-        $shortcode = $validated['deck'];
-
-        // Find deck by shortcode
-        $user = $userRepository->getLoggedInUser();
-        $deck = $deckRepository->findByShortcode($user->id, $shortcode);
-
-        if (!$deck) {
-            $this->redirect(route('library'));
-
+        // Validate session type
+        if (!in_array($type, ['normal', 'deep_study', 'practice'])) {
+            $this->redirect(route('enrolled'));
             return;
         }
 
-        $this->deckId = $deck->id;
+        // Validate deck shortcode format
+        if (!preg_match('/^[A-Za-z0-9]{8}$/', $deck)) {
+            $this->redirect(route('enrolled'));
+            return;
+        }
+
+        $shortcode = $deck;
+
+        // Find deck by shortcode
+        $user = $userRepository->getLoggedInUser();
+        $deckData = $deckRepository->findByShortcode($user->id, $shortcode);
+
+        if (!$deckData) {
+            $this->redirect(route('enrolled'));
+            return;
+        }
+
+        $this->deckId = $deckData->id;
         $this->deckShortcode = $shortcode;
 
-        // Parse session configuration from query params
-        $this->initializeSessionConfig();
+        // Determine exit URL based on deck's parent
+        $this->exitUrl = $this->determineExitUrl($deckData, $deckRepository);
+
+        // Parse session configuration from route param
+        $this->initializeSessionConfig($type);
 
         // Load cards for the session
         $this->loadSessionCards($userRepository, $cardRepository);
     }
 
-    private function initializeSessionConfig(): void
+    private function determineExitUrl($deckData, DeckRepository $deckRepository): string
     {
-        // Query parameters are already validated in mount()
-        $sessionType = request()->query('session_type', 'normal');
-        $cardLimit = request()->query('card_limit') ? (int) request()->query('card_limit') : null;
-        $statusFiltersString = request()->query('status_filters');
-
-        // Parse and validate status filters
-        $statusFilters = null;
-        if ($statusFiltersString) {
-            $filters = array_filter(explode(',', $statusFiltersString));
-            // Validate each filter is an allowed value
-            $allowedFilters = ['new', 'due', 'reviewed'];
-            $validFilters = array_intersect($filters, $allowedFilters);
-            $statusFilters = !empty($validFilters) ? array_values($validFilters) : null;
+        // If deck has a parent (is a child deck), return to collection page
+        if ($deckData->parent_deck_id !== null) {
+            return route('collection.show', ['id' => $deckData->parent_deck_id]);
         }
 
-        $randomOrder = request()->query('random_order', '0') === '1';
+        // Otherwise return to enrolled page
+        return route('enrolled');
+    }
 
+    private function initializeSessionConfig(string $sessionType): void
+    {
         $type = match ($sessionType) {
             'deep_study' => StudySessionType::DEEP_STUDY,
             'practice' => StudySessionType::PRACTICE,
@@ -105,10 +121,10 @@ class StudyInterface extends Component
 
         $this->sessionConfig = new StudySessionConfigData(
             type: $type,
-            cardLimit: $cardLimit,
-            statusFilters: $statusFilters,
+            cardLimit: null,
+            statusFilters: null,
             trackSrs: $trackSrs,
-            randomOrder: $randomOrder,
+            randomOrder: false,
         );
     }
 
@@ -137,12 +153,54 @@ class StudyInterface extends Component
     private function loadNextCard(): void
     {
         $this->currentCardIndex++;
+        $this->cardsReviewedThisSession++;
 
         if ($this->currentCardIndex < count($this->sessionCards)) {
             $this->currentCardId = $this->sessionCards[$this->currentCardIndex];
         } else {
+            // Session complete - check if there are more cards available
             $this->currentCardId = null;
+            $this->sessionComplete = true;
+            $this->checkForMoreCards();
         }
+    }
+
+    private function checkForMoreCards(): void
+    {
+        // Only check for more cards in normal review sessions
+        if ($this->sessionConfig->type !== StudySessionType::NORMAL) {
+            $this->hasMoreCards = false;
+            return;
+        }
+
+        $userRepository = app(UserRepository::class);
+        $cardRepository = app(CardRepository::class);
+
+        $user = $userRepository->getLoggedInUser();
+
+        // Check if there are more cards available
+        $moreCards = $cardRepository->getCardsForSession(
+            $user->id,
+            $this->deckId,
+            $this->sessionConfig
+        );
+
+        $this->hasMoreCards = $moreCards->count() > 0;
+    }
+
+    public function loadMoreCards(): void
+    {
+        $userRepository = app(UserRepository::class);
+        $cardRepository = app(CardRepository::class);
+
+        // Reset session state
+        $this->sessionComplete = false;
+        $this->hasMoreCards = false;
+        $this->currentCardIndex = 0;
+        $this->cardsReviewedThisSession = 0;
+
+        // Load new batch of cards
+        $this->loadSessionCards($userRepository, $cardRepository);
     }
 
     public function reveal(): void
@@ -152,52 +210,73 @@ class StudyInterface extends Component
     }
 
     /**
-     * Toggle an answer selection for multi-answer support.
+     * Submit the selected answers, create review, and reveal the correct answer.
+     * Accepts answers from client-side Alpine state to avoid round-trips on selection.
+     *
+     * @param array<string> $answers The selected answers from the client
      */
-    public function toggleAnswer(string $answer): void
+    public function submitAnswers(array $answers, ReviewCardAction $reviewCardAction, UserRepository $userRepository): void
     {
-        if (in_array($answer, $this->selectedAnswers, true)) {
-            // Remove from selection
-            $this->selectedAnswers = array_values(array_filter(
-                $this->selectedAnswers,
-                fn ($a) => $a !== $answer
-            ));
-        } else {
-            // Add to selection
-            $this->selectedAnswers[] = $answer;
-        }
-    }
+        // Store the answers from Alpine
+        $this->selectedAnswers = $answers;
 
-    /**
-     * Submit the selected answers and reveal the correct answer.
-     */
-    public function submitAnswers(): void
-    {
         if (count($this->selectedAnswers) === 0) {
             return;
         }
 
-        $this->revealed = true;
-        $this->dispatch('card-revealed');
-    }
-
-    public function continue(ReviewCardAction $reviewCardAction, UserRepository $userRepository): void
-    {
         if ($this->currentCardId === null) {
             return;
         }
 
+        // Create the review immediately on submission (not on continue)
+        // This ensures the card is marked as reviewed even if user refreshes
         $user = $userRepository->getLoggedInUser();
-
-        // ReviewCardAction now handles practice mode and accepts array of answers
         $isPractice = !$this->sessionConfig->trackSrs;
-        $answersToSubmit = count($this->selectedAnswers) > 0 ? $this->selectedAnswers : null;
-        $reviewCardAction->execute($user->id, $this->currentCardId, $answersToSubmit, $isPractice);
+        $reviewCardAction->execute($user->id, $this->currentCardId, $this->selectedAnswers, $isPractice);
 
+        $this->revealed = true;
+    }
+
+    public function continue(): void
+    {
+        // Simply advance to the next card (review was already created in submitAnswers)
         $this->revealed = false;
         $this->selectedAnswers = [];
         $this->resetReportWidget();
+        $this->resetShuffledAnswers();
         $this->loadNextCard();
+    }
+
+    private function resetShuffledAnswers(): void
+    {
+        $this->shuffledAnswersCache = [];
+        $this->shuffledForCardId = null;
+    }
+
+    private function getShuffledAnswers(array $answerChoices, int $cardId): array
+    {
+        // Return cached shuffle if for the same card
+        if ($this->shuffledForCardId === $cardId && !empty($this->shuffledAnswersCache)) {
+            return $this->shuffledAnswersCache;
+        }
+
+        // Create array with original indices
+        $answersWithIndices = [];
+        foreach ($answerChoices as $index => $choice) {
+            $answersWithIndices[] = [
+                'originalIndex' => $index,
+                'choice' => $choice,
+            ];
+        }
+
+        // Shuffle the array
+        shuffle($answersWithIndices);
+
+        // Cache the result
+        $this->shuffledAnswersCache = $answersWithIndices;
+        $this->shuffledForCardId = $cardId;
+
+        return $answersWithIndices;
     }
 
     public function toggleReportWidget(): void
@@ -232,21 +311,25 @@ class StudyInterface extends Component
         $this->reportSubmitted = false;
     }
 
-    public function render(CardRepository $cardRepository, \Domain\Deck\Repositories\DeckRepository $deckRepository)
+    public function render(CardRepository $cardRepository, DeckRepository $deckRepository)
     {
         $card = null;
         $deck = null;
         $isCorrect = null;
         $progress = null;
+        $shuffledAnswers = [];
 
         if ($this->currentCardId !== null) {
             $card = $cardRepository->findById($this->currentCardId);
             if ($card) {
                 $deck = $deckRepository->findById($card->deck_id);
 
+                // Get shuffled answers
+                $answerChoices = $card->answer_choices ?? [];
+                $shuffledAnswers = $this->getShuffledAnswers($answerChoices, $card->id);
+
                 // Determine if answer is correct (for display after reveal)
                 if ($this->revealed && count($this->selectedAnswers) > 0) {
-                    $answerChoices = $card->answer_choices ?? [];
                     $correctIndices = $card->correct_answer_indices ?? [];
 
                     // Get correct answers as strings
@@ -286,6 +369,11 @@ class StudyInterface extends Component
             'sessionConfig' => $this->sessionConfig,
             'progress' => $progress,
             'deckShortcode' => $this->deckShortcode,
+            'exitUrl' => $this->exitUrl,
+            'shuffledAnswers' => $shuffledAnswers,
+            'sessionComplete' => $this->sessionComplete,
+            'hasMoreCards' => $this->hasMoreCards,
+            'cardsReviewedThisSession' => $this->cardsReviewedThisSession,
         ]);
     }
 }

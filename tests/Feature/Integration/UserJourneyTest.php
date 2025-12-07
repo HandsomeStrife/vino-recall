@@ -34,8 +34,8 @@ test('complete user journey: register, login, view dashboard, study cards', func
     $response->assertStatus(200)
         ->assertSee('Welcome back');
 
-    // Visit study page
-    $response = $this->get(route('study'));
+    // Visit enrolled page
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 
     // Logout
@@ -99,8 +99,8 @@ test('user study session: select deck, study cards, rate cards, view progress', 
     $response->assertStatus(200)
         ->assertSee($deck->name);
 
-    // Visit study page
-    $response = $this->get(route('study'));
+    // Visit enrolled page
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 
     // Enroll in deck
@@ -198,8 +198,8 @@ test('complete study session with multiple cards', function () {
         ]);
     }
 
-    // Visit study page
-    $response = $this->get(route('study'));
+    // Visit enrolled page
+    $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 
     // Verify dashboard shows enrolled deck with daily goal

@@ -7,6 +7,7 @@ namespace Domain\Deck\Actions;
 use Domain\Deck\Data\DeckData;
 use Domain\Deck\Exceptions\DeckHierarchyException;
 use Domain\Deck\Models\Deck;
+use Illuminate\Support\Str;
 
 class CreateDeckAction
 {
@@ -54,6 +55,45 @@ class CreateDeckAction
             $deck->categories()->sync($categoryIds);
         }
 
+        // Auto-enroll users if deck was created as child of a collection
+        if ($parent_deck_id !== null) {
+            $this->autoEnrollCollectionSubscribers($deck, $parent_deck_id);
+        }
+
         return DeckData::fromModel($deck->load(['categories', 'parent', 'children']));
+    }
+
+    /**
+     * Auto-enroll all users subscribed to the parent collection in the new child deck.
+     */
+    private function autoEnrollCollectionSubscribers(Deck $childDeck, int $parentDeckId): void
+    {
+        $parentDeck = Deck::find($parentDeckId);
+        
+        if ($parentDeck === null) {
+            return;
+        }
+
+        // Get all users enrolled in the parent collection
+        $enrolledUsers = $parentDeck->enrolledUsers()->get();
+
+        foreach ($enrolledUsers as $user) {
+            // Generate unique shortcode
+            $shortcode = $this->generateUniqueShortcode();
+            
+            $user->enrolledDecks()->attach($childDeck->id, [
+                'enrolled_at' => now(),
+                'shortcode' => $shortcode,
+            ]);
+        }
+    }
+
+    private function generateUniqueShortcode(): string
+    {
+        do {
+            $shortcode = strtoupper(Str::random(8));
+        } while (\DB::table('deck_user')->where('shortcode', $shortcode)->exists());
+
+        return $shortcode;
     }
 }

@@ -6,7 +6,6 @@ namespace App\Livewire;
 
 use Domain\Card\Enums\SrsStage;
 use Domain\Card\Models\CardReview;
-use Domain\Card\Models\ReviewHistory;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
 use Domain\Deck\Data\DeckData;
@@ -15,32 +14,8 @@ use Domain\Deck\Repositories\DeckRepository;
 use Domain\User\Repositories\UserRepository;
 use Livewire\Component;
 
-class Dashboard extends Component
+class Enrolled extends Component
 {
-    private function formatTimeUntil(\Carbon\Carbon $datetime): string
-    {
-        $now = now();
-        $diff = $now->diff($datetime);
-
-        if ($diff->d > 0) {
-            if ($diff->h > 0) {
-                return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ' . $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
-            }
-
-            return $diff->d . ' day' . ($diff->d > 1 ? 's' : '');
-        } elseif ($diff->h > 0) {
-            if ($diff->i > 0) {
-                return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ' . $diff->i . ' minute' . ($diff->i > 1 ? 's' : '');
-            }
-
-            return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
-        } else {
-            $minutes = max(1, $diff->i);
-
-            return $minutes . ' minute' . ($minutes > 1 ? 's' : '');
-        }
-    }
-
     public function render(
         UserRepository $userRepository,
         CardReviewRepository $cardReviewRepository,
@@ -50,53 +25,6 @@ class Dashboard extends Component
         $user = $userRepository->getLoggedInUser();
         $allEnrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
         $dueCards = $cardReviewRepository->getDueCardsForUser($user->id);
-        $masteredCount = $cardReviewRepository->getMasteredCardsCount($user->id);
-        $streak = $cardReviewRepository->getCurrentStreak($user->id);
-        $recentActivity = $cardReviewRepository->getRecentActivity($user->id, 5);
-        $mistakes = $cardReviewRepository->getMistakes($user->id, 5);
-        $availableDecks = $deckRepository->getAvailableDecks($user->id);
-
-        // Daily goal: Review 20 cards (from review_history, excluding practice)
-        $dailyGoal = 20;
-        $todayReviews = ReviewHistory::where('user_id', $user->id)
-            ->where('is_practice', false)
-            ->whereDate('reviewed_at', today())
-            ->count();
-        $dailyGoalProgress = min(100, (int) (($todayReviews / $dailyGoal) * 100));
-
-        // Week activity for streak visualization
-        $weekActivity = collect();
-        for ($day = 6; $day >= 0; $day--) {
-            $date = now()->subDays($day);
-            $dayReviews = ReviewHistory::where('user_id', $user->id)
-                ->where('is_practice', false)
-                ->whereDate('reviewed_at', $date->toDateString())
-                ->count();
-
-            $weekActivity->push([
-                'date' => $date,
-                'completed' => $dayReviews >= $dailyGoal,
-            ]);
-        }
-
-        // Get cards for recent activity and mistakes (both now use ReviewHistoryData)
-        $recentActivityWithCards = $recentActivity->map(function ($activity) use ($cardRepository) {
-            $card = $cardRepository->findById($activity->card_id);
-
-            return [
-                'activity' => $activity,
-                'card' => $card,
-            ];
-        });
-
-        $mistakesWithCards = $mistakes->map(function ($history) use ($cardRepository) {
-            $card = $cardRepository->findById($history->card_id);
-
-            return [
-                'history' => $history,
-                'card' => $card,
-            ];
-        });
 
         // Separate enrolled decks into collections and standalone
         $enrolledCollections = $allEnrolledDecks->filter(fn ($deck) => $deck->is_collection);
@@ -105,47 +33,20 @@ class Dashboard extends Component
         // Build collection stats
         $collectionsWithStats = $enrolledCollections->map(function ($collection) use ($cardRepository, $cardReviewRepository, $user, $dueCards, $allEnrolledDecks) {
             return $this->buildCollectionStats($collection, $cardRepository, $cardReviewRepository, $user, $dueCards, $allEnrolledDecks);
-        })->sortBy(function ($stat) {
-            // Sort by due cards descending
-            return $stat['dueCards'] > 0 ? [1, -$stat['dueCards']] : [2, 0];
-        })->values();
+        })->sortByDesc(fn ($stat) => $stat['dueCards'])->values();
 
         // Build standalone deck stats
         $standaloneWithStats = $enrolledStandalone->map(function ($deck) use ($cardRepository, $cardReviewRepository, $user, $dueCards) {
             return $this->buildDeckStats($deck, $cardRepository, $cardReviewRepository, $user, $dueCards);
-        })->sortBy(function ($stat) {
-            return $stat['dueCards'] > 0 ? [1, -$stat['dueCards']] : [2, 0];
-        })->values();
-
-        // Merge collections and standalone for hero display (prioritize by due cards)
-        $allItemsWithStats = $collectionsWithStats->merge($standaloneWithStats)
-            ->sortBy(function ($stat) {
-                return $stat['dueCards'] > 0 ? [1, -$stat['dueCards']] : [2, 0];
-            })->values();
-
-        // Take top 2 items for hero
-        $heroItems = $allItemsWithStats->take(2);
-
-        // Remaining items for sidebar
-        $otherItems = $allItemsWithStats->skip(2);
+        })->sortByDesc(fn ($stat) => $stat['dueCards'])->values();
 
         $hasEnrolledDecks = $enrolledCollections->isNotEmpty() || $enrolledStandalone->isNotEmpty();
 
-        return view('livewire.dashboard', [
-            'userName' => $user->name,
-            'heroItems' => $heroItems,
-            'otherItems' => $otherItems,
+        return view('livewire.enrolled', [
+            'collectionsWithStats' => $collectionsWithStats,
+            'standaloneWithStats' => $standaloneWithStats,
             'hasEnrolledDecks' => $hasEnrolledDecks,
-            'dueCardsCount' => $dueCards->count(),
-            'masteredCount' => $masteredCount,
-            'streak' => $streak,
-            'recentActivityWithCards' => $recentActivityWithCards,
-            'mistakesWithCards' => $mistakesWithCards,
-            'availableDecks' => $availableDecks,
-            'dailyGoal' => $dailyGoal,
-            'todayReviews' => $todayReviews,
-            'dailyGoalProgress' => $dailyGoalProgress,
-            'weekActivity' => $weekActivity,
+            'totalDueCards' => $dueCards->count(),
         ]);
     }
 
@@ -166,7 +67,7 @@ class Dashboard extends Component
         $newCardsCount = 0;
         $childCount = $childDecks->count();
 
-        // Get all card review records for user (SRS state)
+        // Get all reviewed card IDs for user
         $reviewedCardIds = CardReview::where('user_id', $user->id)
             ->pluck('card_id')
             ->toArray();
@@ -175,10 +76,10 @@ class Dashboard extends Component
             $cards = $cardRepository->getByDeckId($childDeck->id);
             $totalCards += $cards->count();
 
-            // Sum stages for this child deck
-            $childCardIds = $cards->pluck('id')->toArray();
+            // Sum stages for progress calculation
+            $cardIds = $cards->pluck('id')->toArray();
             $stageSum += CardReview::where('user_id', $user->id)
-                ->whereIn('card_id', $childCardIds)
+                ->whereIn('card_id', $cardIds)
                 ->sum('srs_stage');
 
             // Count due cards for this child
@@ -186,7 +87,7 @@ class Dashboard extends Component
                 return $cards->contains(fn ($card) => $card->id === $review->card_id);
             })->count();
 
-            // Count new cards for this child (not in card_reviews)
+            // Count new cards for this child
             $newCardsCount += $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
         }
 
@@ -235,21 +136,6 @@ class Dashboard extends Component
         // Use accuracy from review history
         $accuracyRate = $cardReviewRepository->getAccuracy($user->id, $deck->id);
 
-        $nextReviewTime = null;
-        if ($dueCardsForDeck === 0 && $reviewedCount > 0) {
-            $cardIds = $cards->pluck('id')->toArray();
-            $nextReview = CardReview::where('user_id', $user->id)
-                ->whereIn('card_id', $cardIds)
-                ->where('next_review_at', '>', now())
-                ->where('srs_stage', '<', SrsStage::STAGE_MAX) // Not retired
-                ->orderBy('next_review_at', 'asc')
-                ->first();
-
-            if ($nextReview) {
-                $nextReviewTime = $this->formatTimeUntil($nextReview->next_review_at);
-            }
-        }
-
         return [
             'type' => 'deck',
             'deck' => $deck,
@@ -259,7 +145,6 @@ class Dashboard extends Component
             'newCards' => $newCardsForDeck,
             'progress' => (int) round($progress),
             'retentionRate' => $accuracyRate,
-            'nextReviewTime' => $nextReviewTime,
             'image' => DeckImageHelper::getImagePath($deck),
         ];
     }

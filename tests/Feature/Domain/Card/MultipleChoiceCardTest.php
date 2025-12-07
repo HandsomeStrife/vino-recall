@@ -6,9 +6,10 @@ use Domain\Admin\Models\Admin;
 use Domain\Card\Actions\CreateCardAction;
 use Domain\Card\Actions\ReviewCardAction;
 use Domain\Card\Actions\UpdateCardAction;
-use Domain\Card\Enums\CardRating;
 use Domain\Card\Enums\CardType;
 use Domain\Card\Models\Card;
+use Domain\Card\Models\CardReview;
+use Domain\Card\Models\ReviewHistory;
 use Domain\Deck\Models\Deck;
 use Domain\User\Models\User;
 
@@ -159,14 +160,19 @@ test('can review a card with correct single answer', function (): void {
         selectedAnswers: ['Paris']
     );
 
-    expect($reviewData->rating)->toBe(CardRating::CORRECT->value)
-        ->and($reviewData->is_correct)->toBeTrue();
+    expect($reviewData->srs_stage)->toBe(1); // Advanced from 0 to 1
 
+    // Check review history
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeTrue();
+
+    // Check card review state
     $this->assertDatabaseHas('card_reviews', [
         'user_id' => $user->id,
         'card_id' => $card->id,
-        'rating' => 'correct',
-        'is_correct' => true,
+        'srs_stage' => 1,
     ]);
 });
 
@@ -191,14 +197,17 @@ test('can review a card with incorrect single answer', function (): void {
         selectedAnswers: ['London']
     );
 
-    expect($reviewData->rating)->toBe(CardRating::INCORRECT->value)
-        ->and($reviewData->is_correct)->toBeFalse();
+    // Check review history
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeFalse();
 
+    // Check card review state (incorrect from stage 0 goes to stage 1)
     $this->assertDatabaseHas('card_reviews', [
         'user_id' => $user->id,
         'card_id' => $card->id,
-        'rating' => 'incorrect',
-        'is_correct' => false,
+        'srs_stage' => 1,
     ]);
 });
 
@@ -218,13 +227,16 @@ test('multi-answer card requires all correct answers selected', function (): voi
     $action = new ReviewCardAction();
 
     // Only selected one of two correct answers - should be incorrect (all-or-nothing)
-    $reviewData = $action->execute(
+    $action->execute(
         userId: $user->id,
         cardId: $card->id,
         selectedAnswers: ['Merlot']
     );
 
-    expect($reviewData->is_correct)->toBeFalse();
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeFalse();
 });
 
 test('multi-answer card is correct when all answers selected', function (): void {
@@ -242,13 +254,16 @@ test('multi-answer card is correct when all answers selected', function (): void
 
     $action = new ReviewCardAction();
 
-    $reviewData = $action->execute(
+    $action->execute(
         userId: $user->id,
         cardId: $card->id,
         selectedAnswers: ['Merlot', 'Syrah']
     );
 
-    expect($reviewData->is_correct)->toBeTrue();
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeTrue();
 });
 
 test('multi-answer card is incorrect when extra wrong answer selected', function (): void {
@@ -267,13 +282,16 @@ test('multi-answer card is incorrect when extra wrong answer selected', function
     $action = new ReviewCardAction();
 
     // Selected both correct answers + one wrong
-    $reviewData = $action->execute(
+    $action->execute(
         userId: $user->id,
         cardId: $card->id,
         selectedAnswers: ['Merlot', 'Syrah', 'Chardonnay']
     );
 
-    expect($reviewData->is_correct)->toBeFalse();
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeFalse();
 });
 
 test('hasMultipleCorrectAnswers returns false for single correct answer', function (): void {
@@ -309,11 +327,14 @@ test('review with no answer selected is incorrect', function (): void {
 
     $action = new ReviewCardAction();
 
-    $reviewData = $action->execute(
+    $action->execute(
         userId: $user->id,
         cardId: $card->id,
         selectedAnswers: []
     );
 
-    expect($reviewData->is_correct)->toBeFalse();
+    $history = ReviewHistory::where('user_id', $user->id)
+        ->where('card_id', $card->id)
+        ->first();
+    expect($history->is_correct)->toBeFalse();
 });
