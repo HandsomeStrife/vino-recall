@@ -9,7 +9,7 @@
     'hasMaterials' => false,
 ])
 
-<div id="deck-{{ $deck->id }}" class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full scroll-mt-8 transition-all duration-300">
+<div x-data="{ showDescription: false }" id="deck-{{ $deck->id }}" class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full scroll-mt-8 transition-all duration-300">
     <!-- Colored Title Banner with Enrolled Badge -->
     <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $deckColor }};">
         <div>
@@ -38,7 +38,16 @@
         <div class="flex-1 p-6 pr-64 flex flex-col">
             <div class="flex-1">
                 @if($description)
-                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ $description }}</p>
+                    <p class="text-gray-600 text-sm mb-3">
+                        @if(strlen($description) > 80)
+                            {{ Str::limit($description, 80, '') }} ...
+                            <a @click="showDescription = true" class="text-burgundy-600 hover:text-burgundy-800 font-medium cursor-pointer text-xs">
+                                read more
+                            </a>
+                        @else
+                            {{ $description }}
+                        @endif
+                    </p>
                 @endif
                 
                 <div class="text-sm text-gray-500 mb-4">
@@ -64,5 +73,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Description Modal -->
+    <x-modal.popup x-model="showDescription" x-modelable="open" :light="true">
+        <x-slot name="title">
+            {{ $deck->name }}
+        </x-slot>
+
+        <p class="text-gray-600">{{ $description }}</p>
+    </x-modal.popup>
 </div>
 

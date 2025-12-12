@@ -321,3 +321,90 @@ Run tests with `sail pest`
 
 5. **Project Awareness**  
    - In Cursor’s agent mode, search the codebase for relevant references (models, data, actions, repositories) before creating new ones.
+
+# Modal Component Usage (`<x-modal.slideover>` and `<x-modal.popup>`)
+
+This document outlines the correct way to use the standard modal components in this project. Adhering to these rules ensures consistency and leverages the component design.
+
+## Core Principles
+
+1.  **Title via Slot:** The modal's title **MUST** be placed within `<x-slot name="title">`. Do **NOT** use the `title="..."` attribute.
+2.  **No Content Slot:** The main body/content of the modal **MUST** be placed directly within the `<x-modal.*>` tags. Do **NOT** use `<x-slot name="content">`.
+3.  **Actions Slot:** Action buttons (like Save, Cancel, Confirm, Delete) **MUST** be placed within `<x-slot name="actions">`. Do **NOT** place them directly as children of the modal component outside this slot.
+
+## Correct Example (`<x-modal.popup>`)
+
+```blade
+<x-modal.popup 
+    x-model="confirmingDeletion" 
+    x-modelable="open"
+    max-width="lg"
+>
+    <x-slot name="title">
+        Confirm Deletion
+    </x-slot>
+
+    {{-- Main content goes directly here --}}
+    <p class="text-sm text-gray-600">
+        Are you sure you want to delete this item? This action cannot be undone.
+    </p>
+
+    {{-- Action buttons MUST be in the actions slot --}}
+    <x-slot name="actions">
+        <div class="flex justify-end space-x-3">
+            <x-button.secondary type="button" @click="confirmingDeletion = false">
+                Cancel
+            </x-button.secondary>
+            <x-button.danger type="button" wire:click="deleteItem">
+                Delete
+            </x-button.danger>
+        </div>
+    </x-slot>
+</x-modal.popup>
+```
+
+## Correct Example (`<x-modal.slideover>`)
+
+```blade
+<x-modal.slideover 
+    x-model="showForm"
+    x-modelable="open"
+>
+    <x-slot name="title">
+        Add New Item
+    </x-slot>
+
+    {{-- Main content (e.g., a form) goes directly here --}}
+
+    {{-- Modal Action buttons MUST be in the actions slot --}}
+    <x-slot name="actions">
+        <div class="flex justify-end space-x-3">
+            <x-button.secondary type="button" @click="showForm = false">
+                Cancel
+            </x-button.secondary>
+            <x-button.primary type="submit" form="yourFormId"> {{-- Example: use form attribute if needed --}}
+                Save Item
+            </x-button.primary>
+            {{-- Alternatively, place submit button inside form and only Cancel here --}}
+        </div>
+    </x-slot>
+</x-modal.slideover>
+```
+
+## Incorrect Usage (Avoid This)
+
+```blade
+{{-- INCORRECT: Uses title attribute --}}
+<x-modal.popup x-model="show" title="My Title"> 
+    
+    {{-- INCORRECT: Uses content slot --}}
+    <x-slot name="content"> 
+        My modal content.
+    </x-slot>
+
+    {{-- INCORRECT: Places actions outside actions slot --}}
+    <div class="flex justify-end">
+        <x-button>OK</x-button> 
+    </div>
+</x-modal.popup>
+``` 
