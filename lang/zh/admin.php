@@ -35,4 +35,3 @@ return [
     'answer_choices' => 'Answer Choices',
     'correct_answer' => 'Correct Answer',
 ];
-

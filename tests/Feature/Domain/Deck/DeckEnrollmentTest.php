@@ -12,7 +12,7 @@ test('user can enroll in a deck', function () {
     $user = User::factory()->create();
     $deck = Deck::factory()->create();
 
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $shortcode = $action->execute($user->id, $deck->id);
 
     expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeTrue();
@@ -25,11 +25,11 @@ test('user can unenroll from a deck', function () {
     $deck = Deck::factory()->create();
 
     // First enroll using the action (which generates shortcode)
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $action->execute($user->id, $deck->id);
 
     // Then unenroll
-    $unenrollAction = new UnenrollUserFromDeckAction();
+    $unenrollAction = new UnenrollUserFromDeckAction;
     $unenrollAction->execute($user->id, $deck->id);
 
     expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeFalse();
@@ -39,7 +39,7 @@ test('enrolling in same deck multiple times is idempotent', function () {
     $user = User::factory()->create();
     $deck = Deck::factory()->create();
 
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $shortcode1 = $action->execute($user->id, $deck->id);
     $shortcode2 = $action->execute($user->id, $deck->id);
 
@@ -52,12 +52,12 @@ test('repository can check if user is enrolled in deck', function () {
     $user = User::factory()->create();
     $deck = Deck::factory()->create();
 
-    $repository = new DeckRepository();
+    $repository = new DeckRepository;
 
     expect($repository->isUserEnrolledInDeck($user->id, $deck->id))->toBeFalse();
 
     // Use action to enroll (generates shortcode)
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $action->execute($user->id, $deck->id);
 
     expect($repository->isUserEnrolledInDeck($user->id, $deck->id))->toBeTrue();
@@ -70,11 +70,11 @@ test('repository can get user enrolled decks', function () {
     $deck3 = Deck::factory()->create();
 
     // Use action to enroll (generates shortcode)
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $action->execute($user->id, $deck1->id);
     $action->execute($user->id, $deck2->id);
 
-    $repository = new DeckRepository();
+    $repository = new DeckRepository;
     $enrolledDecks = $repository->getUserEnrolledDecks($user->id);
 
     expect($enrolledDecks)->toHaveCount(2);
@@ -87,7 +87,7 @@ test('enrollment generates unique shortcode per user-deck pair', function () {
     $deck1 = Deck::factory()->create();
     $deck2 = Deck::factory()->create();
 
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $shortcode1 = $action->execute($user->id, $deck1->id);
     $shortcode2 = $action->execute($user->id, $deck2->id);
 
@@ -99,7 +99,7 @@ test('different users get different shortcodes for same deck', function () {
     $user2 = User::factory()->create();
     $deck = Deck::factory()->create();
 
-    $action = new EnrollUserInDeckAction();
+    $action = new EnrollUserInDeckAction;
     $shortcode1 = $action->execute($user1->id, $deck->id);
     $shortcode2 = $action->execute($user2->id, $deck->id);
 

@@ -19,7 +19,7 @@ class ReviewCardAction
     /**
      * Execute a card review.
      *
-     * @param array<string>|null $selectedAnswers Array of selected answer strings for multi-answer support
+     * @param  array<string>|null  $selectedAnswers  Array of selected answer strings for multi-answer support
      */
     public function execute(int $userId, int $cardId, ?array $selectedAnswers = null, bool $isPractice = false): CardReviewData
     {
@@ -122,7 +122,7 @@ class ReviewCardAction
     /**
      * Check if the selected answers are correct (all-or-nothing for multi-answer).
      *
-     * @param array<string>|null $selectedAnswers
+     * @param  array<string>|null  $selectedAnswers
      */
     private function isAnswerCorrect(Card $card, ?array $selectedAnswers): bool
     {
@@ -138,7 +138,7 @@ class ReviewCardAction
         $answerChoices = json_decode($card->answer_choices, true);
         $correctIndices = json_decode($card->correct_answer_indices, true);
 
-        if (!is_array($answerChoices) || !is_array($correctIndices)) {
+        if (! is_array($answerChoices) || ! is_array($correctIndices)) {
             return false;
         }
 

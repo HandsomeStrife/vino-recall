@@ -17,4 +17,3 @@ return [
     'no_cards_due' => 'No cards due for review',
     'great_job' => 'Great job! You\'re all caught up.',
 ];
-

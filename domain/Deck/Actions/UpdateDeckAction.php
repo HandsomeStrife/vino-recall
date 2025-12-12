@@ -47,7 +47,7 @@ class UpdateDeckAction
         if ($is_collection !== null) {
             $this->validateCollectionChange($deck, $is_collection);
             $updateData['is_collection'] = $is_collection;
-            
+
             // If becoming a collection, clear any parent
             if ($is_collection) {
                 $updateData['parent_deck_id'] = null;
@@ -57,10 +57,10 @@ class UpdateDeckAction
         // Handle parent deck assignment (only if not a collection)
         $willBeCollection = $is_collection ?? $deck->is_collection;
         $newParentId = null;
-        
-        if ($clear_parent && !$willBeCollection) {
+
+        if ($clear_parent && ! $willBeCollection) {
             $updateData['parent_deck_id'] = null;
-        } elseif ($parent_deck_id !== null && !$willBeCollection) {
+        } elseif ($parent_deck_id !== null && ! $willBeCollection) {
             $this->validateParentAssignment($deck, $parent_deck_id);
             $updateData['parent_deck_id'] = $parent_deck_id;
             $newParentId = $parent_deck_id;
@@ -87,7 +87,7 @@ class UpdateDeckAction
     private function autoEnrollCollectionSubscribers(Deck $childDeck, int $parentDeckId): void
     {
         $parentDeck = Deck::find($parentDeckId);
-        
+
         if ($parentDeck === null) {
             return;
         }
@@ -98,11 +98,11 @@ class UpdateDeckAction
         foreach ($enrolledUsers as $user) {
             // Check if user is already enrolled in this child deck
             $alreadyEnrolled = $user->enrolledDecks()->where('deck_id', $childDeck->id)->exists();
-            
-            if (!$alreadyEnrolled) {
+
+            if (! $alreadyEnrolled) {
                 // Generate unique shortcode
                 $shortcode = $this->generateUniqueShortcode();
-                
+
                 $user->enrolledDecks()->attach($childDeck->id, [
                     'enrolled_at' => now(),
                     'shortcode' => $shortcode,
@@ -133,7 +133,7 @@ class UpdateDeckAction
         }
 
         // Can't stop being a collection if it has children
-        if (!$isCollection && $deck->is_collection && $deck->children()->exists()) {
+        if (! $isCollection && $deck->is_collection && $deck->children()->exists()) {
             throw DeckHierarchyException::cannotRemoveCollectionWithChildren();
         }
     }
@@ -157,7 +157,7 @@ class UpdateDeckAction
         }
 
         // Parent deck must be a collection
-        if (!$parentDeck->is_collection) {
+        if (! $parentDeck->is_collection) {
             throw DeckHierarchyException::parentMustBeCollection();
         }
     }

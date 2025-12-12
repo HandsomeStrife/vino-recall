@@ -217,4 +217,3 @@ class WebhookController extends Controller
         }
     }
 }
-

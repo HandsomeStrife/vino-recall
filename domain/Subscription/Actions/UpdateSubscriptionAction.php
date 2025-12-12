@@ -41,4 +41,3 @@ class UpdateSubscriptionAction
         return SubscriptionData::fromModel($subscription->fresh());
     }
 }
-

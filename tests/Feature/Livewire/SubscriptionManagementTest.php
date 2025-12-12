@@ -112,4 +112,3 @@ test('subscription management displays inactive subscription status', function (
     Livewire::test(SubscriptionManagement::class)
         ->assertSee('inactive');
 });
-

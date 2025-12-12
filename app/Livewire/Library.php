@@ -86,9 +86,9 @@ class Library extends Component
 
         // Separate collections and standalone decks for both enrolled and available
         $enrolledCollections = $enrolledWithStats->filter(fn ($stat) => $stat['isParent']);
-        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => !$stat['isParent']);
+        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => ! $stat['isParent']);
         $availableCollections = $availableWithStats->filter(fn ($stat) => $stat['isParent']);
-        $availableStandalone = $availableWithStats->filter(fn ($stat) => !$stat['isParent']);
+        $availableStandalone = $availableWithStats->filter(fn ($stat) => ! $stat['isParent']);
 
         return view('livewire.library', [
             'enrolledCollections' => $enrolledCollections,
@@ -110,7 +110,7 @@ class Library extends Component
         }
 
         // For collections, check if any children have this category
-        if ($deckStat['isParent'] && !empty($deckStat['children'])) {
+        if ($deckStat['isParent'] && ! empty($deckStat['children'])) {
             foreach ($deckStat['children'] as $childStat) {
                 $childDeck = $childStat['deck'];
                 if ($childDeck->category_ids && in_array($this->categoryId, $childDeck->category_ids)) {
@@ -131,7 +131,7 @@ class Library extends Component
         $stats = $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
 
         // Get shortcode if this is a standalone deck (not a collection)
-        if (!$deck->is_collection) {
+        if (! $deck->is_collection) {
             $userModel = \Domain\User\Models\User::find($user->id);
             $enrolledDeck = $userModel->enrolledDecks()
                 ->where('deck_id', $deck->id)
@@ -252,7 +252,7 @@ class Library extends Component
         $newCount = 0;
         foreach ($children as $childDeck) {
             $cards = $cardRepository->getByDeckId($childDeck->id);
-            $newCount += $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+            $newCount += $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
         }
 
         return $newCount;

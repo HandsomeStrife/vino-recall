@@ -15,4 +15,3 @@ return [
     'categories' => 'Categories',
     'logout' => 'Log Out',
 ];
-

@@ -60,4 +60,3 @@ test('admin factory password can authenticate', function () {
     // Default factory password is 'password'
     expect(\Illuminate\Support\Facades\Hash::check('password', $admin->password))->toBeTrue();
 });
-

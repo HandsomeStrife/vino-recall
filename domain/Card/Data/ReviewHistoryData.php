@@ -58,4 +58,3 @@ class ReviewHistoryData extends Data
         return SrsStage::fromStage($this->new_stage)->getName();
     }
 }
-

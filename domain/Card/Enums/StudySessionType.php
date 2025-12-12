@@ -10,4 +10,3 @@ enum StudySessionType: string
     case DEEP_STUDY = 'deep_study';
     case PRACTICE = 'practice';
 }
-

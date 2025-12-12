@@ -182,7 +182,7 @@ test('registration trims whitespace from name', function () {
     ]);
 
     $response->assertRedirect(route('dashboard'));
-    
+
     $user = User::where('email', 'test@example.com')->first();
     expect($user->name)->toBe('Test User');
 });
@@ -203,7 +203,7 @@ test('registration accepts uppercase email', function () {
 
 test('registration escapes html in name', function () {
     $maliciousName = '<script>alert("xss")</script>';
-    
+
     $response = $this->post(route('register'), [
         'name' => $maliciousName,
         'email' => 'test@example.com',
@@ -212,9 +212,9 @@ test('registration escapes html in name', function () {
     ]);
 
     $response->assertRedirect(route('dashboard'));
-    
+
     $user = User::where('email', 'test@example.com')->first();
-    
+
     // When displayed, it should be escaped
     $this->actingAs($user);
     $response = $this->get(route('profile'));
@@ -224,8 +224,8 @@ test('registration escapes html in name', function () {
 // Edge Case Validation Tests
 
 test('registration handles very long email', function () {
-    $longEmail = str_repeat('a', 256) . '@example.com';
-    
+    $longEmail = str_repeat('a', 256).'@example.com';
+
     $response = $this->post(route('register'), [
         'name' => 'Test User',
         'email' => $longEmail,
@@ -245,14 +245,14 @@ test('registration handles unicode characters in name', function () {
     ]);
 
     $response->assertRedirect(route('dashboard'));
-    
+
     $user = User::where('email', 'unicode@example.com')->first();
     expect($user->name)->toBe('Test Üser 测试');
 });
 
 test('registration handles special characters in password', function () {
     $specialPassword = 'P@ssw0rd!#$%^&*()';
-    
+
     $response = $this->post(route('register'), [
         'name' => 'Test User',
         'email' => 'special@example.com',
@@ -278,4 +278,3 @@ test('login is case insensitive for email', function () {
     $response->assertRedirect(route('dashboard'));
     $this->assertAuthenticated();
 });
-

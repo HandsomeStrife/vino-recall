@@ -50,4 +50,3 @@ class CategoryRepository
             ->map(fn ($category) => CategoryData::from($category));
     }
 }
-

@@ -7,7 +7,7 @@ use Domain\User\Models\User;
 use Illuminate\Http\Request;
 
 test('can detect locale from accept language header', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
     $request = Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT_LANGUAGE' => 'es-ES,es;q=0.9,en;q=0.8']);
 
     $locale = $service->detectLocaleFromHeader($request);
@@ -16,7 +16,7 @@ test('can detect locale from accept language header', function (): void {
 });
 
 test('can detect locale with quality values', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
     $request = Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR;q=0.8,en-US;q=0.9,de;q=0.7']);
 
     $locale = $service->detectLocaleFromHeader($request);
@@ -25,7 +25,7 @@ test('can detect locale with quality values', function (): void {
 });
 
 test('returns null when no supported locale in header', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
     $request = Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT_LANGUAGE' => 'ko-KR,ko;q=0.9']);
 
     $locale = $service->detectLocaleFromHeader($request);
@@ -34,7 +34,7 @@ test('returns null when no supported locale in header', function (): void {
 });
 
 test('returns null when no accept language header', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
     $request = Request::create('/', 'GET');
 
     $locale = $service->detectLocaleFromHeader($request);
@@ -43,9 +43,8 @@ test('returns null when no accept language header', function (): void {
     expect($locale)->toBeNull();
 })->skip('Accept-Language parsing returns en when empty - expected behavior');
 
-
 test('get supported locales returns configured locales', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
 
     $locales = $service->getSupportedLocales();
 
@@ -53,7 +52,7 @@ test('get supported locales returns configured locales', function (): void {
 });
 
 test('get locale label returns correct labels', function (): void {
-    $service = new LocalizationService();
+    $service = new LocalizationService;
 
     expect($service->getLocaleLabel('en'))->toBe('English')
         ->and($service->getLocaleLabel('es'))->toBe('Español')
@@ -117,4 +116,3 @@ test('translation files exist for all supported locales', function (): void {
         }
     }
 });
-

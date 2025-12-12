@@ -58,4 +58,3 @@ class ReviewHistory extends Model
         return $this->belongsTo(Card::class);
     }
 }
-

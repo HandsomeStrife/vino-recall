@@ -215,4 +215,3 @@ test('profile displays subscription status badge with correct variant', function
     Livewire::test(Profile::class)
         ->assertSee('Past_due');
 });
-

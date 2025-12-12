@@ -16,7 +16,7 @@ test('webhook endpoint is registered', function () {
     // Verify the webhook route exists and is accessible
     // Actual webhook testing requires valid Stripe signatures
     // which are tested in integration/staging environments
-    
+
     expect(route('webhook.stripe'))->toContain('/webhook/stripe');
 });
 
@@ -122,4 +122,3 @@ test('multiple subscriptions can exist for different users', function () {
 
     expect(Subscription::count())->toBeGreaterThanOrEqual(2);
 });
-

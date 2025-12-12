@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Hash;
 test('update user action can update name', function () {
     $user = User::factory()->create(['name' => 'Original Name']);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         name: 'Updated Name'
     );
 
     expect($result->name)->toBe('Updated Name');
-    
+
     $user->refresh();
     expect($user->name)->toBe('Updated Name');
 });
@@ -24,14 +24,14 @@ test('update user action can update name', function () {
 test('update user action can update email', function () {
     $user = User::factory()->create(['email' => 'old@example.com']);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         email: 'new@example.com'
     );
 
     expect($result->email)->toBe('new@example.com');
-    
+
     $user->refresh();
     expect($user->email)->toBe('new@example.com');
 });
@@ -41,7 +41,7 @@ test('update user action can update password', function () {
         'password' => Hash::make('oldpassword'),
     ]);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $action->execute(
         userId: $user->id,
         password: 'newpassword123'
@@ -54,14 +54,14 @@ test('update user action can update password', function () {
 test('update user action can update locale', function () {
     $user = User::factory()->create(['locale' => 'en']);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         locale: 'es'
     );
 
     expect($result->locale)->toBe('es');
-    
+
     $user->refresh();
     expect($user->locale)->toBe('es');
 });
@@ -73,7 +73,7 @@ test('update user action can update multiple fields at once', function () {
         'locale' => 'en',
     ]);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         name: 'New Name',
@@ -92,7 +92,7 @@ test('update user action leaves unchanged fields intact', function () {
         'email' => 'original@example.com',
     ]);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         name: 'Updated Name'
@@ -105,7 +105,7 @@ test('update user action leaves unchanged fields intact', function () {
 test('update user action returns user data object', function () {
     $user = User::factory()->create();
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(
         userId: $user->id,
         name: 'Test Name'
@@ -117,14 +117,14 @@ test('update user action returns user data object', function () {
 test('update user action hashes password before storing', function () {
     $user = User::factory()->create();
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $action->execute(
         userId: $user->id,
         password: 'plainpassword'
     );
 
     $user->refresh();
-    
+
     // Password should be hashed, not stored as plain text
     expect($user->password)->not->toBe('plainpassword')
         ->and(Hash::check('plainpassword', $user->password))->toBeTrue();
@@ -136,7 +136,7 @@ test('update user action handles user with minimal changes', function () {
         'email' => 'test@example.com',
     ]);
 
-    $action = new UpdateUserAction();
+    $action = new UpdateUserAction;
     $result = $action->execute(userId: $user->id);
 
     // Should return the user even if no changes made
@@ -144,4 +144,3 @@ test('update user action handles user with minimal changes', function () {
         ->and($result->name)->toBe('Test User')
         ->and($result->email)->toBe('test@example.com');
 });
-

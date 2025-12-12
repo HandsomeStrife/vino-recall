@@ -21,7 +21,7 @@ class CardFactory extends Factory
             $this->faker->word(),
             $this->faker->word(),
         ]);
-        
+
         // Sometimes single correct answer, sometimes multiple
         $correctAnswerIndices = $this->faker->boolean(70)
             ? json_encode([$this->faker->numberBetween(0, 3)])

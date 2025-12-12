@@ -52,4 +52,3 @@ class Admin extends Authenticatable
         ];
     }
 }
-

@@ -25,7 +25,9 @@ enum SrsStage: int
     case WINE_GOD = 9;
 
     public const int STAGE_MIN = 0;
+
     public const int STAGE_MAX = 9;
+
     public const int MASTERED_THRESHOLD = 7;
 
     /**
@@ -128,4 +130,3 @@ enum SrsStage: int
         return self::from(max(self::STAGE_MIN, min($stage, self::STAGE_MAX)));
     }
 }
-

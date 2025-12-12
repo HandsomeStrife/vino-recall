@@ -210,14 +210,14 @@ test('unauthenticated requests to protected routes redirect to login', function 
 
 test('password is hashed in database', function () {
     $plainPassword = 'my-secure-password';
-    
+
     $user = User::factory()->create([
         'password' => \Illuminate\Support\Facades\Hash::make($plainPassword),
     ]);
 
     // Password should not be stored as plain text
     expect($user->password)->not->toBe($plainPassword);
-    
+
     // But should verify correctly
     expect(\Illuminate\Support\Facades\Hash::check($plainPassword, $user->password))->toBeTrue();
 });
@@ -272,4 +272,3 @@ test('admin and user authentication are completely separate', function () {
     expect(auth()->guard('admin')->check())->toBeTrue()
         ->and(auth()->guard('web')->check())->toBeTrue();
 });
-

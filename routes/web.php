@@ -69,8 +69,10 @@ if (app()->environment('local')) {
         $user = \Domain\User\Models\User::first();
         if ($user) {
             \Illuminate\Support\Facades\Auth::login($user);
+
             return redirect()->route('dashboard');
         }
+
         return redirect()->route('home');
     })->name('dev.auto-login');
 
@@ -78,8 +80,10 @@ if (app()->environment('local')) {
         $admin = \Domain\Admin\Models\Admin::first();
         if ($admin) {
             \Illuminate\Support\Facades\Auth::guard('admin')->login($admin);
+
             return redirect()->route('admin.dashboard');
         }
+
         return redirect()->route('admin.login');
     })->name('dev.admin-auto-login');
 }

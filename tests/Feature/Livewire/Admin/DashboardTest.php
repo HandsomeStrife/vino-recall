@@ -75,4 +75,3 @@ test('admin dashboard displays all statistics together', function () {
         ->assertSee('Decks')
         ->assertSee('Cards');
 });
-

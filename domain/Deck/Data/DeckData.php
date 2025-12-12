@@ -34,7 +34,7 @@ class DeckData extends Data
     {
         $categories = null;
         $categoryIds = null;
-        
+
         if ($deck->relationLoaded('categories')) {
             $categories = $deck->categories;
             $categoryIds = $deck->categories->pluck('id')->toArray();
@@ -49,7 +49,7 @@ class DeckData extends Data
         if ($deck->relationLoaded('parent') && $deck->parent !== null) {
             $parentName = $deck->parent->name;
         }
-        
+
         return new self(
             id: $deck->id,
             name: $deck->name,

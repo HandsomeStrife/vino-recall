@@ -13,11 +13,11 @@ class StripeService
     public function __construct()
     {
         $secret = config('stripe.secret');
-        
+
         if (! $secret) {
             throw new \RuntimeException('Stripe secret key not configured');
         }
-        
+
         $this->stripe = new StripeClient($secret);
     }
 
@@ -81,7 +81,7 @@ class StripeService
     private function getPlanStripePriceId(int $planId): string
     {
         $plan = \Domain\Subscription\Models\Plan::findOrFail($planId);
-        
+
         if ($plan->stripe_price_id === null) {
             throw new \RuntimeException("Plan {$planId} does not have a Stripe price ID configured.");
         }

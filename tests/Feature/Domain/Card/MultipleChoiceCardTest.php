@@ -8,7 +8,6 @@ use Domain\Card\Actions\ReviewCardAction;
 use Domain\Card\Actions\UpdateCardAction;
 use Domain\Card\Enums\CardType;
 use Domain\Card\Models\Card;
-use Domain\Card\Models\CardReview;
 use Domain\Card\Models\ReviewHistory;
 use Domain\Deck\Models\Deck;
 use Domain\User\Models\User;
@@ -17,7 +16,7 @@ test('can create a multiple choice card with single correct answer', function ()
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $cardData = $action->execute(
         deckId: $deck->id,
@@ -46,7 +45,7 @@ test('can create a multiple choice card with multiple correct answers', function
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $cardData = $action->execute(
         deckId: $deck->id,
@@ -67,7 +66,7 @@ test('card requires at least 2 answer choices', function (): void {
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $action->execute(
         deckId: $deck->id,
@@ -84,7 +83,7 @@ test('card requires at least one correct answer index', function (): void {
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $action->execute(
         deckId: $deck->id,
@@ -101,7 +100,7 @@ test('card requires valid correct answer indices', function (): void {
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $action->execute(
         deckId: $deck->id,
@@ -128,7 +127,7 @@ test('can update a card with new answer choices', function (): void {
         'correct_answer_indices' => json_encode([0]),
     ]);
 
-    $action = new UpdateCardAction();
+    $action = new UpdateCardAction;
 
     $cardData = $action->execute(
         cardId: $card->id,
@@ -154,7 +153,7 @@ test('can review a card with correct single answer', function (): void {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     $reviewData = $action->execute(
         userId: $user->id,
@@ -192,7 +191,7 @@ test('can review a card with incorrect single answer', function (): void {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     $reviewData = $action->execute(
         userId: $user->id,
@@ -228,7 +227,7 @@ test('multi-answer card requires all correct answers selected', function (): voi
         'correct_answer_indices' => json_encode([1, 3]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     // Only selected one of two correct answers - should be incorrect (all-or-nothing)
     $action->execute(
@@ -257,7 +256,7 @@ test('multi-answer card is correct when all answers selected', function (): void
         'correct_answer_indices' => json_encode([1, 3]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     $action->execute(
         userId: $user->id,
@@ -285,7 +284,7 @@ test('multi-answer card is incorrect when extra wrong answer selected', function
         'correct_answer_indices' => json_encode([1, 3]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     // Selected both correct answers + one wrong
     $action->execute(
@@ -304,7 +303,7 @@ test('hasMultipleCorrectAnswers returns false for single correct answer', functi
     $admin = Admin::factory()->create();
     $deck = Deck::factory()->create(['created_by' => $admin->id]);
 
-    $action = new CreateCardAction();
+    $action = new CreateCardAction;
 
     $cardData = $action->execute(
         deckId: $deck->id,
@@ -332,7 +331,7 @@ test('review with no answer selected is incorrect', function (): void {
         'correct_answer_indices' => json_encode([1]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     $action->execute(
         userId: $user->id,

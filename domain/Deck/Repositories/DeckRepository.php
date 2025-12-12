@@ -35,8 +35,8 @@ class DeckRepository
     public function findByShortcode(int $user_id, string $shortcode): ?DeckData
     {
         $user = \Domain\User\Models\User::find($user_id);
-        
-        if (!$user) {
+
+        if (! $user) {
             return null;
         }
 
@@ -74,8 +74,8 @@ class DeckRepository
     public function getUserEnrolledDecks(int $user_id): \Illuminate\Support\Collection
     {
         $user = \Domain\User\Models\User::find($user_id);
-        
-        if (!$user) {
+
+        if (! $user) {
             return collect();
         }
 
@@ -105,8 +105,8 @@ class DeckRepository
     public function getAvailableDecks(int $userId): \Illuminate\Support\Collection
     {
         $user = \Domain\User\Models\User::find($userId);
-        
-        if (!$user) {
+
+        if (! $user) {
             return collect();
         }
 

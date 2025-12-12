@@ -82,9 +82,9 @@ class CreateAdminCommand extends Command
             return Command::FAILURE;
         }
 
-        $admin_data = (new CreateAdminAction())->execute($name, $email, $password);
+        $admin_data = (new CreateAdminAction)->execute($name, $email, $password);
 
-        $this->info("Admin user created successfully!");
+        $this->info('Admin user created successfully!');
         $this->table(
             ['ID', 'Name', 'Email'],
             [[$admin_data->id, $admin_data->name, $admin_data->email]]
@@ -93,4 +93,3 @@ class CreateAdminCommand extends Command
         return Command::SUCCESS;
     }
 }
-

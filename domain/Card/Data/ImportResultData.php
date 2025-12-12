@@ -9,7 +9,7 @@ use Spatie\LaravelData\Data;
 class ImportResultData extends Data
 {
     /**
-     * @param array<int, string> $errors
+     * @param  array<int, string>  $errors
      */
     public function __construct(
         public int $imported,
@@ -17,4 +17,3 @@ class ImportResultData extends Data
         public array $errors,
     ) {}
 }
-

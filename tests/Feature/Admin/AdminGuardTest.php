@@ -48,7 +48,7 @@ test('admin middleware redirects to admin login', function () {
 test('admin can access their own profile data through repository', function () {
     $admin = actingAsAdmin();
 
-    $repository = new \Domain\Admin\Repositories\AdminRepository();
+    $repository = new \Domain\Admin\Repositories\AdminRepository;
     $adminData = $repository->getLoggedInAdmin();
 
     expect($adminData->id)->toBe($admin->id)
@@ -76,4 +76,3 @@ test('user guard and admin guard are separate', function () {
         ->and(auth()->guard('admin')->check())->toBeTrue()
         ->and(auth()->guard('admin')->id())->toBe($admin->id);
 });
-

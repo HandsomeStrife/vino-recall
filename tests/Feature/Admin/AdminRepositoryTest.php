@@ -11,7 +11,7 @@ test('admin repository can find admin by email', function () {
         'email' => 'admin@test.com',
     ]);
 
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->findByEmail('admin@test.com');
 
     expect($result)
@@ -21,7 +21,7 @@ test('admin repository can find admin by email', function () {
 });
 
 test('admin repository returns null for non-existent email', function () {
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->findByEmail('nonexistent@test.com');
 
     expect($result)->toBeNull();
@@ -30,7 +30,7 @@ test('admin repository returns null for non-existent email', function () {
 test('admin repository can find admin by id', function () {
     $admin = Admin::factory()->create();
 
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->findById($admin->id);
 
     expect($result)
@@ -39,7 +39,7 @@ test('admin repository can find admin by id', function () {
 });
 
 test('admin repository returns null for non-existent id', function () {
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->findById(99999);
 
     expect($result)->toBeNull();
@@ -48,7 +48,7 @@ test('admin repository returns null for non-existent id', function () {
 test('admin repository can get logged in admin', function () {
     $admin = actingAsAdmin();
 
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->getLoggedInAdmin();
 
     expect($result)
@@ -57,14 +57,14 @@ test('admin repository can get logged in admin', function () {
 });
 
 test('admin repository throws exception when no admin is logged in', function () {
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $repository->getLoggedInAdmin();
 })->throws(RuntimeException::class, 'No authenticated admin found');
 
 test('admin repository can get all admins', function () {
     Admin::factory()->count(3)->create();
 
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->getAll();
 
     expect($result)->toHaveCount(3)
@@ -72,7 +72,7 @@ test('admin repository can get all admins', function () {
 });
 
 test('admin repository returns empty collection when no admins exist', function () {
-    $repository = new AdminRepository();
+    $repository = new AdminRepository;
     $result = $repository->getAll();
 
     expect($result)->toHaveCount(0);
@@ -94,4 +94,3 @@ test('admin data correctly maps from model', function () {
         ->and($adminData->created_at)->toBeString()
         ->and($adminData->updated_at)->toBeString();
 });
-

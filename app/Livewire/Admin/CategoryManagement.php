@@ -95,7 +95,7 @@ class CategoryManagement extends Component
     {
         if ($this->editingCategoryId) {
             $this->validate([
-                'name' => ['required', 'string', 'min:3', 'max:255', 'unique:categories,name,' . $this->editingCategoryId],
+                'name' => ['required', 'string', 'min:3', 'max:255', 'unique:categories,name,'.$this->editingCategoryId],
                 'description' => ['nullable', 'string', 'max:1000'],
                 'image' => ['nullable', 'image', 'max:5120'],
             ]);
@@ -130,4 +130,3 @@ class CategoryManagement extends Component
         $this->is_active = true;
     }
 }
-

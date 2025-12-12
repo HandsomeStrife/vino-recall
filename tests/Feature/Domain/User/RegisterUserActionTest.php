@@ -31,7 +31,7 @@ test('register user action hashes password', function () {
     );
 
     $user = \Domain\User\Models\User::find($userData->id);
-    
+
     // Password should be hashed
     expect($user->password)->not->toBe('password')
         ->and(\Illuminate\Support\Facades\Hash::check('password', $user->password))->toBeTrue();

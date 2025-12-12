@@ -90,29 +90,34 @@
                                         <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $deckStat['deck']->description }}</p>
                                     @endif
                                     
-                                    <!-- Stats Grid -->
-                                    <div class="grid grid-cols-3 gap-2 mb-4">
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold {{ $deckStat['dueCards'] > 0 ? 'text-burgundy-500' : 'text-gray-600' }}">
-                                                {{ $deckStat['dueCards'] }}
+                                    @if($deckStat['reviewedCount'] === 0)
+                                        <!-- Deck not started yet -->
+                                        <div class="text-sm text-gray-600 mb-2">Ready to begin</div>
+                                        <div class="text-2xl font-bold text-burgundy-500 mb-4">{{ $deckStat['newCards'] }}</div>
+                                        <div class="text-xs text-gray-500">Cards ready to learn</div>
+                                    @else
+                                        <!-- Deck already started - show stats grid -->
+                                        <div class="grid grid-cols-3 gap-2 mb-4">
+                                            <div class="text-center">
+                                                <div class="text-xl font-bold {{ $deckStat['dueCards'] > 0 ? 'text-burgundy-500' : 'text-gray-600' }}">
+                                                    {{ $deckStat['dueCards'] }}
+                                                </div>
+                                                <div class="text-xs text-gray-500">Due</div>
                                             </div>
-                                            <div class="text-xs text-gray-500">Due</div>
+                                            <div class="text-center">
+                                                <div class="text-xl font-bold text-gray-600">{{ $deckStat['newCards'] }}</div>
+                                                <div class="text-xs text-gray-500">New</div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="text-xl font-bold text-gray-600">{{ $deckStat['totalCards'] }}</div>
+                                                <div class="text-xs text-gray-500">Total</div>
+                                            </div>
                                         </div>
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold text-gray-600">{{ $deckStat['newCards'] }}</div>
-                                            <div class="text-xs text-gray-500">New</div>
-                                        </div>
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold text-gray-600">{{ $deckStat['totalCards'] }}</div>
-                                            <div class="text-xs text-gray-500">Total</div>
-                                        </div>
-                                    </div>
-                                    
-                                    @if($deckStat['progress'] > 0)
-                                        <div class="text-sm text-gray-600 mb-2">{{ $deckStat['progress'] }}% complete</div>
-                                    @endif
-                                    
-                                    @if($deckStat['reviewedCount'] > 0)
+                                        
+                                        @if($deckStat['progress'] > 0)
+                                            <div class="text-sm text-gray-600 mb-2">{{ $deckStat['progress'] }}% complete</div>
+                                        @endif
+                                        
                                         <div class="text-sm text-gray-500">{{ $deckStat['retentionRate'] }}% Retention Rate</div>
                                     @endif
                                 </div>
@@ -120,14 +125,26 @@
                                 <!-- Action Buttons -->
                                 <div class="mt-auto pt-4 flex flex-col gap-2">
                                     @if($deckStat['isEnrolled'] && $deckStat['shortcode'])
-                                        <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
-                                           class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
-                                            Start Session
-                                        </a>
-                                        <a href="{{ route('deck.stats', $deckStat['shortcode']) }}" 
-                                           class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
-                                            View Stats
-                                        </a>
+                                        @if($deckStat['reviewedCount'] === 0)
+                                            <!-- Start Now button for unstarted decks -->
+                                            <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
+                                               class="inline-flex items-center justify-center text-center bg-burgundy-500 text-white px-6 py-3 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                                </svg>
+                                                Start Now
+                                            </a>
+                                        @else
+                                            <!-- Standard buttons for started decks -->
+                                            <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
+                                               class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                                Start Session
+                                            </a>
+                                            <a href="{{ route('deck.stats', $deckStat['shortcode']) }}" 
+                                               class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
+                                                View Stats
+                                            </a>
+                                        @endif
                                     @else
                                         <div class="text-center text-gray-500 text-sm py-2">
                                             Enroll in the collection to study

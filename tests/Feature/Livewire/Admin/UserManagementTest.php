@@ -45,4 +45,3 @@ test('user management shows users', function () {
     Livewire::test(UserManagement::class)
         ->assertSee('User');
 });
-

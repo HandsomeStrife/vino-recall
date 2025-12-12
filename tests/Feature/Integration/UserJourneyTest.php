@@ -104,7 +104,7 @@ test('user study session: select deck, study cards, rate cards, view progress', 
     $response->assertStatus(200);
 
     // Enroll in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Study cards (simulate via CardReview creation)
     CardReview::factory()->create([
@@ -186,7 +186,7 @@ test('complete study session with multiple cards', function () {
     $cards = Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create reviews for all cards (simulate previous study session)
     foreach ($cards as $card) {

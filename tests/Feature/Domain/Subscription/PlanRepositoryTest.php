@@ -11,7 +11,7 @@ test('plan repository can get all plans', function () {
     Plan::factory()->create(['name' => 'Premium Plan', 'price' => 19.99]);
     Plan::factory()->create(['name' => 'Enterprise Plan', 'price' => 49.99]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->getAll();
 
     expect($result)->toHaveCount(3)
@@ -19,7 +19,7 @@ test('plan repository can get all plans', function () {
 });
 
 test('plan repository returns empty collection when no plans exist', function () {
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->getAll();
 
     expect($result)->toBeEmpty();
@@ -32,7 +32,7 @@ test('plan repository can find plan by id', function () {
         'features' => 'Test features',
     ]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->findById($plan->id);
 
     expect($result)->toBeInstanceOf(PlanData::class)
@@ -43,7 +43,7 @@ test('plan repository can find plan by id', function () {
 });
 
 test('plan repository returns null when plan not found by id', function () {
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->findById(999999);
 
     expect($result)->toBeNull();
@@ -57,7 +57,7 @@ test('plan repository preserves all plan data fields', function () {
         'stripe_price_id' => 'price_test123',
     ]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->findById($plan->id);
 
     expect($result->name)->toBe('Full Plan')
@@ -71,7 +71,7 @@ test('plan repository returns plans in correct order', function () {
     Plan::factory()->create(['name' => 'Plan B', 'price' => 20.00]);
     Plan::factory()->create(['name' => 'Plan C', 'price' => 30.00]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->getAll();
 
     expect($result)->toHaveCount(3);
@@ -86,7 +86,7 @@ test('plan repository handles plans with null features', function () {
         'features' => null,
     ]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->findById($plan->id);
 
     expect($result->features)->toBeNull();
@@ -99,9 +99,8 @@ test('plan repository handles plans with null stripe_price_id', function () {
         'stripe_price_id' => null,
     ]);
 
-    $repository = new PlanRepository();
+    $repository = new PlanRepository;
     $result = $repository->findById($plan->id);
 
     expect($result->stripe_price_id)->toBeNull();
 });
-

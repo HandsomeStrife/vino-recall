@@ -207,7 +207,7 @@
                                                     <span class="font-semibold text-burgundy-900">{{ $deckStat['totalCards'] }}</span> {{ $deckStat['totalCards'] === 1 ? 'card' : 'cards' }}
                                                 </div>
                                                 
-                                                @if($deckStat['progress'] > 0)
+                                                @if($deckStat['reviewedCount'] > 0 && $deckStat['progress'] > 0)
                                                     <div class="text-sm text-gray-600 mb-4">{{ $deckStat['progress'] }}% complete</div>
                                                 @endif
                                             </div>
@@ -215,18 +215,30 @@
                                             <!-- Action Buttons -->
                                             <div class="mt-auto pt-4 flex flex-col gap-2">
                                                 @if($deckStat['shortcode'])
-                                                    <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
-                                                       class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
-                                                        Start Session
-                                                    </a>
-                                                    <a href="{{ route('deck.stats', $deckStat['shortcode']) }}" 
-                                                       class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
-                                                        View Stats
-                                                    </a>
-                                                    <button wire:click="unenrollFromDeck({{ $deckStat['deck']->id }})" 
-                                                            class="inline-block text-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
-                                                        Remove from Library
-                                                    </button>
+                                                    @if($deckStat['reviewedCount'] === 0)
+                                                        <!-- Start Now button for unstarted decks -->
+                                                        <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
+                                                           class="inline-flex items-center justify-center text-center bg-burgundy-500 text-white px-6 py-3 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                                            </svg>
+                                                            Start Now
+                                                        </a>
+                                                    @else
+                                                        <!-- Standard buttons for started decks -->
+                                                        <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
+                                                           class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                                            Start Session
+                                                        </a>
+                                                        <a href="{{ route('deck.stats', $deckStat['shortcode']) }}" 
+                                                           class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
+                                                            View Stats
+                                                        </a>
+                                                        <button wire:click="unenrollFromDeck({{ $deckStat['deck']->id }})" 
+                                                                class="inline-block text-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
+                                                            Remove from Library
+                                                        </button>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </div>

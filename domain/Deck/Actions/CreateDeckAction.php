@@ -29,13 +29,13 @@ class CreateDeckAction
         // Validate parent deck if provided
         if ($parent_deck_id !== null) {
             $parentDeck = Deck::find($parent_deck_id);
-            
+
             if ($parentDeck === null) {
                 throw new \InvalidArgumentException('Parent deck not found.');
             }
 
             // Parent deck must be a collection
-            if (!$parentDeck->is_collection) {
+            if (! $parentDeck->is_collection) {
                 throw DeckHierarchyException::parentMustBeCollection();
             }
         }
@@ -51,7 +51,7 @@ class CreateDeckAction
         ]);
 
         // Sync categories
-        if (!empty($categoryIds)) {
+        if (! empty($categoryIds)) {
             $deck->categories()->sync($categoryIds);
         }
 
@@ -69,7 +69,7 @@ class CreateDeckAction
     private function autoEnrollCollectionSubscribers(Deck $childDeck, int $parentDeckId): void
     {
         $parentDeck = Deck::find($parentDeckId);
-        
+
         if ($parentDeck === null) {
             return;
         }
@@ -80,7 +80,7 @@ class CreateDeckAction
         foreach ($enrolledUsers as $user) {
             // Generate unique shortcode
             $shortcode = $this->generateUniqueShortcode();
-            
+
             $user->enrolledDecks()->attach($childDeck->id, [
                 'enrolled_at' => now(),
                 'shortcode' => $shortcode,

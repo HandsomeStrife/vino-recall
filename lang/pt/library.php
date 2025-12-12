@@ -10,4 +10,3 @@ return [
     'filter_by' => 'Filter by',
     'all_decks' => 'All Decks',
 ];
-

@@ -228,4 +228,3 @@ test('form resets when modal closes', function () {
         ->assertSet('description', null)
         ->assertSet('editingCategoryId', null);
 });
-

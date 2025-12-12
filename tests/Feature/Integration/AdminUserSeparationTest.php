@@ -11,7 +11,7 @@ test('admin and user can be logged in simultaneously on different guards', funct
 
     // Login as user on web guard
     auth()->guard('web')->login($user);
-    
+
     // Login as admin on admin guard
     auth()->guard('admin')->login($admin);
 
@@ -90,7 +90,7 @@ test('admin table and user table are separate', function () {
 test('admin repository works with admin guard', function () {
     $admin = actingAsAdmin();
 
-    $repository = new \Domain\Admin\Repositories\AdminRepository();
+    $repository = new \Domain\Admin\Repositories\AdminRepository;
     $adminData = $repository->getLoggedInAdmin();
 
     expect($adminData->id)->toBe($admin->id);
@@ -99,7 +99,7 @@ test('admin repository works with admin guard', function () {
 test('user repository works with user guard', function () {
     $user = actingAsUser();
 
-    $repository = new \Domain\User\Repositories\UserRepository();
+    $repository = new \Domain\User\Repositories\UserRepository;
     $userData = $repository->getLoggedInUser();
 
     expect($userData->id)->toBe($user->id);
@@ -151,4 +151,3 @@ test('complete user journey from registration to studying', function () {
     $response = $this->get(route('library'));
     $response->assertStatus(200);
 });
-

@@ -65,7 +65,7 @@ test('card reviews from yesterday do not count toward today limit', function () 
     $this->actingAs($user);
 
     $deck = Deck::factory()->create();
-    
+
     // Create reviews from yesterday
     for ($i = 0; $i < 20; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
@@ -135,4 +135,3 @@ test('unknown plan defaults to free tier limits', function () {
     $response = $this->get(route('enrolled'));
     $response->assertStatus(200);
 });
-

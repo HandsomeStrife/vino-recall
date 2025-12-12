@@ -79,10 +79,9 @@ class ExportDeckCardsAction
     {
         // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
         if (strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
-            return '"' . str_replace('"', '""', $field) . '"';
+            return '"'.str_replace('"', '""', $field).'"';
         }
 
         return $field;
     }
 }
-

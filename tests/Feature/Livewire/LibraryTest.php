@@ -33,7 +33,7 @@ test('library shows enrollment status', function () {
     $user = actingAsUser();
     $enrolledDeck = Deck::factory()->create(['name' => 'First Deck']);
     $notEnrolledDeck = Deck::factory()->create(['name' => 'Second Deck']);
-    
+
     // Enroll user in first deck with shortcode
     $user->enrolledDecks()->attach($enrolledDeck->id, [
         'enrolled_at' => now(),
@@ -54,14 +54,14 @@ test('user can enroll in deck from library', function () {
     Livewire::test(Library::class)
         ->call('enrollInDeck', $deck->id)
         ->assertDispatched('deck-enrolled');
-    
+
     expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeTrue();
 });
 
 test('user can unenroll from deck in library', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Test Deck']);
-    
+
     // Enroll first with shortcode
     $user->enrolledDecks()->attach($deck->id, [
         'enrolled_at' => now(),
@@ -71,7 +71,7 @@ test('user can unenroll from deck in library', function () {
     Livewire::test(Library::class)
         ->call('unenrollFromDeck', $deck->id)
         ->assertDispatched('deck-unenrolled');
-    
+
     expect($user->enrolledDecks()->where('deck_id', $deck->id)->exists())->toBeFalse();
 });
 
@@ -110,7 +110,7 @@ test('library shows progress bar for enrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Complete Deck']);
     $cards = Card::factory()->count(3)->create(['deck_id' => $deck->id]);
-    
+
     // Enroll user in deck with shortcode
     $user->enrolledDecks()->attach($deck->id, [
         'enrolled_at' => now(),
@@ -169,7 +169,7 @@ test('library shows multiple decks correctly', function () {
 test('library enrollment is user-specific', function () {
     $user1 = actingAsUser();
     $user2 = User::factory()->create();
-    
+
     $deck = Deck::factory()->create(['is_active' => true, 'name' => 'Shared Deck']);
     Card::factory()->count(2)->create(['deck_id' => $deck->id]);
 

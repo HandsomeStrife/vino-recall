@@ -28,4 +28,3 @@ class CardReport extends Model
         return $this->belongsTo(User::class);
     }
 }
-

@@ -27,4 +27,3 @@ class CreateCategoryAction
         return CategoryData::from($category);
     }
 }
-

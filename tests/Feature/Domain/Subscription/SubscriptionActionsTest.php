@@ -12,7 +12,7 @@ use Domain\User\Models\User;
 it('can create a new subscription', function () {
     $user = User::factory()->create();
     $plan = Plan::factory()->create();
-    $action = new CreateSubscriptionAction();
+    $action = new CreateSubscriptionAction;
 
     $subscriptionData = $action->execute(
         userId: $user->id,
@@ -36,7 +36,7 @@ it('can create a new subscription', function () {
 it('can update an existing subscription', function () {
     $subscription = Subscription::factory()->create(['status' => 'active']);
     $newPlan = Plan::factory()->create();
-    $action = new UpdateSubscriptionAction();
+    $action = new UpdateSubscriptionAction;
 
     $updatedSubscriptionData = $action->execute(
         subscriptionId: $subscription->id,
@@ -56,7 +56,7 @@ it('can update an existing subscription', function () {
 
 it('can cancel a subscription', function () {
     $subscription = Subscription::factory()->create(['status' => 'active']);
-    $action = new CancelSubscriptionAction(new UpdateSubscriptionAction());
+    $action = new CancelSubscriptionAction(new UpdateSubscriptionAction);
 
     $action->execute($subscription->id);
 
@@ -67,7 +67,6 @@ it('can cancel a subscription', function () {
 });
 
 it('throws exception when updating non-existent subscription', function () {
-    $action = new UpdateSubscriptionAction();
+    $action = new UpdateSubscriptionAction;
     $action->execute(999, planId: 1);
 })->throws(Illuminate\Database\Eloquent\ModelNotFoundException::class);
-

@@ -20,11 +20,11 @@ class LoginController
     public function login(Request $request): RedirectResponse
     {
         // Rate limiting: 3 attempts per minute per IP + email combination (stricter for admin)
-        $key = 'admin.login:' . $request->ip() . ':' . strtolower($request->input('email') ?? '');
-        
+        $key = 'admin.login:'.$request->ip().':'.strtolower($request->input('email') ?? '');
+
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $seconds = RateLimiter::availableIn($key);
-            
+
             throw ValidationException::withMessages([
                 'email' => ["Too many login attempts. Please try again in {$seconds} seconds."],
             ]);
@@ -37,7 +37,7 @@ class LoginController
 
         if (Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
+
             // Clear rate limiter on successful login
             RateLimiter::clear($key);
 
@@ -52,4 +52,3 @@ class LoginController
         ]);
     }
 }
-

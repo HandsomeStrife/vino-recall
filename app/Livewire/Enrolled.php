@@ -28,7 +28,7 @@ class Enrolled extends Component
 
         // Separate enrolled decks into collections and standalone
         $enrolledCollections = $allEnrolledDecks->filter(fn ($deck) => $deck->is_collection);
-        $enrolledStandalone = $allEnrolledDecks->filter(fn ($deck) => !$deck->is_collection && $deck->parent_deck_id === null);
+        $enrolledStandalone = $allEnrolledDecks->filter(fn ($deck) => ! $deck->is_collection && $deck->parent_deck_id === null);
 
         // Build collection stats
         $collectionsWithStats = $enrolledCollections->map(function ($collection) use ($cardRepository, $cardReviewRepository, $user, $dueCards, $allEnrolledDecks) {
@@ -88,7 +88,7 @@ class Enrolled extends Component
             })->count();
 
             // Count new cards for this child
-            $newCardsCount += $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+            $newCardsCount += $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
         }
 
         // Calculate stage-based progress
@@ -128,7 +128,7 @@ class Enrolled extends Component
             return $cards->contains(fn ($card) => $card->id === $review->card_id);
         })->count();
 
-        $newCardsForDeck = $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+        $newCardsForDeck = $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
 
         // Use stage-based progress
         $progress = $cardReviewRepository->getProgress($user->id, $deck->id, $totalCards);

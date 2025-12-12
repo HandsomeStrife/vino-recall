@@ -43,4 +43,3 @@ class AdminRepository
         return Admin::all()->map(fn ($admin) => AdminData::fromModel($admin));
     }
 }
-

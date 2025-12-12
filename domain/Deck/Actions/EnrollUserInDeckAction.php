@@ -42,7 +42,7 @@ class EnrollUserInDeckAction
     {
         // Check if already enrolled
         $existing = $user->enrolledDecks()->where('deck_id', $deck->id)->first();
-        
+
         if ($existing) {
             return $existing->pivot->shortcode;
         }

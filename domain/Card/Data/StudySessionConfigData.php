@@ -19,7 +19,5 @@ class StudySessionConfigData extends Data implements Wireable
         public ?array $statusFilters = null,
         public bool $trackSrs = true,
         public bool $randomOrder = false,
-    ) {
-    }
+    ) {}
 }
-

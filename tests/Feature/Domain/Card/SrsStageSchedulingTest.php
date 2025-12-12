@@ -38,7 +38,7 @@ function createTestCard(User $user, Deck $deck): Card
 
 function reviewCard(User $user, Card $card, bool $wasCorrect): \Domain\Card\Data\CardReviewData
 {
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
     $selectedAnswer = $wasCorrect ? ['Correct'] : ['Wrong1'];
 
     return $action->execute($user->id, $card->id, $selectedAnswer);
@@ -608,7 +608,7 @@ test('5.1 - Only cards with next_review_at <= now are returned as due', function
     // Card B: not due (next_review_at in the future)
     setCardStage($user, $cardB, 3, $t0->copy()->addHour());
 
-    $repository = new \Domain\Card\Repositories\CardReviewRepository();
+    $repository = new \Domain\Card\Repositories\CardReviewRepository;
     $dueCards = $repository->getDueCardsForUser($user->id);
 
     expect($dueCards->pluck('card_id')->toArray())->toContain($cardA->id);
@@ -634,7 +634,7 @@ test('5.2 - Wine God cards (stage 9) are never in the due queue', function () {
     // Set card to Wine God with null next_review_at
     setCardStage($user, $card, 9, null);
 
-    $repository = new \Domain\Card\Repositories\CardReviewRepository();
+    $repository = new \Domain\Card\Repositories\CardReviewRepository;
     $dueCards = $repository->getDueCardsForUser($user->id);
 
     expect($dueCards->pluck('card_id')->toArray())->not->toContain($card->id);
@@ -657,7 +657,7 @@ test('5.3 - Uncorked cards (stage 0) are not in review queue until reviewed', fu
     // Create card but don't review it (stays at stage 0, not in card_reviews)
     $card = createTestCard($user, $deck);
 
-    $repository = new \Domain\Card\Repositories\CardReviewRepository();
+    $repository = new \Domain\Card\Repositories\CardReviewRepository;
     $dueCards = $repository->getDueCardsForUser($user->id);
 
     // Card not in due queue because it has no CardReview record yet
@@ -811,4 +811,3 @@ test('7.4 - SrsStage enum has correct stage names', function () {
     expect(SrsStage::SOMMELIER->getName())->toBe('Sommelier');
     expect(SrsStage::WINE_GOD->getName())->toBe('Wine God');
 });
-

@@ -79,7 +79,7 @@ test('admin can update deck categories', function () {
     $deck = Deck::factory()->create();
     $oldCategory = Category::factory()->create();
     $newCategory = Category::factory()->create();
-    
+
     $deck->categories()->attach($oldCategory->id);
 
     Livewire::test(DeckManagement::class)

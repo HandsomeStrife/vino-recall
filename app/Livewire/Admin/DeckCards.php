@@ -100,7 +100,7 @@ class DeckCards extends Component
 
     public function toggleAddForm(): void
     {
-        $this->showAddForm = !$this->showAddForm;
+        $this->showAddForm = ! $this->showAddForm;
         if ($this->showAddForm) {
             $this->form->resetForm();
         }

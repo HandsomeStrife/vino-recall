@@ -7,17 +7,17 @@ use Domain\User\Models\User;
 test('session configuration has secure defaults', function () {
     // Clear config cache to ensure we get latest values
     \Illuminate\Support\Facades\Artisan::call('config:clear');
-    
+
     // Verify session security settings
     expect(config('session.http_only'))->toBe(true);
-    
+
     // Session encryption and secure cookie depend on environment
     // In test environment these may be overridden, but defaults should be secure
     $encrypt = config('session.encrypt');
     $secure = config('session.secure');
     expect($encrypt)->toBeIn([true, false]); // Can be overridden in test env
     expect($secure)->toBeIn([true, false]); // Can be overridden in test env
-    
+
     // Same site should be strict or lax
     $sameSite = config('session.same_site');
     expect($sameSite)->toBeIn(['strict', 'lax']);
@@ -49,4 +49,3 @@ test('session is cleared on logout', function () {
     $this->assertGuest();
     $response->assertRedirect(route('home'));
 });
-

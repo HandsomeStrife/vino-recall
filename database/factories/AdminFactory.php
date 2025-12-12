@@ -34,4 +34,3 @@ class AdminFactory extends Factory
         ]);
     }
 }
-

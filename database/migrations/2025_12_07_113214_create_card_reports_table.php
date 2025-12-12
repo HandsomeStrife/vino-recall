@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('message');
             $table->string('status')->default('pending'); // pending, reviewed, resolved
             $table->timestamps();
-            
+
             $table->index(['status', 'created_at']);
         });
     }

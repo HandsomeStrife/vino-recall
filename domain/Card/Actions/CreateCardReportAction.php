@@ -22,4 +22,3 @@ class CreateCardReportAction
         ]);
     }
 }
-

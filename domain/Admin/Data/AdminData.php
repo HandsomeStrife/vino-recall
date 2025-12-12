@@ -30,4 +30,3 @@ class AdminData extends Data
         );
     }
 }
-

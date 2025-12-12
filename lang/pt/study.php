@@ -16,4 +16,3 @@ return [
     'correct' => 'Correct',
     'your_answer' => 'Your Answer',
 ];
-

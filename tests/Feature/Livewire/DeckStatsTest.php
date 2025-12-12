@@ -16,7 +16,7 @@ test('deck stats page can be rendered for enrolled deck', function () {
     $deck = Deck::factory()->create(['name' => 'Test Deck']);
 
     // Enroll user in deck - returns shortcode string
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
@@ -29,7 +29,7 @@ test('deck stats shows total card count', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Wine Basics']);
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     Card::factory()->count(10)->create(['deck_id' => $deck->id]);
 
@@ -41,7 +41,7 @@ test('deck stats shows reviewed and new card counts', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $cards = Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
@@ -65,7 +65,7 @@ test('deck stats shows due cards count', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
@@ -85,7 +85,7 @@ test('deck stats shows accuracy rate from review history', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
@@ -119,7 +119,7 @@ test('deck stats shows stage-based progress percentage', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $cards = Card::factory()->count(4)->create(['deck_id' => $deck->id]);
 
@@ -145,7 +145,7 @@ test('deck stats shows recent activity from review history', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = Card::factory()->create([
         'deck_id' => $deck->id,
@@ -168,7 +168,7 @@ test('deck stats shows mastered cards count based on srs_stage', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
@@ -187,7 +187,7 @@ test('deck stats shows empty state for deck with no cards', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Empty Deck']);
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     Livewire::test(DeckStats::class, ['shortcode' => $shortcode])
         ->assertStatus(200)
@@ -201,8 +201,8 @@ test('deck stats isolates data to specific deck', function () {
     $deck1 = Deck::factory()->create(['name' => 'Deck One']);
     $deck2 = Deck::factory()->create(['name' => 'Deck Two']);
 
-    $shortcode1 = (new EnrollUserInDeckAction())->execute($user->id, $deck1->id);
-    (new EnrollUserInDeckAction())->execute($user->id, $deck2->id);
+    $shortcode1 = (new EnrollUserInDeckAction)->execute($user->id, $deck1->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck2->id);
 
     // Create cards for both decks
     Card::factory()->count(5)->create(['deck_id' => $deck1->id]);
@@ -220,7 +220,7 @@ test('deck stats does not show other users reviews', function () {
 
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user1->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user1->id, $deck->id);
 
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
@@ -240,7 +240,7 @@ test('accuracy is 100% when all reviews are correct', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $cards = Card::factory()->count(5)->create(['deck_id' => $deck->id]);
 
@@ -269,7 +269,7 @@ test('mastery rate is 0% after first perfect session', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $cards = Card::factory()->count(10)->create(['deck_id' => $deck->id]);
 
@@ -291,7 +291,7 @@ test('progress is approximately 11% after first perfect session', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
 
-    $shortcode = (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    $shortcode = (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $cards = Card::factory()->count(9)->create(['deck_id' => $deck->id]);
 

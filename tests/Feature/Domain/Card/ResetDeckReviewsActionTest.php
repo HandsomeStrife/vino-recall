@@ -32,7 +32,7 @@ test('reset deck reviews deletes all card reviews for user and deck', function (
 
     expect(CardReview::where('user_id', $user->id)->count())->toBe(3);
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user->id, $deck->id);
 
     expect($result['card_reviews_deleted'])->toBe(3);
@@ -56,7 +56,7 @@ test('reset deck reviews deletes all review history for user and deck', function
 
     expect(ReviewHistory::where('user_id', $user->id)->count())->toBe(5);
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user->id, $deck->id);
 
     expect($result['review_history_deleted'])->toBe(5);
@@ -92,7 +92,7 @@ test('reset deck reviews only affects the specified deck', function () {
 
     expect(CardReview::where('user_id', $user->id)->count())->toBe(2);
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user->id, $deck1->id);
 
     expect($result['card_reviews_deleted'])->toBe(1);
@@ -123,7 +123,7 @@ test('reset deck reviews only affects the specified user', function () {
         'next_review_at' => now()->addDays(7),
     ]);
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user1->id, $deck->id);
 
     expect($result['card_reviews_deleted'])->toBe(1);
@@ -137,7 +137,7 @@ test('reset deck reviews handles empty deck gracefully', function () {
 
     // No cards in deck
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user->id, $deck->id);
 
     expect($result['card_reviews_deleted'])->toBe(0);
@@ -154,10 +154,9 @@ test('reset deck reviews handles deck with no reviews gracefully', function () {
         'card_type' => CardType::MULTIPLE_CHOICE->value,
     ]);
 
-    $action = new ResetDeckReviewsAction();
+    $action = new ResetDeckReviewsAction;
     $result = $action->execute($user->id, $deck->id);
 
     expect($result['card_reviews_deleted'])->toBe(0);
     expect($result['review_history_deleted'])->toBe(0);
 });
-

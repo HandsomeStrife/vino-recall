@@ -27,4 +27,3 @@ class CreateSubscriptionAction
         return SubscriptionData::fromModel($subscription->fresh());
     }
 }
-

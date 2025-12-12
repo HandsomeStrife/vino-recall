@@ -7,4 +7,3 @@ return [
     'default_locale' => 'en',
     'auto_detect' => true,
 ];
-

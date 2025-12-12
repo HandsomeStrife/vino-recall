@@ -63,14 +63,16 @@ class StudyInterface extends Component
         DeckRepository $deckRepository
     ): void {
         // Validate session type
-        if (!in_array($type, ['normal', 'deep_study', 'practice'])) {
+        if (! in_array($type, ['normal', 'deep_study', 'practice'])) {
             $this->redirect(route('enrolled'));
+
             return;
         }
 
         // Validate deck shortcode format
-        if (!preg_match('/^[A-Za-z0-9]{8}$/', $deck)) {
+        if (! preg_match('/^[A-Za-z0-9]{8}$/', $deck)) {
             $this->redirect(route('enrolled'));
+
             return;
         }
 
@@ -80,8 +82,9 @@ class StudyInterface extends Component
         $user = $userRepository->getLoggedInUser();
         $deckData = $deckRepository->findByShortcode($user->id, $shortcode);
 
-        if (!$deckData) {
+        if (! $deckData) {
             $this->redirect(route('enrolled'));
+
             return;
         }
 
@@ -145,7 +148,7 @@ class StudyInterface extends Component
         $this->currentCardIndex = 0;
 
         // Load first card
-        if (!empty($this->sessionCards)) {
+        if (! empty($this->sessionCards)) {
             $this->currentCardId = $this->sessionCards[0];
         }
     }
@@ -170,6 +173,7 @@ class StudyInterface extends Component
         // Only check for more cards in normal review sessions
         if ($this->sessionConfig->type !== StudySessionType::NORMAL) {
             $this->hasMoreCards = false;
+
             return;
         }
 
@@ -213,7 +217,7 @@ class StudyInterface extends Component
      * Submit the selected answers, create review, and reveal the correct answer.
      * Accepts answers from client-side Alpine state to avoid round-trips on selection.
      *
-     * @param array<string> $answers The selected answers from the client
+     * @param  array<string>  $answers  The selected answers from the client
      */
     public function submitAnswers(array $answers, ReviewCardAction $reviewCardAction, UserRepository $userRepository): void
     {
@@ -231,7 +235,7 @@ class StudyInterface extends Component
         // Create the review immediately on submission (not on continue)
         // This ensures the card is marked as reviewed even if user refreshes
         $user = $userRepository->getLoggedInUser();
-        $isPractice = !$this->sessionConfig->trackSrs;
+        $isPractice = ! $this->sessionConfig->trackSrs;
         $reviewCardAction->execute($user->id, $this->currentCardId, $this->selectedAnswers, $isPractice);
 
         $this->revealed = true;
@@ -256,7 +260,7 @@ class StudyInterface extends Component
     private function getShuffledAnswers(array $answerChoices, int $cardId): array
     {
         // Return cached shuffle if for the same card
-        if ($this->shuffledForCardId === $cardId && !empty($this->shuffledAnswersCache)) {
+        if ($this->shuffledForCardId === $cardId && ! empty($this->shuffledAnswersCache)) {
             return $this->shuffledAnswersCache;
         }
 
@@ -281,8 +285,8 @@ class StudyInterface extends Component
 
     public function toggleReportWidget(): void
     {
-        $this->showReportWidget = !$this->showReportWidget;
-        if (!$this->showReportWidget) {
+        $this->showReportWidget = ! $this->showReportWidget;
+        if (! $this->showReportWidget) {
             $this->resetReportWidget();
         }
     }
@@ -354,7 +358,7 @@ class StudyInterface extends Component
         }
 
         // Calculate progress
-        if (!empty($this->sessionCards)) {
+        if (! empty($this->sessionCards)) {
             $progress = [
                 'current' => $this->currentCardIndex + 1,
                 'total' => count($this->sessionCards),

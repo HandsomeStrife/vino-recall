@@ -21,13 +21,13 @@ class ContentSecurityPolicy
 
         // Build Content Security Policy
         $isLocal = app()->environment('local');
-        
+
         // Base CSP
         $csp = [
             "default-src 'self'",
             "img-src 'self' data: https:",
             "font-src 'self' data: https://fonts.bunny.net https://fonts.gstatic.com",
-            "frame-src https://js.stripe.com",
+            'frame-src https://js.stripe.com',
             "base-uri 'self'",
             "form-action 'self'",
         ];
@@ -51,7 +51,7 @@ class ContentSecurityPolicy
         }
 
         $response->headers->set('Content-Security-Policy', implode('; ', $csp));
-        
+
         // Additional security headers
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
@@ -61,4 +61,3 @@ class ContentSecurityPolicy
         return $response;
     }
 }
-

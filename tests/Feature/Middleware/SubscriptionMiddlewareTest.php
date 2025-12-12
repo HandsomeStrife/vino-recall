@@ -147,4 +147,3 @@ test('expired subscription can be detected', function () {
 
     expect($subscription->current_period_end)->toBeLessThan(now());
 });
-

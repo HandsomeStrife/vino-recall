@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Drop foreign key constraints that reference users table
         // since admins and users are now separate
-        
+
         Schema::table('decks', function (Blueprint $table) {
             $table->dropForeign(['created_by']);
         });

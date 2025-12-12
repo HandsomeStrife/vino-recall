@@ -71,4 +71,3 @@ class ResetAdminPasswordCommand extends Command
         return Command::SUCCESS;
     }
 }
-

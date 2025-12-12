@@ -26,7 +26,7 @@ class DeckStats extends Component
         $user = $userRepository->getLoggedInUser();
         $deck = $deckRepository->findByShortcode($user->id, $shortcode);
 
-        if (!$deck) {
+        if (! $deck) {
             $this->redirect(route('library'));
 
             return;
@@ -47,9 +47,9 @@ class DeckStats extends Component
 
     public function resetDeckProgress(): void
     {
-        $user = (new UserRepository())->getLoggedInUser();
+        $user = (new UserRepository)->getLoggedInUser();
 
-        $result = (new ResetDeckReviewsAction())->execute($user->id, $this->deckId);
+        $result = (new ResetDeckReviewsAction)->execute($user->id, $this->deckId);
 
         $this->showResetConfirmation = false;
 
@@ -68,7 +68,7 @@ class DeckStats extends Component
         $deck = $deckRepository->findById($this->deckId);
         $user = $userRepository->getLoggedInUser();
 
-        if (!$deck) {
+        if (! $deck) {
             return redirect()->route('library');
         }
 

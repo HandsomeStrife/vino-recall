@@ -20,4 +20,3 @@ class LogoutController
         return redirect()->route('admin.login');
     }
 }
-

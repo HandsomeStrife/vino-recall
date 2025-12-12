@@ -28,7 +28,7 @@ class DeckImageHelper
         }
 
         if ($imagePath !== null && $imagePath !== '') {
-            return asset('storage/' . $imagePath);
+            return asset('storage/'.$imagePath);
         }
 
         return self::getDefaultImagePath($deckId);
@@ -42,7 +42,6 @@ class DeckImageHelper
     {
         $imageNumber = ($deckId % self::DEFAULT_IMAGES_COUNT) + 1;
 
-        return asset(self::DEFAULT_IMAGES_PATH . $imageNumber . '.jpg');
+        return asset(self::DEFAULT_IMAGES_PATH.$imageNumber.'.jpg');
     }
 }
-

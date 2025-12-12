@@ -21,7 +21,7 @@ test('dashboard shows user name in welcome message', function () {
     $user = actingAsUser();
 
     Livewire::test(Dashboard::class)
-        ->assertSee('Welcome back, ' . $user->name);
+        ->assertSee('Welcome back, '.$user->name);
 });
 
 test('dashboard shows browse library for user with no enrolled decks', function () {
@@ -35,10 +35,10 @@ test('dashboard shows browse library for user with no enrolled decks', function 
 test('dashboard shows daily goal section when user has enrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
+
     // Enroll user in deck using action (generates shortcode)
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     Card::factory()->count(3)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Dashboard::class)
@@ -48,9 +48,9 @@ test('dashboard shows daily goal section when user has enrolled decks', function
 test('dashboard shows recent mistakes section when user has enrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     Card::factory()->count(3)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Dashboard::class)
@@ -60,9 +60,9 @@ test('dashboard shows recent mistakes section when user has enrolled decks', fun
 test('dashboard shows todays focus section with enrolled decks', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Wine Basics']);
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     Card::factory()->count(3)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Dashboard::class)
@@ -73,9 +73,9 @@ test('dashboard shows todays focus section with enrolled decks', function () {
 test('dashboard shows streak when user has consecutive days', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     $card1 = Card::factory()->create(['deck_id' => $deck->id]);
     $card2 = Card::factory()->create(['deck_id' => $deck->id]);
 
@@ -102,9 +102,9 @@ test('dashboard shows streak when user has consecutive days', function () {
 test('dashboard daily goal shows progress', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     // Create 5 reviews today (out of 20 goal)
     for ($i = 0; $i < 5; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
@@ -124,9 +124,9 @@ test('dashboard daily goal shows progress', function () {
 test('dashboard shows daily goal achieved when goal met', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     // Create 20 reviews today (meets goal)
     for ($i = 0; $i < 20; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
@@ -145,9 +145,9 @@ test('dashboard shows daily goal achieved when goal met', function () {
 test('dashboard shows no recent mistakes message when none exist', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     Card::factory()->count(3)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Dashboard::class)
@@ -158,9 +158,9 @@ test('dashboard shows no recent mistakes message when none exist', function () {
 test('dashboard shows recent mistakes when user has incorrect reviews', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     $card = Card::factory()->create([
         'deck_id' => $deck->id,
         'question' => 'Test Question About Wine',
@@ -180,7 +180,7 @@ test('dashboard shows recent mistakes when user has incorrect reviews', function
 
 test('dashboard shows available decks for enrollment', function () {
     $user = actingAsUser();
-    
+
     // Create a deck user is NOT enrolled in
     $availableDeck = Deck::factory()->create([
         'name' => 'Advanced Wine Studies',
@@ -194,9 +194,9 @@ test('dashboard shows available decks for enrollment', function () {
 test('dashboard handles user with many reviews correctly', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create();
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     // Create many reviews
     for ($i = 0; $i < 50; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
@@ -214,9 +214,9 @@ test('dashboard handles user with many reviews correctly', function () {
 test('dashboard shows due cards count on deck card', function () {
     $user = actingAsUser();
     $deck = Deck::factory()->create(['name' => 'Test Deck']);
-    
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
-    
+
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
+
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
     // Create a review that is due

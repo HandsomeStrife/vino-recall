@@ -17,7 +17,7 @@ test('subscription repository can find subscription by user id', function () {
         'status' => 'active',
     ]);
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findByUserId($user->id);
 
     expect($result)->toBeInstanceOf(SubscriptionData::class)
@@ -29,7 +29,7 @@ test('subscription repository can find subscription by user id', function () {
 test('subscription repository returns null when no subscription found for user', function () {
     $user = User::factory()->create();
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findByUserId($user->id);
 
     expect($result)->toBeNull();
@@ -43,7 +43,7 @@ test('subscription repository can find subscription by id', function () {
         'stripe_subscription_id' => 'sub_test123',
     ]);
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findById($subscription->id);
 
     expect($result)->toBeInstanceOf(SubscriptionData::class)
@@ -52,7 +52,7 @@ test('subscription repository can find subscription by id', function () {
 });
 
 test('subscription repository returns null when subscription not found by id', function () {
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findById(999999);
 
     expect($result)->toBeNull();
@@ -62,7 +62,7 @@ test('subscription repository can get all subscriptions', function () {
     $plan = Plan::factory()->create();
     Subscription::factory()->count(3)->create(['plan_id' => $plan->id]);
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->getAll();
 
     expect($result)->toHaveCount(3)
@@ -70,7 +70,7 @@ test('subscription repository can get all subscriptions', function () {
 });
 
 test('subscription repository returns empty collection when no subscriptions', function () {
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->getAll();
 
     expect($result)->toBeEmpty();
@@ -79,7 +79,7 @@ test('subscription repository returns empty collection when no subscriptions', f
 test('subscription repository handles multiple subscriptions per user correctly', function () {
     $user = User::factory()->create();
     $plan = Plan::factory()->create();
-    
+
     // Create old inactive subscription
     Subscription::factory()->create([
         'user_id' => $user->id,
@@ -96,7 +96,7 @@ test('subscription repository handles multiple subscriptions per user correctly'
         'created_at' => now(),
     ]);
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findByUserId($user->id);
 
     // Should return the most recent one (or first one found, depending on implementation)
@@ -108,7 +108,7 @@ test('subscription repository preserves all subscription data fields', function 
     $user = User::factory()->create();
     $plan = Plan::factory()->create();
     $periodEnd = now()->addMonth();
-    
+
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'plan_id' => $plan->id,
@@ -117,7 +117,7 @@ test('subscription repository preserves all subscription data fields', function 
         'current_period_end' => $periodEnd,
     ]);
 
-    $repository = new SubscriptionRepository();
+    $repository = new SubscriptionRepository;
     $result = $repository->findById($subscription->id);
 
     expect($result->user_id)->toBe($user->id)
@@ -126,4 +126,3 @@ test('subscription repository preserves all subscription data fields', function 
         ->and($result->status)->toBe('active')
         ->and($result->current_period_end)->not->toBeNull();
 });
-

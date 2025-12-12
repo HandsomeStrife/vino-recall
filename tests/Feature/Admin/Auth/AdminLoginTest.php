@@ -93,7 +93,7 @@ test('admin login with remember me', function () {
         ->assertRedirect(route('admin.dashboard'));
 
     assertAuthenticatedAs($admin, 'admin');
-    
+
     // Verify remember token was set
     $admin->refresh();
     expect($admin->remember_token)->not->toBeNull();
@@ -158,4 +158,3 @@ test('admin and user sessions are independent', function () {
     // User should still be authenticated on web guard
     assertAuthenticatedAs($user, 'web');
 });
-

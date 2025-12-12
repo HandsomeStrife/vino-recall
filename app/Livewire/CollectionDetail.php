@@ -36,7 +36,7 @@ class CollectionDetail extends Component
         // Get the collection
         $collection = $deckRepository->findById($this->collectionId);
 
-        if ($collection === null || !$collection->is_collection) {
+        if ($collection === null || ! $collection->is_collection) {
             abort(404, 'Collection not found');
         }
 
@@ -116,7 +116,7 @@ class CollectionDetail extends Component
             return $cards->contains(fn ($card) => $card->id === $review->card_id);
         })->count();
 
-        $newCardsForDeck = $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+        $newCardsForDeck = $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
 
         // Use accuracy from review history
         $accuracyRate = $cardReviewRepository->getAccuracy($user->id, $deck->id);

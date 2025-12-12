@@ -195,7 +195,7 @@ test('admin rate limiting is stricter than user rate limiting', function () {
             'email' => 'test@example.com',
             'password' => 'wrongpassword',
         ]);
-        
+
         if ($i < 4) {
             expect($response->exception->errors()['email'][0])->not->toContain('Too many login attempts');
         }
@@ -207,7 +207,7 @@ test('admin rate limiting is stricter than user rate limiting', function () {
             'email' => 'admin@example.com',
             'password' => 'wrongpassword',
         ]);
-        
+
         if ($i < 3) {
             expect($response->exception->errors()['email'][0])->not->toContain('Too many login attempts');
         } else {
@@ -215,4 +215,3 @@ test('admin rate limiting is stricter than user rate limiting', function () {
         }
     }
 });
-

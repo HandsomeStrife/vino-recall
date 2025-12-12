@@ -24,20 +24,20 @@ class Dashboard extends Component
 
         if ($diff->d > 0) {
             if ($diff->h > 0) {
-                return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ' . $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
+                return $diff->d.' day'.($diff->d > 1 ? 's' : '').' '.$diff->h.' hour'.($diff->h > 1 ? 's' : '');
             }
 
-            return $diff->d . ' day' . ($diff->d > 1 ? 's' : '');
+            return $diff->d.' day'.($diff->d > 1 ? 's' : '');
         } elseif ($diff->h > 0) {
             if ($diff->i > 0) {
-                return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ' . $diff->i . ' minute' . ($diff->i > 1 ? 's' : '');
+                return $diff->h.' hour'.($diff->h > 1 ? 's' : '').' '.$diff->i.' minute'.($diff->i > 1 ? 's' : '');
             }
 
-            return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
+            return $diff->h.' hour'.($diff->h > 1 ? 's' : '');
         } else {
             $minutes = max(1, $diff->i);
 
-            return $minutes . ' minute' . ($minutes > 1 ? 's' : '');
+            return $minutes.' minute'.($minutes > 1 ? 's' : '');
         }
     }
 
@@ -99,7 +99,7 @@ class Dashboard extends Component
 
         // Separate enrolled decks into collections and standalone
         $enrolledCollections = $allEnrolledDecks->filter(fn ($deck) => $deck->is_collection);
-        $enrolledStandalone = $allEnrolledDecks->filter(fn ($deck) => !$deck->is_collection && $deck->parent_deck_id === null);
+        $enrolledStandalone = $allEnrolledDecks->filter(fn ($deck) => ! $deck->is_collection && $deck->parent_deck_id === null);
 
         // Build collection stats
         $collectionsWithStats = $enrolledCollections->map(function ($collection) use ($cardRepository, $cardReviewRepository, $user, $dueCards, $allEnrolledDecks) {
@@ -192,7 +192,7 @@ class Dashboard extends Component
             })->count();
 
             // Count new cards for this child (not in card_reviews)
-            $newCardsCount += $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+            $newCardsCount += $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
         }
 
         // Calculate stage-based progress
@@ -232,7 +232,7 @@ class Dashboard extends Component
             return $cards->contains(fn ($card) => $card->id === $review->card_id);
         })->count();
 
-        $newCardsForDeck = $cards->filter(fn ($card) => !in_array($card->id, $reviewedCardIds))->count();
+        $newCardsForDeck = $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
 
         // Use stage-based progress
         $progress = $cardReviewRepository->getProgress($user->id, $deck->id, $totalCards);

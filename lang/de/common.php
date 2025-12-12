@@ -24,4 +24,3 @@ return [
     'confirm' => 'Confirm',
     'actions' => 'Actions',
 ];
-

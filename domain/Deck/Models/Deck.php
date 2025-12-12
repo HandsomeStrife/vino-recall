@@ -99,7 +99,7 @@ class Deck extends Model
      */
     public function isStandalone(): bool
     {
-        return !$this->is_collection && !$this->isChild();
+        return ! $this->is_collection && ! $this->isChild();
     }
 
     /**
@@ -113,6 +113,7 @@ class Deck extends Model
         if ($this->is_collection) {
             return 'collection';
         }
+
         return 'standalone';
     }
 }

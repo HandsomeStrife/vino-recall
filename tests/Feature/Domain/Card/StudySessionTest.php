@@ -18,7 +18,7 @@ test('getCardsForSession returns cards for normal session', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     $cards = CardFactory::new()->count(15)->create(['deck_id' => $deck->id]);
@@ -33,7 +33,7 @@ test('getCardsForSession returns cards for normal session', function () {
         ]);
     }
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::NORMAL,
         cardLimit: null,
@@ -54,7 +54,7 @@ test('getCardsForSession returns all cards for deep study', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     $cards = CardFactory::new()->count(20)->create(['deck_id' => $deck->id]);
@@ -69,7 +69,7 @@ test('getCardsForSession returns all cards for deep study', function () {
         ]);
     }
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::DEEP_STUDY,
         cardLimit: null,
@@ -89,7 +89,7 @@ test('getCardsForSession filters by mistakes for practice session', function () 
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     $cards = CardFactory::new()->count(10)->create(['deck_id' => $deck->id]);
@@ -123,7 +123,7 @@ test('getCardsForSession filters by mistakes for practice session', function () 
         ]);
     }
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::PRACTICE,
         cardLimit: null,
@@ -143,7 +143,7 @@ test('getCardsForSession filters by new cards for practice session', function ()
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     $cards = CardFactory::new()->count(10)->create(['deck_id' => $deck->id]);
@@ -157,7 +157,7 @@ test('getCardsForSession filters by new cards for practice session', function ()
         ]);
     }
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::PRACTICE,
         cardLimit: null,
@@ -177,7 +177,7 @@ test('getCardsForSession filters by mastered cards for practice session', functi
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     $cards = CardFactory::new()->count(10)->create(['deck_id' => $deck->id]);
@@ -199,7 +199,7 @@ test('getCardsForSession filters by mastered cards for practice session', functi
         ]);
     }
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::PRACTICE,
         cardLimit: null,
@@ -219,12 +219,12 @@ test('getCardsForSession applies card limit', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     CardFactory::new()->count(30)->create(['deck_id' => $deck->id]);
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::DEEP_STUDY,
         cardLimit: 10,
@@ -244,12 +244,12 @@ test('getCardsForSession applies random order', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     // Create cards
     CardFactory::new()->count(20)->create(['deck_id' => $deck->id]);
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::DEEP_STUDY,
         cardLimit: null,
@@ -274,13 +274,13 @@ test('getCardsForSession only returns cards from enrolled decks', function () {
     $unenrolledDeck = DeckFactory::new()->create();
 
     // Enroll user only in first deck
-    (new EnrollUserInDeckAction())->execute($user->id, $enrolledDeck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $enrolledDeck->id);
 
     // Create cards in both decks
     CardFactory::new()->count(5)->create(['deck_id' => $enrolledDeck->id]);
     CardFactory::new()->count(5)->create(['deck_id' => $unenrolledDeck->id]);
 
-    $repository = new CardRepository();
+    $repository = new CardRepository;
     $config = new StudySessionConfigData(
         type: StudySessionType::DEEP_STUDY,
         cardLimit: null,

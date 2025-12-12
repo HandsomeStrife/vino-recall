@@ -56,9 +56,8 @@ class CardRepository
     /**
      * Get cards that the user hasn't reviewed yet (only from enrolled decks)
      *
-     * @param int $userId
-     * @param int|null $deckId Optional specific deck ID to filter by
-     * @param int|null $limit Optional limit on number of cards returned
+     * @param  int|null  $deckId  Optional specific deck ID to filter by
+     * @param  int|null  $limit  Optional limit on number of cards returned
      * @return \Illuminate\Support\Collection<int, CardData>
      */
     public function getNewCardsForUser(int $userId, ?int $deckId = null, ?int $limit = null): \Illuminate\Support\Collection
@@ -76,7 +75,7 @@ class CardRepository
         // If specific deck requested, validate it's enrolled
         $targetDeckIds = $enrolledDeckIds;
         if ($deckId !== null) {
-            if (!in_array($deckId, $enrolledDeckIds)) {
+            if (! in_array($deckId, $enrolledDeckIds)) {
                 return collect();
             }
             $targetDeckIds = [$deckId];
@@ -112,7 +111,7 @@ class CardRepository
             ->pluck('decks.id')
             ->toArray();
 
-        if ($deckId !== null && !in_array($deckId, $enrolledDeckIds)) {
+        if ($deckId !== null && ! in_array($deckId, $enrolledDeckIds)) {
             return collect();
         }
 
@@ -251,18 +250,18 @@ class CardRepository
             $bIsReviewed = in_array($b->id, $reviewedCardIds);
 
             // Due cards come first
-            if ($aIsDue && !$bIsDue) {
+            if ($aIsDue && ! $bIsDue) {
                 return -1;
             }
-            if (!$aIsDue && $bIsDue) {
+            if (! $aIsDue && $bIsDue) {
                 return 1;
             }
 
             // New cards come next
-            if (!$aIsReviewed && $bIsReviewed) {
+            if (! $aIsReviewed && $bIsReviewed) {
                 return -1;
             }
-            if ($aIsReviewed && !$bIsReviewed) {
+            if ($aIsReviewed && ! $bIsReviewed) {
                 return 1;
             }
 
@@ -308,9 +307,7 @@ class CardRepository
     /**
      * Get new cards for specific deck IDs (helper for normal session)
      *
-     * @param int $userId
-     * @param array<int> $deckIds
-     * @param int|null $limit
+     * @param  array<int>  $deckIds
      * @return \Illuminate\Support\Collection<int, CardData>
      */
     private function getNewCardsForDeckIds(int $userId, array $deckIds, ?int $limit = null): \Illuminate\Support\Collection

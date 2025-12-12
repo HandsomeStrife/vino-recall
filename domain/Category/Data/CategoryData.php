@@ -36,4 +36,3 @@ class CategoryData extends Data
         );
     }
 }
-

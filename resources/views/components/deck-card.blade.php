@@ -28,60 +28,71 @@
         
         <!-- Content Section - with proper padding to avoid image overlap on desktop -->
         <div class="flex-1 p-6 md:pr-64 flex flex-col justify-between relative z-10 md:bg-white">
-            <div class="mb-4">
-                @if($dueCards > 0 && $newCards > 0)
-                    <!-- Both due and new cards -->
-                    <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Available Today:</div>
-                    <div class="text-3xl font-bold text-burgundy-500">
-                        {{ $dueCards + $newCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
-                    </div>
-                    <div class="text-sm text-gray-600 mt-1">{{ $dueCards }} due · {{ $newCards }} new</div>
-                @elseif($dueCards > 0)
-                    <!-- Only due cards -->
-                    <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Due Today:</div>
-                    <div class="text-3xl font-bold text-burgundy-500">
-                        {{ $dueCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
-                    </div>
-                @elseif($newCards > 0)
-                    <!-- Only new cards -->
-                    <div class="text-xs font-semibold text-gray-600 uppercase mb-1">New Cards:</div>
-                    <div class="text-3xl font-bold text-burgundy-500">
-                        {{ $newCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
-                    </div>
-                @else
-                    <!-- No cards available -->
-                    <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Status:</div>
-                    <div class="text-xl font-bold text-green-600">
-                        All Caught Up!
-                    </div>
-                    @if($nextReviewTime)
-                        <div class="text-sm text-gray-500 mt-1">Next review in {{ $nextReviewTime }}</div>
+            @if($reviewedCount === 0)
+                <!-- Deck not started yet -->
+                <div class="flex-1 flex flex-col justify-center items-start">
+                    <div class="text-xs font-semibold text-gray-600 uppercase mb-2">Ready to Begin</div>
+                    <div class="text-2xl font-bold text-burgundy-900 mb-4">Start your learning journey with this deck</div>
+                    <div class="text-sm text-gray-600 mb-4">{{ $newCards }} cards ready to learn</div>
+                </div>
+                
+                <a href="{{ route('study', ['type' => 'normal', 'deck' => $deck->shortcode]) }}" 
+                   class="w-full inline-flex items-center justify-center px-6 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 active:bg-burgundy-700 transition-all duration-150 font-semibold shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                    Start Now
+                </a>
+            @else
+                <!-- Deck already started -->
+                <div class="mb-4">
+                    @if($dueCards > 0 && $newCards > 0)
+                        <!-- Both due and new cards -->
+                        <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Available Today:</div>
+                        <div class="text-3xl font-bold text-burgundy-500">
+                            {{ $dueCards + $newCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">{{ $dueCards }} due · {{ $newCards }} new</div>
+                    @elseif($dueCards > 0)
+                        <!-- Only due cards -->
+                        <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Due Today:</div>
+                        <div class="text-3xl font-bold text-burgundy-500">
+                            {{ $dueCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
+                        </div>
+                    @elseif($newCards > 0)
+                        <!-- Only new cards -->
+                        <div class="text-xs font-semibold text-gray-600 uppercase mb-1">New Cards:</div>
+                        <div class="text-3xl font-bold text-burgundy-500">
+                            {{ $newCards }} <span class="text-lg font-normal text-gray-600">Cards</span>
+                        </div>
+                    @else
+                        <!-- No cards available -->
+                        <div class="text-xs font-semibold text-gray-600 uppercase mb-1">Status:</div>
+                        <div class="text-xl font-bold text-green-600">
+                            All Caught Up!
+                        </div>
+                        @if($nextReviewTime)
+                            <div class="text-sm text-gray-500 mt-1">Next review in {{ $nextReviewTime }}</div>
+                        @endif
                     @endif
-                @endif
-            </div>
+                </div>
 
-            <div class="max-w-xs mb-4">
-                @if($reviewedCount > 0)
+                <div class="max-w-xs mb-4">
                     <div class="text-sm text-gray-600 mb-2 font-semibold">{{ $retentionRate }}% Retention Rate</div>
                     <div class="w-full bg-gray-200 rounded-full h-3">
                         <div class="h-3 rounded-full transition-all" style="width: {{ $retentionRate }}%; background-color: {{ $deckColor }};"></div>
                     </div>
-                @else
-                    <div class="text-sm text-gray-600 mb-2 font-semibold">Start Learning</div>
-                    <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="h-3 bg-gray-400 rounded-full" style="width: 100%;"></div>
-                    </div>
-                @endif
-            </div>
+                </div>
 
-            <x-study-session-modal 
-                :deckId="$deck->shortcode" 
-                :deckName="$deck->name"
-                :dueCount="$dueCards"
-                :newCount="$newCards"
-                :reviewedCount="$reviewedCount"
-                :totalCount="$dueCards + $newCards"
-                class="w-full" />
+                <x-study-session-modal 
+                    :deckId="$deck->shortcode" 
+                    :deckName="$deck->name"
+                    :dueCount="$dueCards"
+                    :newCount="$newCards"
+                    :reviewedCount="$reviewedCount"
+                    :totalCount="$dueCards + $newCards"
+                    class="w-full" />
+            @endif
         </div>
         
         <!-- Diagonal Image Section - hidden on mobile, visible on desktop -->

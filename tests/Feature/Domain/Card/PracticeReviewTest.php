@@ -15,7 +15,7 @@ test('practice reviews are logged to review history with is_practice flag', func
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -24,7 +24,7 @@ test('practice reviews are logged to review history with is_practice flag', func
         'correct_answer_indices' => json_encode([0]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
     $action->execute($user->id, $card->id, ['Option A'], isPractice: true);
 
     // Check review history
@@ -42,7 +42,7 @@ test('practice reviews do not advance SRS stage', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -52,7 +52,7 @@ test('practice reviews do not advance SRS stage', function () {
     ]);
 
     // First, do a real SRS review (correct answer) - advances to stage 1
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
     $firstReview = $action->execute($user->id, $card->id, ['Option A'], isPractice: false);
 
     expect($firstReview->srs_stage)->toBe(1);
@@ -77,7 +77,7 @@ test('practice reviews do not demote SRS stage on incorrect answer', function ()
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -95,7 +95,7 @@ test('practice reviews do not demote SRS stage on incorrect answer', function ()
     ]);
 
     // Do a practice review with incorrect answer
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
     $action->execute($user->id, $card->id, ['Option B'], isPractice: true);
 
     // Stage should not have changed
@@ -108,7 +108,7 @@ test('SRS reviews advance stage correctly', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -117,7 +117,7 @@ test('SRS reviews advance stage correctly', function () {
         'correct_answer_indices' => json_encode([0]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     // First review - correct answer (stage 0 -> 1)
     $firstReview = $action->execute($user->id, $card->id, ['Option A'], isPractice: false);
@@ -140,7 +140,7 @@ test('incorrect SRS reviews demote stage and schedule sooner', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -149,7 +149,7 @@ test('incorrect SRS reviews demote stage and schedule sooner', function () {
         'correct_answer_indices' => json_encode([0]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     // First review - incorrect answer (stage 0 -> 1, but still early stage)
     $review = $action->execute($user->id, $card->id, ['Option B'], isPractice: false);
@@ -169,7 +169,7 @@ test('practice reviews are excluded from accuracy calculation', function () {
     $deck = DeckFactory::new()->create();
 
     // Enroll user in deck
-    (new EnrollUserInDeckAction())->execute($user->id, $deck->id);
+    (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
     $card1 = CardFactory::new()->create([
         'deck_id' => $deck->id,
@@ -185,7 +185,7 @@ test('practice reviews are excluded from accuracy calculation', function () {
         'correct_answer_indices' => json_encode([0]),
     ]);
 
-    $action = new ReviewCardAction();
+    $action = new ReviewCardAction;
 
     // Do one correct SRS review on card1
     $action->execute($user->id, $card1->id, ['Option A'], isPractice: false);
@@ -193,7 +193,7 @@ test('practice reviews are excluded from accuracy calculation', function () {
     // Do practice reviews on card2 (incorrect)
     $action->execute($user->id, $card2->id, ['Option B'], isPractice: true);
 
-    $repository = new \Domain\Card\Repositories\CardReviewRepository();
+    $repository = new \Domain\Card\Repositories\CardReviewRepository;
     $accuracy = $repository->getAccuracy($user->id, $deck->id);
 
     // Accuracy should be 100% (only counting the SRS review, excluding practice)

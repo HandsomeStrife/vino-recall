@@ -21,4 +21,3 @@ class CreateAdminAction
         return AdminData::fromModel($admin);
     }
 }
-

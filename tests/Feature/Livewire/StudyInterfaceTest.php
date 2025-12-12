@@ -13,9 +13,9 @@ beforeEach(function () {
     // StudyInterface requires a deck shortcode
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
-    
+
     $this->deck = Deck::factory()->create();
-    
+
     // Enroll user in deck
     $this->user->enrolledDecks()->attach($this->deck->id, [
         'shortcode' => 'TESTCODE',
@@ -78,7 +78,7 @@ test('study interface continues to next card after review', function () {
         ->call('continue')
         ->assertSet('revealed', false)
         ->assertSet('selectedAnswers', []);
-        
+
     // Should now be on next card
     expect($component->get('currentCardIndex'))->toBe(1);
 });
@@ -127,7 +127,7 @@ test('study interface creates review record after submission', function () {
         'card_id' => $card->id,
         'is_correct' => true,
     ]);
-    
+
     // Card review stores SRS state
     $this->assertDatabaseHas('card_reviews', [
         'user_id' => $this->user->id,
@@ -164,7 +164,7 @@ test('practice session does not create new SRS review if one exists', function (
         'answer_choices' => json_encode(['Wrong', 'Correct']),
         'correct_answer_indices' => json_encode([1]),
     ]);
-    
+
     // Create existing SRS review at stage 4
     CardReview::factory()->create([
         'user_id' => $this->user->id,
@@ -184,7 +184,7 @@ test('practice session does not create new SRS review if one exists', function (
 
     // Should only have 1 review (the original) - practice doesn't create duplicates
     expect(CardReview::where('user_id', $this->user->id)->where('card_id', $card->id)->count())->toBe(1);
-    
+
     // SRS stage should remain unchanged in practice mode
     $currentStage = CardReview::where('user_id', $this->user->id)
         ->where('card_id', $card->id)
@@ -210,7 +210,7 @@ test('study interface offers to load more cards after normal session completes',
         ->call('continue')
         ->call('submitAnswers', ['Option B'])
         ->call('continue');
-        
+
     // Session should be complete
     expect($component->get('sessionComplete'))->toBeTrue();
 });

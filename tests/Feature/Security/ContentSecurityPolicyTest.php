@@ -30,7 +30,7 @@ test('csp allows stripe scripts', function () {
     $response = $this->get(route('home'));
 
     $csp = $response->headers->get('Content-Security-Policy');
-    
+
     expect($csp)->toContain('https://js.stripe.com');
     expect($csp)->toContain('https://api.stripe.com');
 });
@@ -39,7 +39,7 @@ test('csp restricts default sources to self', function () {
     $response = $this->get(route('home'));
 
     $csp = $response->headers->get('Content-Security-Policy');
-    
+
     expect($csp)->toContain("default-src 'self'");
 });
 
@@ -47,7 +47,6 @@ test('csp includes form-action restriction', function () {
     $response = $this->get(route('home'));
 
     $csp = $response->headers->get('Content-Security-Policy');
-    
+
     expect($csp)->toContain("form-action 'self'");
 });
-

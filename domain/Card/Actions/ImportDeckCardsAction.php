@@ -88,7 +88,8 @@ class ImportDeckCardsAction
     /**
      * Process a single CSV row and create a card.
      *
-     * @param array<int, string> $row
+     * @param  array<int, string>  $row
+     *
      * @throws InvalidArgumentException
      */
     private function processRow(int $deckId, array $row, int $lineNumber): void
@@ -127,7 +128,7 @@ class ImportDeckCardsAction
         }
 
         if ($numberOfCorrectAnswers > count($answers)) {
-            throw new InvalidArgumentException("Number of correct answers ({$numberOfCorrectAnswers}) exceeds total answers (" . count($answers) . ').');
+            throw new InvalidArgumentException("Number of correct answers ({$numberOfCorrectAnswers}) exceeds total answers (".count($answers).').');
         }
 
         // First N answers are correct, build indices array
@@ -154,4 +155,3 @@ class ImportDeckCardsAction
         );
     }
 }
-

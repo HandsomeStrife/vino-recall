@@ -12,13 +12,13 @@ test('get new cards for user returns cards not yet reviewed from enrolled decks 
     $user = User::factory()->create();
     $enrolledDeck = Deck::factory()->create();
     $notEnrolledDeck = Deck::factory()->create();
-    
+
     // Enroll user in first deck
     $user->enrolledDecks()->attach($enrolledDeck->id, [
         'enrolled_at' => now(),
         'shortcode' => strtoupper(\Illuminate\Support\Str::random(8)),
     ]);
-    
+
     $card1 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);
     $card2 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);
     $card3 = Card::factory()->create(['deck_id' => $enrolledDeck->id]);

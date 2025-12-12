@@ -28,4 +28,3 @@ class UpdateCategoryAction
         return CategoryData::from($category->fresh());
     }
 }
-

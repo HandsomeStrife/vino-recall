@@ -40,7 +40,8 @@ class CardForm extends Form
     public function getFilledChoices(): array
     {
         $trimmed = array_map(fn ($choice) => trim($choice), $this->answer_choices);
-        return array_values(array_filter($trimmed, fn ($choice) => !empty($choice)));
+
+        return array_values(array_filter($trimmed, fn ($choice) => ! empty($choice)));
     }
 
     /**
@@ -53,6 +54,7 @@ class CardForm extends Form
         // Validate at least 2 non-empty answer choices
         if (count($filledChoices) < 2) {
             $this->addError('form.answer_choices', 'Please provide at least 2 answer choices.');
+
             return null;
         }
 
@@ -61,7 +63,7 @@ class CardForm extends Form
         foreach ($this->correct_answer_indices as $index) {
             if (isset($this->answer_choices[$index])) {
                 $trimmedChoice = trim($this->answer_choices[$index]);
-                if (!empty($trimmedChoice)) {
+                if (! empty($trimmedChoice)) {
                     $foundIndex = array_search($trimmedChoice, $filledChoices, true);
                     if ($foundIndex !== false) {
                         $validIndices[] = $foundIndex;
@@ -72,6 +74,7 @@ class CardForm extends Form
 
         if (empty($validIndices)) {
             $this->addError('form.correct_answer_indices', 'Please mark at least one correct answer.');
+
             return null;
         }
 
@@ -87,6 +90,7 @@ class CardForm extends Form
         foreach ($validIndices as $idx) {
             $correctAnswers[] = $filledChoices[$idx];
         }
+
         return implode(', ', $correctAnswers);
     }
 
