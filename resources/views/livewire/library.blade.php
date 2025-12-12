@@ -7,6 +7,26 @@
         </div>
     </div>
 
+    @if($scrollToDeckId)
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Use a longer timeout to ensure Livewire and the page are fully loaded
+                setTimeout(() => {
+                    const element = document.getElementById('deck-{{ $scrollToDeckId }}');
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Add highlight effect
+                        element.classList.add('ring-4', 'ring-burgundy-500', 'ring-offset-4');
+                        // Remove highlight after 2 seconds
+                        setTimeout(() => {
+                            element.classList.remove('ring-4', 'ring-burgundy-500', 'ring-offset-4');
+                        }, 2000);
+                    }
+                }, 500);
+            });
+        </script>
+    @endif
+
     <!-- Main Content -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Category Filter -->
@@ -118,7 +138,7 @@
                                                 @endif
                                             </div>
                                             <div class="ml-4 flex gap-2">
-                                                <a href="{{ route('collection.show', $deckStat['deck']->id) }}" 
+                                                <a href="{{ route('collection.show', $deckStat['deck']->identifier) }}" 
                                                    class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
                                                     View Collection
                                                 </a>
@@ -141,7 +161,16 @@
                                                             <div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0 border border-gray-200" 
                                                                  style="background-image: url('{{ $childStat['image'] }}');"></div>
                                                             <div class="flex-1 min-w-0">
-                                                                <h5 class="font-semibold text-gray-900 truncate">{{ $childStat['deck']->name }}</h5>
+                                                                <div class="flex items-center gap-2">
+                                                                    <h5 class="font-semibold text-gray-900 truncate">{{ $childStat['deck']->name }}</h5>
+                                                                    @if($childStat['hasMaterials'] ?? false)
+                                                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-burgundy-100 text-burgundy-700 text-xs font-medium rounded" title="Includes learning materials">
+                                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.205 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.795 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.795 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.205 18 16.5 18s-3.332.477-4.5 1.253"></path>
+                                                                            </svg>
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
                                                                 <p class="text-sm text-gray-500">{{ $childStat['totalCards'] }} cards</p>
                                                                 @if($childStat['progress'] > 0)
                                                                     <div class="mt-2 flex items-center gap-2">
@@ -186,7 +215,7 @@
                                 
                                 <div class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full">
                                     <!-- Colored Title Banner -->
-                                    <div class="px-6 py-3" style="background-color: {{ $deckColor }};">
+                                    <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $deckColor }};">
                                         <div>
                                             <h3 class="text-lg font-bold text-white">{{ $deckStat['deck']->name }}</h3>
                                             @if($deckStat['deck']->parent_name)
@@ -195,6 +224,14 @@
                                                 <span class="text-xs text-white/80">{{ $deckStat['deck']->categories->first()->name }}</span>
                                             @endif
                                         </div>
+                                        @if($deckStat['hasMaterials'] ?? false)
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-white/20 text-white text-xs font-medium rounded-full shrink-0" title="Includes learning materials">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.205 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.795 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.795 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.205 18 16.5 18s-3.332.477-4.5 1.253"></path>
+                                                </svg>
+                                                Materials
+                                            </span>
+                                        @endif
                                     </div>
                                     
                                     <div class="flex relative flex-1">
@@ -283,7 +320,7 @@
                                 $deckColor = $colors[$deckStat['deck']->id % count($colors)];
                             @endphp
                             
-                            <div class="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+                            <div id="deck-{{ $deckStat['deck']->id }}" class="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden scroll-mt-8 transition-all duration-300">
                                 <!-- Collection Header -->
                                 <div class="px-6 py-4 flex items-center justify-between" style="background-color: {{ $deckColor }};">
                                     <div class="flex items-center gap-3">
@@ -308,7 +345,7 @@
                                             @endif
                                         </div>
                                         <div class="ml-4 flex gap-2">
-                                            <a href="{{ route('collection.show', $deckStat['deck']->id) }}" 
+                                            <a href="{{ route('collection.show', $deckStat['deck']->identifier) }}" 
                                                class="inline-block bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
                                                 View Collection
                                             </a>
@@ -331,7 +368,16 @@
                                                         <div class="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0 border border-gray-200" 
                                                              style="background-image: url('{{ $childStat['image'] }}');"></div>
                                                         <div class="flex-1 min-w-0">
-                                                            <h5 class="font-semibold text-gray-900 truncate">{{ $childStat['deck']->name }}</h5>
+                                                            <div class="flex items-center gap-2">
+                                                                <h5 class="font-semibold text-gray-900 truncate">{{ $childStat['deck']->name }}</h5>
+                                                                @if($childStat['hasMaterials'] ?? false)
+                                                                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-burgundy-100 text-burgundy-700 text-xs font-medium rounded" title="Includes learning materials">
+                                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.205 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.795 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.795 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.205 18 16.5 18s-3.332.477-4.5 1.253"></path>
+                                                                        </svg>
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                             <p class="text-sm text-gray-500">{{ $childStat['totalCards'] }} cards</p>
                                                         </div>
                                                     </div>
@@ -379,6 +425,7 @@
                                 :description="$deckStat['deck']->description"
                                 :isEnrolled="false"
                                 :progress="0"
+                                :hasMaterials="$deckStat['hasMaterials'] ?? false"
                             >
                                 <x-slot:bottomAction>
                                     <button wire:click="enrollInDeck({{ $deckStat['deck']->id }})" 

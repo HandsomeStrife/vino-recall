@@ -19,17 +19,26 @@ use Livewire\Component;
 
 class CollectionDetail extends Component
 {
-    public int $collectionId;
+    public string $identifier;
 
-    public function mount(int $collectionId): void
+    public function mount(string $identifier): void
     {
-        $this->collectionId = $collectionId;
+        $this->identifier = $identifier;
     }
 
-    public function enrollInCollection(EnrollUserInDeckAction $enrollAction, UserRepository $userRepository): void
-    {
+    public function enrollInCollection(
+        EnrollUserInDeckAction $enrollAction,
+        UserRepository $userRepository,
+        \Domain\Deck\Repositories\DeckRepository $deckRepository
+    ): void {
         $user = $userRepository->getLoggedInUser();
-        $enrollAction->execute($user->id, $this->collectionId);
+        $collection = $deckRepository->findByIdentifier($this->identifier);
+
+        if ($collection === null) {
+            return;
+        }
+
+        $enrollAction->execute($user->id, $collection->id);
 
         $this->dispatch('collection-enrolled');
     }
@@ -59,8 +68,8 @@ class CollectionDetail extends Component
         $userData = $userRepository->getLoggedInUser();
         $user = User::find($userData->id);
 
-        // Get the collection
-        $collection = $deckRepository->findById($this->collectionId);
+        // Get the collection by identifier
+        $collection = $deckRepository->findByIdentifier($this->identifier);
 
         if ($collection === null || ! $collection->is_collection) {
             abort(404, 'Collection not found');
@@ -70,7 +79,7 @@ class CollectionDetail extends Component
         $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $collection->id);
 
         // Get child decks with user enrollment info (to get shortcodes)
-        $childDecks = Deck::where('parent_deck_id', $this->collectionId)
+        $childDecks = Deck::where('parent_deck_id', $collection->id)
             ->where('is_active', true)
             ->get();
 

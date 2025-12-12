@@ -14,7 +14,6 @@ use Domain\User\Models\User;
 test('guest cannot access authenticated routes', function () {
     $protectedRoutes = [
         'dashboard',
-        'enrolled',
         'library',
         'profile',
         'subscription',
@@ -196,9 +195,6 @@ test('authenticated user cannot access guest-only routes', function () {
 
 test('unauthenticated requests to protected routes redirect to login', function () {
     $response = $this->get(route('dashboard'));
-    $response->assertRedirect(route('login'));
-
-    $response = $this->get(route('enrolled'));
     $response->assertRedirect(route('login'));
 
     $response = $this->get(route('library'));

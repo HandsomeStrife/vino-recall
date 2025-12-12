@@ -11,7 +11,9 @@ use Domain\Card\Enums\StudySessionType;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
 use Domain\Deck\Repositories\DeckRepository;
+use Domain\Material\Repositories\MaterialRepository;
 use Domain\User\Repositories\UserRepository;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class StudyInterface extends Component
@@ -54,24 +56,30 @@ class StudyInterface extends Component
 
     public int $cardsReviewedThisSession = 0;
 
+    // Study phase tracking
+    public string $phase = 'flashcards'; // materials, intermediary, flashcards
+
+    public int $current_material_index = 0;
+
     public function mount(
         string $type,
         string $deck,
-        UserRepository $userRepository,
-        CardReviewRepository $cardReviewRepository,
-        CardRepository $cardRepository,
-        DeckRepository $deckRepository
+        UserRepository $user_repository,
+        CardReviewRepository $card_review_repository,
+        CardRepository $card_repository,
+        DeckRepository $deck_repository,
+        MaterialRepository $material_repository
     ): void {
         // Validate session type
         if (! in_array($type, ['normal', 'deep_study', 'practice'])) {
-            $this->redirect(route('enrolled'));
+            $this->redirect(route('library'));
 
             return;
         }
 
         // Validate deck shortcode format
         if (! preg_match('/^[A-Za-z0-9]{8}$/', $deck)) {
-            $this->redirect(route('enrolled'));
+            $this->redirect(route('library'));
 
             return;
         }
@@ -79,37 +87,44 @@ class StudyInterface extends Component
         $shortcode = $deck;
 
         // Find deck by shortcode
-        $user = $userRepository->getLoggedInUser();
-        $deckData = $deckRepository->findByShortcode($user->id, $shortcode);
+        $user = $user_repository->getLoggedInUser();
+        $deck_data = $deck_repository->findByShortcode($user->id, $shortcode);
 
-        if (! $deckData) {
-            $this->redirect(route('enrolled'));
+        if (! $deck_data) {
+            $this->redirect(route('library'));
 
             return;
         }
 
-        $this->deckId = $deckData->id;
+        $this->deckId = $deck_data->id;
         $this->deckShortcode = $shortcode;
 
         // Determine exit URL based on deck's parent
-        $this->exitUrl = $this->determineExitUrl($deckData, $deckRepository);
+        $this->exitUrl = $this->determineExitUrl($deck_data, $deck_repository);
 
         // Parse session configuration from route param
         $this->initializeSessionConfig($type);
 
+        // Check if we should show materials first
+        $this->determineStartingPhase($user->id, $deck_data->id, $material_repository);
+
         // Load cards for the session
-        $this->loadSessionCards($userRepository, $cardRepository);
+        $this->loadSessionCards($user_repository, $card_repository);
     }
 
     private function determineExitUrl($deckData, DeckRepository $deckRepository): string
     {
         // If deck has a parent (is a child deck), return to collection page
         if ($deckData->parent_deck_id !== null) {
-            return route('collection.show', ['id' => $deckData->parent_deck_id]);
+            // Get parent deck to find its identifier
+            $parentDeck = $deckRepository->findById($deckData->parent_deck_id);
+            if ($parentDeck !== null) {
+                return route('collection.show', ['identifier' => $parentDeck->identifier]);
+            }
         }
 
-        // Otherwise return to enrolled page
-        return route('enrolled');
+        // Otherwise return to deck stats page
+        return route('deck.stats', ['shortcode' => $this->deckShortcode]);
     }
 
     private function initializeSessionConfig(string $sessionType): void
@@ -129,6 +144,27 @@ class StudyInterface extends Component
             trackSrs: $trackSrs,
             randomOrder: false,
         );
+    }
+
+    private function determineStartingPhase(int $user_id, int $deck_id, MaterialRepository $material_repository): void
+    {
+        // Check if deck has materials and user hasn't viewed them
+        $has_materials = $material_repository->hasMaterials($deck_id);
+
+        if ($has_materials) {
+            $has_viewed = DB::table('deck_user')
+                ->where('user_id', $user_id)
+                ->where('deck_id', $deck_id)
+                ->value('has_viewed_materials');
+
+            if (! $has_viewed) {
+                $this->phase = 'materials';
+
+                return;
+            }
+        }
+
+        $this->phase = 'flashcards';
     }
 
     private function loadSessionCards(
@@ -315,46 +351,112 @@ class StudyInterface extends Component
         $this->reportSubmitted = false;
     }
 
-    public function render(CardRepository $cardRepository, DeckRepository $deckRepository)
+    // Material phase methods
+    public function nextMaterial(MaterialRepository $material_repository): void
+    {
+        if ($this->deckId === null) {
+            return;
+        }
+
+        $materials = $material_repository->getByDeckId($this->deckId);
+        if ($this->current_material_index < $materials->count() - 1) {
+            $this->current_material_index++;
+        }
+    }
+
+    public function previousMaterial(): void
+    {
+        if ($this->current_material_index > 0) {
+            $this->current_material_index--;
+        }
+    }
+
+    public function completeMaterials(): void
+    {
+        $this->markMaterialsViewed();
+        $this->phase = 'intermediary';
+    }
+
+    public function skipMaterials(): void
+    {
+        $this->markMaterialsViewed();
+        $this->phase = 'intermediary';
+    }
+
+    public function beginFlashcards(): void
+    {
+        $this->phase = 'flashcards';
+    }
+
+    private function markMaterialsViewed(): void
+    {
+        if ($this->deckId === null) {
+            return;
+        }
+
+        $user_repository = app(UserRepository::class);
+        $user = $user_repository->getLoggedInUser();
+
+        DB::table('deck_user')
+            ->where('user_id', $user->id)
+            ->where('deck_id', $this->deckId)
+            ->update(['has_viewed_materials' => true]);
+    }
+
+    public function render(CardRepository $card_repository, DeckRepository $deck_repository, MaterialRepository $material_repository)
     {
         $card = null;
         $deck = null;
-        $isCorrect = null;
+        $is_correct = null;
         $progress = null;
-        $shuffledAnswers = [];
+        $shuffled_answers = [];
+        $materials = collect();
+        $current_material = null;
 
-        if ($this->currentCardId !== null) {
-            $card = $cardRepository->findById($this->currentCardId);
+        // Get deck info
+        if ($this->deckId) {
+            $deck = $deck_repository->findById($this->deckId);
+        }
+
+        // Materials phase
+        if ($this->phase === 'materials' && $this->deckId) {
+            $materials = $material_repository->getByDeckId($this->deckId);
+            $current_material = $materials->get($this->current_material_index);
+        }
+
+        // Flashcard phase
+        if ($this->phase === 'flashcards' && $this->currentCardId !== null) {
+            $card = $card_repository->findById($this->currentCardId);
             if ($card) {
-                $deck = $deckRepository->findById($card->deck_id);
+                $deck = $deck_repository->findById($card->deck_id);
 
                 // Get shuffled answers
-                $answerChoices = $card->answer_choices ?? [];
-                $shuffledAnswers = $this->getShuffledAnswers($answerChoices, $card->id);
+                $answer_choices = $card->answer_choices ?? [];
+                $shuffled_answers = $this->getShuffledAnswers($answer_choices, $card->id);
 
                 // Determine if answer is correct (for display after reveal)
                 if ($this->revealed && count($this->selectedAnswers) > 0) {
-                    $correctIndices = $card->correct_answer_indices ?? [];
+                    $correct_indices = $card->correct_answer_indices ?? [];
 
                     // Get correct answers as strings
-                    $correctAnswers = [];
-                    foreach ($correctIndices as $index) {
-                        if (isset($answerChoices[$index])) {
-                            $correctAnswers[] = $answerChoices[$index];
+                    $correct_answers = [];
+                    foreach ($correct_indices as $index) {
+                        if (isset($answer_choices[$index])) {
+                            $correct_answers[] = $answer_choices[$index];
                         }
                     }
 
                     // Sort both for comparison
-                    $sortedSelected = $this->selectedAnswers;
-                    $sortedCorrect = $correctAnswers;
-                    sort($sortedSelected);
-                    sort($sortedCorrect);
+                    $sorted_selected = $this->selectedAnswers;
+                    $sorted_correct = $correct_answers;
+                    sort($sorted_selected);
+                    sort($sorted_correct);
 
-                    $isCorrect = $sortedSelected === $sortedCorrect;
+                    $is_correct = $sorted_selected === $sorted_correct;
                 }
             }
         } elseif ($this->deckId) {
-            $deck = $deckRepository->findById($this->deckId);
+            $deck = $deck_repository->findById($this->deckId);
         }
 
         // Calculate progress
@@ -369,15 +471,19 @@ class StudyInterface extends Component
         return view('livewire.study-interface', [
             'card' => $card,
             'deck' => $deck,
-            'isCorrect' => $isCorrect,
+            'isCorrect' => $is_correct,
             'sessionConfig' => $this->sessionConfig,
             'progress' => $progress,
             'deckShortcode' => $this->deckShortcode,
             'exitUrl' => $this->exitUrl,
-            'shuffledAnswers' => $shuffledAnswers,
+            'shuffledAnswers' => $shuffled_answers,
             'sessionComplete' => $this->sessionComplete,
             'hasMoreCards' => $this->hasMoreCards,
             'cardsReviewedThisSession' => $this->cardsReviewedThisSession,
+            'phase' => $this->phase,
+            'materials' => $materials,
+            'current_material' => $current_material,
+            'current_material_index' => $this->current_material_index,
         ]);
     }
 }

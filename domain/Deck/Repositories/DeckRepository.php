@@ -51,6 +51,15 @@ class DeckRepository
         return DeckData::fromModel($deck);
     }
 
+    public function findByIdentifier(string $identifier): ?DeckData
+    {
+        $deck = Deck::with(['categories', 'parent', 'children'])
+            ->where('identifier', $identifier)
+            ->first();
+
+        return $deck ? DeckData::fromModel($deck) : null;
+    }
+
     /**
      * Get active decks that are either parent decks or standalone (no parent).
      * Child decks are not returned directly - they are accessed through their parent.

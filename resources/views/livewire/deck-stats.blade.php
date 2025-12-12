@@ -8,6 +8,16 @@
                 @endif
             </div>
             <div class="flex items-center gap-3">
+                @if(isset($hasMaterials) && $hasMaterials && isset($deckShortcode))
+                <a href="{{ route('deck.materials', ['shortcode' => $deckShortcode]) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-white hover:bg-green-50 text-green-600 rounded-lg transition font-medium border border-green-200 hover:border-green-300"
+                   title="Review learning materials">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Review Materials
+                </a>
+                @endif
                 <button 
                     wire:click="confirmReset"
                     class="inline-flex items-center px-4 py-2 bg-white hover:bg-red-50 text-red-600 rounded-lg transition font-medium border border-red-200 hover:border-red-300"
@@ -78,7 +88,7 @@
                     :dueCardsCount="$dueCardsCount"
                     :newCardsCount="$newCardsCount"
                     :reviewedCount="$reviewedCount"
-                    :deckShortcode="$deck->shortcode"
+                    :deckShortcode="$deckShortcode"
                     :deckName="$deck->name"
                 />
             </div>

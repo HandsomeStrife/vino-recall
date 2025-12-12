@@ -48,12 +48,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', fn () => view('pages.dashboard'))->name('dashboard');
     Route::get('/study/{type}/{deck}', fn (string $type, string $deck) => view('pages.study', ['type' => $type, 'deck' => $deck]))->name('study')->where(['type' => 'normal|deep_study|practice', 'deck' => '[A-Za-z0-9]{8}']);
-    Route::get('/library', fn () => view('pages.library'))->name('library');
-    Route::get('/enrolled', fn () => view('pages.enrolled'))->name('enrolled');
+    Route::get('/library/{identifier?}', fn (?string $identifier = null) => view('pages.library', ['identifier' => $identifier]))->name('library');
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
     Route::get('/subscription', fn () => view('pages.subscription'))->name('subscription');
     Route::get('/deck/{shortcode}/stats', fn (string $shortcode) => view('pages.deck-stats', ['shortcode' => $shortcode]))->name('deck.stats');
-    Route::get('/collection/{id}', fn (int $id) => view('pages.collection', ['collectionId' => $id]))->name('collection.show');
+    Route::get('/deck/{shortcode}/materials', fn (string $shortcode) => view('pages.deck-materials', ['shortcode' => $shortcode]))->name('deck.materials');
+    Route::get('/collection/{identifier}', fn (string $identifier) => view('pages.collection', ['identifier' => $identifier]))->name('collection.show');
 });
 
 Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->prefix('admin')->name('admin.')->group(function () {
@@ -61,6 +61,7 @@ Route::middleware(\App\Http\Middleware\AdminAuthenticate::class)->prefix('admin'
     Route::get('/users', fn () => view('pages.admin.users'))->name('users');
     Route::get('/decks', fn () => view('pages.admin.decks'))->name('decks');
     Route::get('/decks/{deckId}/cards', fn (int $deckId) => view('pages.admin.deck-cards', ['deckId' => $deckId]))->name('decks.cards');
+    Route::get('/decks/{deckId}/materials', fn (int $deckId) => view('pages.admin.deck-materials', ['deck_id' => $deckId]))->name('decks.materials');
     Route::get('/categories', fn () => view('pages.admin.categories'))->name('categories');
 });
 

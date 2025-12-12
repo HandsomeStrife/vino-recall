@@ -34,10 +34,6 @@ test('complete user journey: register, login, view dashboard, study cards', func
     $response->assertStatus(200)
         ->assertSee('Welcome back');
 
-    // Visit enrolled page
-    $response = $this->get(route('enrolled'));
-    $response->assertStatus(200);
-
     // Logout
     $response = $this->post(route('logout'));
     $response->assertRedirect('/');
@@ -102,10 +98,6 @@ test('user study session: select deck, study cards, rate cards, view progress', 
     
     // Deck should be visible somewhere on the page (either tab)
     // Since library is a Livewire component with tabs, just verify the page loads
-
-    // Visit enrolled page
-    $response = $this->get(route('enrolled'));
-    $response->assertStatus(200);
 
     // Enroll in deck
     (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
@@ -207,10 +199,6 @@ test('complete study session with multiple cards', function () {
             'next_review_at' => now()->subDay(), // All due for review
         ]);
     }
-
-    // Visit enrolled page
-    $response = $this->get(route('enrolled'));
-    $response->assertStatus(200);
 
     // Verify dashboard shows enrolled deck with daily goal
     $response = $this->get(route('dashboard'));

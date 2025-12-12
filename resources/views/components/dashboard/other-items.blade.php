@@ -7,7 +7,7 @@
     <div class="space-y-3">
         @foreach($otherItems as $item)
             @if($item['type'] === 'collection')
-                <a href="{{ route('collection.show', ['id' => $item['deck']->id]) }}" 
+                <a href="{{ route('collection.show', ['identifier' => $item['deck']->identifier]) }}" 
                    class="block relative overflow-hidden p-3 border-2 border-purple-200 rounded-lg hover:border-purple-500 transition bg-purple-50/50">
                     <!-- Background Image with Overlay -->
                     <div class="absolute inset-0 bg-cover bg-center opacity-10" 

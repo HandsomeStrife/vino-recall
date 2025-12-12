@@ -6,9 +6,10 @@
     'description' => null,
     'isEnrolled' => false,
     'progress' => 0,
+    'hasMaterials' => false,
 ])
 
-<div class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full">
+<div id="deck-{{ $deck->id }}" class="bg-white rounded-lg overflow-hidden relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full scroll-mt-8 transition-all duration-300">
     <!-- Colored Title Banner with Enrolled Badge -->
     <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $deckColor }};">
         <div>
@@ -17,11 +18,19 @@
                 <span class="text-xs text-white/80">{{ $deck->categories->first()->name }}</span>
             @endif
         </div>
-        @if($isEnrolled)
-            <div class="shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
+            @if($hasMaterials)
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-white/20 text-white text-xs font-medium rounded-full" title="Includes learning materials">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.205 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.795 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.795 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.205 18 16.5 18s-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Materials
+                </span>
+            @endif
+            @if($isEnrolled)
                 {{ $enrolledBadge ?? '' }}
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
     
     <div class="flex relative flex-1">

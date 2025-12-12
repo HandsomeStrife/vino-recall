@@ -1,4 +1,4 @@
 <x-layout.default :showSidebar="true">
-    <livewire:library />
+    <livewire:library :identifier="$identifier ?? null" />
 </x-layout.default>
 

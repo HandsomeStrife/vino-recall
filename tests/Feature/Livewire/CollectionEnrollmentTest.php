@@ -15,7 +15,7 @@ test('can view collection without enrolling', function () {
         'name' => 'Test Collection',
     ]);
 
-    Livewire::test(CollectionDetail::class, ['collectionId' => $collection->id])
+    Livewire::test(CollectionDetail::class, ['identifier' => $collection->identifier])
         ->assertStatus(200)
         ->assertSee('Test Collection')
         ->assertSee('Enroll in Entire Collection');
@@ -33,7 +33,7 @@ test('collection detail shows enroll buttons when not enrolled', function () {
         'name' => 'Grape Types',
     ]);
 
-    Livewire::test(CollectionDetail::class, ['collectionId' => $collection->id])
+    Livewire::test(CollectionDetail::class, ['identifier' => $collection->identifier])
         ->assertSee('Enroll in Entire Collection')
         ->assertSee('Add to My Decks');
 });
@@ -49,7 +49,7 @@ test('can enroll in individual child deck', function () {
         'name' => 'Red Wines',
     ]);
 
-    Livewire::test(CollectionDetail::class, ['collectionId' => $collection->id])
+    Livewire::test(CollectionDetail::class, ['identifier' => $collection->identifier])
         ->call('enrollInChildDeck', $childDeck->id)
         ->assertDispatched('deck-enrolled');
 
@@ -129,7 +129,7 @@ test('enrolling in collection keeps individual enrollments', function () {
     ]);
 
     // Then enroll in the entire collection
-    Livewire::test(CollectionDetail::class, ['collectionId' => $collection->id])
+    Livewire::test(CollectionDetail::class, ['identifier' => $collection->identifier])
         ->call('enrollInCollection')
         ->assertDispatched('collection-enrolled');
 
@@ -211,7 +211,7 @@ test('can unenroll from individual deck', function () {
         'shortcode' => 'child004',
     ]);
 
-    Livewire::test(CollectionDetail::class, ['collectionId' => $collection->id])
+    Livewire::test(CollectionDetail::class, ['identifier' => $collection->identifier])
         ->call('unenrollFromChildDeck', $childDeck->id)
         ->assertDispatched('deck-unenrolled');
 

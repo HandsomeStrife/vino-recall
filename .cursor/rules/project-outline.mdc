@@ -5,7 +5,7 @@ alwaysApply: true
 Project Name: VinoRecall
 Type: Educational Web Application (SaaS) 
 Core Methodology: Spaced Repetition System (SRS) - WaniKani Style
-Subject Matter: Wine Education (Specifically WSET Level 1 & 2)
+Subject Matter: Wine Education
 
 ## 1. Executive Summary
 
@@ -44,14 +44,42 @@ The app is divided into two distinct "Worlds" (Levels), based on the WSET syllab
 
 ## 4. Feature Breakdown
 
-### A. The "Study Interface" (Core Feature)
+### A. Learning Materials (Pre-Study Phase)
+Before users begin flashcard study, decks can optionally present learning materials to provide context and foundational knowledge.
+
+**Features:**
+- **Rich Text Content:** Materials use Trix editor supporting formatted text, lists, headings
+- **Image Integration:** Featured images with flexible positioning (top, left, right, bottom)
+- **Multiple Materials:** Each deck can have multiple materials presented in sequence
+- **Sortable:** Admins can drag-and-drop to reorder materials
+
+**User Flow - First Study Session:**
+1. **Materials Phase:** When first starting a deck, users are presented with all learning materials
+2. **Navigation:** Users can navigate forward/backward through materials, or skip entirely
+3. **Intermediary Screen:** After completing materials (or skipping), an intermediary screen appears
+4. **Begin Flashcards:** User proceeds to the standard flashcard study interface
+
+**Re-review Materials:**
+- Materials are only shown once per user per deck (tracked in `deck_user.has_viewed_materials`)
+- Users can re-review materials anytime via "Review Materials" link on deck stats page
+- Re-reviewing materials does not affect SRS scheduling or study progress
+
+**Admin Management:**
+- Accessible via "Materials" link in deck management table
+- Create, edit, delete materials with rich text editor
+- Upload and position images within materials
+- Drag-and-drop reordering of materials
+
+### B. The "Study Interface" (Core Feature)
 This is the primary screen where the user spends 90% of their time.
 
 **Flow:**
-1. **The Prompt:** A card appears with an image or question
-2. **Answer Selection:** For multiple-choice, user selects an answer
-3. **Instant Feedback:** System automatically shows if answer is correct or incorrect
-4. **Continue Button:** User proceeds to next card (Space/Enter hotkey)
+1. **Learning Materials (First Time Only):** Optional pre-study content with skip option
+2. **Intermediary Screen:** Transition message before beginning flashcards
+3. **The Prompt:** A card appears with an image or question
+4. **Answer Selection:** For multiple-choice, user selects an answer
+5. **Instant Feedback:** System automatically shows if answer is correct or incorrect
+6. **Continue Button:** User proceeds to next card (Space/Enter hotkey)
 
 **SRS Logic - WaniKani Style:**
 - **Correct Answer:** Next review exponentially increases (1 day → 2.5 days → 6.25 days, etc.)
@@ -59,7 +87,7 @@ This is the primary screen where the user spends 90% of their time.
 - **Ease Factor:** Dynamically adjusts (increases +0.1 for correct, decreases -0.2 for incorrect)
 - **Traditional Cards:** Default to correct (for non-multiple-choice content)
 
-### B. The Dashboard - Hero Section
+### C. The Dashboard - Hero Section
 A visually rich overview of the user's "Wine Journey" with WaniKani-inspired layout.
 
 **Hero Section:**
@@ -78,7 +106,7 @@ A visually rich overview of the user's "Wine Journey" with WaniKani-inspired lay
 - **Recent Activity:** Timeline of recent reviews with correct/incorrect indicators (green checkmark / red X)
 - **Available Decks:** Grid of decks not yet enrolled, with thumbnails and enroll buttons
 
-### C. The Library (Deck Browser)
+### D. The Library (Deck Browser)
 Users can browse and enroll in specific decks.
 
 **Features:**
@@ -87,7 +115,7 @@ Users can browse and enroll in specific decks.
 - Enrollment system with unique shortcodes
 - Filter by: Red Wines, White Wines, Regions, Production, Spirits (for L2)
 
-### D. User Progression
+### E. User Progression
 **Metrics Tracked:**
 - Cards Mastered: Total cards with high retention
 - Current Streak: Consecutive days of study
@@ -104,10 +132,16 @@ Users can browse and enroll in specific decks.
 
 **2. Application (Logged In)**
 - **Dashboard:** Hero with deck cards, daily goal, mistakes, recent activity, available decks
-- **Study Interface:** Distraction-free flashcard mode (navigation hidden)
+- **Study Interface:** Three-phase study flow (materials → intermediary → flashcards)
+- **Material Viewer:** Standalone review of learning materials
 - **Library:** Deck browser with enrollment
-- **Deck Stats:** Detailed statistics per deck
+- **Deck Stats:** Detailed statistics per deck with materials review link
 - **Profile/Settings:** Subscription management, user preferences
+
+**3. Admin Console**
+- **Deck Management:** Create, edit, delete decks with card and material management
+- **Material Management:** Rich text editor for creating learning materials with image uploads
+- **Card Management:** Multiple-choice flashcard creation and editing
 
 ## 6. Technical Architecture
 
@@ -133,6 +167,43 @@ The system uses **objective correctness tracking** rather than subjective diffic
 - `card_reviews.ease_factor`: dynamic difficulty adjustment
 - `card_reviews.next_review_at`: calculated review time
 
+### Learning Materials System
+Materials provide contextual learning content before flashcard study begins.
+
+**Database Schema:**
+- `deck_materials` table:
+  - `deck_id`: Foreign key to deck
+  - `title`: Optional title for the material
+  - `content`: Rich text content (longText)
+  - `image_path`: Optional featured image path
+  - `image_position`: Enum (top, left, right, bottom)
+  - `sort_order`: Integer for ordering materials
+- `deck_user.has_viewed_materials`: Boolean tracking if user has seen materials
+
+**Material Repository:**
+- `getByDeckId($deck_id)`: Get all materials for a deck, ordered by sort_order
+- `findById($id)`: Find a specific material
+- `hasMaterials($deck_id)`: Check if deck has any materials
+- `countByDeckId($deck_id)`: Count materials for a deck
+
+**Material Actions:**
+- `CreateMaterialAction`: Creates new material with automatic sort_order assignment
+- `UpdateMaterialAction`: Updates existing material content and metadata
+- `DeleteMaterialAction`: Deletes material and re-orders remaining materials
+- `UpdateMaterialSortOrderAction`: Bulk update sort order for drag-and-drop
+
+**Frontend Components:**
+- `DeckMaterials` (Livewire): Admin interface for CRUD operations on materials
+- `MaterialViewer` (Livewire): User-facing material display with navigation
+- `Trix Editor` (Blade Component): Rich text editor with image upload support
+
+**Study Flow Integration:**
+- StudyInterface tracks phase: 'materials', 'intermediary', or 'flashcards'
+- On first study session, phase starts at 'materials' if deck has materials and user hasn't viewed them
+- Users can navigate through materials or skip entirely
+- After materials, intermediary screen shows "Ready to Begin?" message
+- Subsequent sessions skip directly to flashcards phase
+
 ### Deck Management
 - **Enrollment System:** Each user-deck relationship has a unique 8-character shortcode
 - **Image System:** Decks can have custom images or use default images (1.jpg - 10.jpg based on deck ID modulo 10)
@@ -145,19 +216,28 @@ The system uses **objective correctness tracking** rather than subjective diffic
 
 ### Repository Pattern
 - **CardReviewRepository Methods:**
-  - `getMistakes($userId, $limit)`: Recent incorrect answers
-  - `getRetentionRate($userId, $deckId)`: Percentage of correct answers
-  - `getDueCardsForUser($userId)`: Cards due for review
-  - `getCurrentStreak($userId)`: Consecutive study days
+  - `getMistakes($user_id, $limit)`: Recent incorrect answers
+  - `getRetentionRate($user_id, $deck_id)`: Percentage of correct answers
+  - `getDueCardsForUser($user_id)`: Cards due for review
+  - `getCurrentStreak($user_id)`: Consecutive study days
 - **DeckRepository Methods:**
-  - `getAvailableDecks($userId)`: Decks not yet enrolled
-  - `getUserEnrolledDecks($userId)`: User's active decks
+  - `getAvailableDecks($user_id)`: Decks not yet enrolled
+  - `getUserEnrolledDecks($user_id)`: User's active decks
+  - `findByShortcode($user_id, $shortcode)`: Find deck by unique user shortcode
+- **MaterialRepository Methods:**
+  - `getByDeckId($deck_id)`: Get all materials for a deck
+  - `hasMaterials($deck_id)`: Check if deck has materials
+  - `findById($id)`: Find specific material
+  - `countByDeckId($deck_id)`: Count materials for a deck
 
 ### Frontend Components
-- **Blade Components:** Header, hero sections, stat cards, deck cards
-- **Livewire:** Dashboard, StudyInterface, Library (reactive components)
+- **Blade Components:** Header, hero sections, stat cards, deck cards, Trix editor
+- **Livewire User Components:** Dashboard, StudyInterface, Library, MaterialViewer, DeckStats
+- **Livewire Admin Components:** DeckManagement, CardManagement, DeckMaterials
 - **AlpineJS:** Dropdown menus, mobile navigation, interactive elements
 - **TailwindCSS:** Utility-first styling with custom burgundy/cream theme
+- **Trix Editor:** Rich text editing with image attachment support (loaded via CDN)
+- **SortableJS:** Drag-and-drop functionality for material reordering
 
 ## 7. Image Optimization
 

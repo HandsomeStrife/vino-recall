@@ -29,7 +29,7 @@ test('user with active subscription can access subscribed content', function () 
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200);
 
-    $response = $this->get(route('enrolled'));
+    $response = $this->get(route('library'));
     $response->assertStatus(200);
 
     $response = $this->get(route('library'));
@@ -94,7 +94,7 @@ test('free tier user can access dashboard and study', function () {
     $response = $this->get(route('dashboard'));
     $response->assertStatus(200);
 
-    $response = $this->get(route('enrolled'));
+    $response = $this->get(route('library'));
     $response->assertStatus(200);
 
     $response = $this->get(route('library'));

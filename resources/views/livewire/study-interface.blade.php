@@ -67,7 +67,131 @@
     @endif
     
     <div class="pt-14 pb-16 px-4 sm:p-6 md:p-8 flex items-start sm:items-center justify-center min-h-dvh">
-        @if($card)
+        @if($phase === 'materials')
+            <!-- Materials Phase -->
+            <div class="max-w-4xl w-full" x-data="{ 
+                current_material_index: @entangle('current_material_index') 
+            }">
+                <div class="mb-4 flex items-center justify-between gap-2">
+                    <x-badge.badge variant="primary" class="text-sm">{{ $deck->name }} - Learning Materials</x-badge.badge>
+                    <div class="text-right flex-shrink-0">
+                        <div class="text-xs sm:text-sm font-medium text-gray-700">
+                            {{ $current_material_index + 1 }} / {{ $materials->count() }}
+                        </div>
+                        <div class="w-20 sm:w-32 h-1.5 sm:h-2 bg-gray-200 rounded-full mt-1">
+                            <div class="h-1.5 sm:h-2 bg-burgundy-500 rounded-full transition-all" 
+                                 style="width: {{ (($current_material_index + 1) / $materials->count()) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                @if($current_material)
+                    <div class="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-4 sm:p-6 md:p-8 mb-6">
+                        @if($current_material->title)
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-burgundy-900 mb-4 sm:mb-6">
+                                {{ $current_material->title }}
+                            </h2>
+                        @endif
+
+                        <div class="prose prose-burgundy max-w-none">
+                            @if($current_material->image_path && $current_material->image_position->value === 'top')
+                                <div class="mb-6">
+                                    <img src="{{ asset('storage/' . $current_material->image_path) }}" 
+                                         alt="{{ $current_material->title ?? 'Material image' }}" 
+                                         class="w-full rounded-lg shadow-md"
+                                         loading="lazy">
+                                </div>
+                            @endif
+
+                            @if($current_material->image_path && $current_material->image_position->value === 'left')
+                                <div class="float-left mr-6 mb-4 max-w-sm">
+                                    <img src="{{ asset('storage/' . $current_material->image_path) }}" 
+                                         alt="{{ $current_material->title ?? 'Material image' }}" 
+                                         class="w-full rounded-lg shadow-md"
+                                         loading="lazy">
+                                </div>
+                            @endif
+
+                            @if($current_material->image_path && $current_material->image_position->value === 'right')
+                                <div class="float-right ml-6 mb-4 max-w-sm">
+                                    <img src="{{ asset('storage/' . $current_material->image_path) }}" 
+                                         alt="{{ $current_material->title ?? 'Material image' }}" 
+                                         class="w-full rounded-lg shadow-md"
+                                         loading="lazy">
+                                </div>
+                            @endif
+
+                            <div class="text-gray-800">
+                                {!! $current_material->content !!}
+                            </div>
+
+                            @if($current_material->image_path && $current_material->image_position->value === 'bottom')
+                                <div class="mt-6">
+                                    <img src="{{ asset('storage/' . $current_material->image_path) }}" 
+                                         alt="{{ $current_material->title ?? 'Material image' }}" 
+                                         class="w-full rounded-lg shadow-md"
+                                         loading="lazy">
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-4">
+                        <button wire:click="previousMaterial" 
+                                :disabled="{{ $current_material_index === 0 }}"
+                                class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Previous
+                        </button>
+
+                        @if($current_material_index === 0)
+                            <button wire:click="skipMaterials"
+                                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">
+                                Skip All
+                            </button>
+                        @endif
+
+                        @if($current_material_index < $materials->count() - 1)
+                            <button wire:click="nextMaterial"
+                                    class="px-4 py-2 sm:px-6 sm:py-3 bg-burgundy-500 hover:bg-burgundy-600 text-white rounded-lg transition font-semibold text-sm sm:text-base">
+                                Next
+                                <svg class="w-5 h-5 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        @else
+                            <button wire:click="completeMaterials"
+                                    class="px-4 py-2 sm:px-6 sm:py-3 bg-burgundy-500 hover:bg-burgundy-600 text-white rounded-lg transition font-semibold text-sm sm:text-base">
+                                Complete
+                            </button>
+                        @endif
+                    </div>
+                @endif
+            </div>
+
+        @elseif($phase === 'intermediary')
+            <!-- Intermediary Screen -->
+            <div class="bg-white rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 text-center max-w-md">
+                <div class="mb-6">
+                    <svg class="w-20 h-20 mx-auto text-burgundy-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-burgundy-900 mb-2">
+                    Ready to Begin?
+                </h2>
+                <p class="text-gray-600 mb-6">
+                    You're about to begin the flashcard portion of this deck. Let's reinforce what you've just learned!
+                </p>
+                <button wire:click="beginFlashcards"
+                        class="px-6 py-3 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition font-semibold">
+                    Start Studying
+                </button>
+            </div>
+
+        @elseif($phase === 'flashcards' && $card)
             <div class="max-w-2xl w-full">
                 <!-- Session Type Badge and Progress -->
                 <div class="mb-2 sm:mb-4 flex items-center justify-between gap-2">

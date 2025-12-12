@@ -13,6 +13,7 @@ use Domain\Deck\Actions\UnenrollUserFromDeckAction;
 use Domain\Deck\Data\DeckData;
 use Domain\Deck\Helpers\DeckImageHelper;
 use Domain\Deck\Repositories\DeckRepository;
+use Domain\Material\Repositories\MaterialRepository;
 use Domain\User\Repositories\UserRepository;
 use Livewire\Component;
 
@@ -21,6 +22,21 @@ class Library extends Component
     public ?int $categoryId = null;
 
     public string $activeTab = 'enrolled';
+
+    public ?int $scrollToDeckId = null;
+
+    public function mount(?string $identifier = null): void
+    {
+        if ($identifier) {
+            $this->activeTab = 'browse';
+            // Find the deck by identifier to get its ID for scrolling
+            $deck_repository = app(DeckRepository::class);
+            $deck = $deck_repository->findByIdentifier($identifier);
+            if ($deck) {
+                $this->scrollToDeckId = $deck->id;
+            }
+        }
+    }
 
     public function filterByCategory(?int $categoryId): void
     {
@@ -49,77 +65,78 @@ class Library extends Component
     }
 
     public function render(
-        DeckRepository $deckRepository,
-        CardRepository $cardRepository,
-        UserRepository $userRepository,
-        CategoryRepository $categoryRepository
+        DeckRepository $deck_repository,
+        CardRepository $card_repository,
+        UserRepository $user_repository,
+        CategoryRepository $category_repository,
+        MaterialRepository $material_repository
     ) {
-        $user = $userRepository->getLoggedInUser();
+        $user = $user_repository->getLoggedInUser();
 
         // Get all categories for the filter
-        $categories = $categoryRepository->getAll();
+        $categories = $category_repository->getAll();
 
         // Get enrolled decks and available decks
-        $enrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
-        $availableDecks = $deckRepository->getAvailableDecks($user->id);
+        $enrolled_decks = $deck_repository->getUserEnrolledDecks($user->id);
+        $available_decks = $deck_repository->getAvailableDecks($user->id);
 
         // Get individually enrolled child decks (enrolled in child but not parent)
-        $individualChildDecks = $deckRepository->getIndividuallyEnrolledChildDecks($user->id);
+        $individual_child_decks = $deck_repository->getIndividuallyEnrolledChildDecks($user->id);
 
         // Build stats for enrolled decks
-        $enrolledWithStats = $enrolledDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
-            return $this->buildDeckStatsWithShortcode($deck, $cardRepository, $user, $deckRepository);
+        $enrolled_with_stats = $enrolled_decks->map(function (DeckData $deck) use ($card_repository, $user, $deck_repository, $material_repository) {
+            return $this->buildDeckStatsWithShortcode($deck, $card_repository, $user, $deck_repository, $material_repository);
         });
 
         // Build stats for individually enrolled child decks
-        $individualChildStats = $individualChildDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
-            return $this->buildDeckStatsWithShortcode($deck, $cardRepository, $user, $deckRepository);
+        $individual_child_stats = $individual_child_decks->map(function (DeckData $deck) use ($card_repository, $user, $deck_repository, $material_repository) {
+            return $this->buildDeckStatsWithShortcode($deck, $card_repository, $user, $deck_repository, $material_repository);
         });
 
         // Build stats for available decks
-        $availableWithStats = $availableDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
-            return $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
+        $available_with_stats = $available_decks->map(function (DeckData $deck) use ($card_repository, $user, $deck_repository, $material_repository) {
+            return $this->buildDeckStats($deck, $card_repository, $user, $deck_repository, $material_repository);
         });
 
         // Apply category filter if selected
         if ($this->categoryId !== null) {
-            $enrolledWithStats = $enrolledWithStats->filter(function ($deckStat) {
-                return $this->matchesCategory($deckStat);
+            $enrolled_with_stats = $enrolled_with_stats->filter(function ($deck_stat) {
+                return $this->matchesCategory($deck_stat);
             });
 
-            $individualChildStats = $individualChildStats->filter(function ($deckStat) {
-                return $this->matchesCategory($deckStat);
+            $individual_child_stats = $individual_child_stats->filter(function ($deck_stat) {
+                return $this->matchesCategory($deck_stat);
             });
 
-            $availableWithStats = $availableWithStats->filter(function ($deckStat) {
-                return $this->matchesCategory($deckStat);
+            $available_with_stats = $available_with_stats->filter(function ($deck_stat) {
+                return $this->matchesCategory($deck_stat);
             });
         }
 
         // Separate collections and standalone decks for enrolled
-        $enrolledCollections = $enrolledWithStats->filter(fn ($stat) => $stat['isParent']);
-        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => ! $stat['isParent'] && $stat['deck']->parent_deck_id === null);
+        $enrolled_collections = $enrolled_with_stats->filter(fn ($stat) => $stat['isParent']);
+        $enrolled_standalone = $enrolled_with_stats->filter(fn ($stat) => ! $stat['isParent'] && $stat['deck']->parent_deck_id === null);
         
         // Combine standalone decks with individually enrolled child decks for "My Decks" section
-        $allMyDecks = $enrolledStandalone->merge($individualChildStats);
+        $all_my_decks = $enrolled_standalone->merge($individual_child_stats);
 
         // Separate available collections and standalone
-        $availableCollections = $availableWithStats->filter(fn ($stat) => $stat['isParent']);
-        $availableStandalone = $availableWithStats->filter(fn ($stat) => ! $stat['isParent']);
+        $available_collections = $available_with_stats->filter(fn ($stat) => $stat['isParent']);
+        $available_standalone = $available_with_stats->filter(fn ($stat) => ! $stat['isParent']);
 
         return view('livewire.library', [
-            'enrolledCollections' => $enrolledCollections,
-            'enrolledStandalone' => $allMyDecks,
-            'availableCollections' => $availableCollections,
-            'availableStandalone' => $availableStandalone,
+            'enrolledCollections' => $enrolled_collections,
+            'enrolledStandalone' => $all_my_decks,
+            'availableCollections' => $available_collections,
+            'availableStandalone' => $available_standalone,
             'categories' => $categories,
             'selectedCategoryId' => $this->categoryId,
         ]);
     }
 
-    private function matchesCategory(array $deckStat): bool
+    private function matchesCategory(array $deck_stat): bool
     {
-        $deck = $deckStat['deck'];
+        $deck = $deck_stat['deck'];
 
         // Check if deck has this category
         if ($deck->category_ids && in_array($this->categoryId, $deck->category_ids)) {
@@ -127,10 +144,10 @@ class Library extends Component
         }
 
         // For collections, check if any children have this category
-        if ($deckStat['isParent'] && ! empty($deckStat['children'])) {
-            foreach ($deckStat['children'] as $childStat) {
-                $childDeck = $childStat['deck'];
-                if ($childDeck->category_ids && in_array($this->categoryId, $childDeck->category_ids)) {
+        if ($deck_stat['isParent'] && ! empty($deck_stat['children'])) {
+            foreach ($deck_stat['children'] as $child_stat) {
+                $child_deck = $child_stat['deck'];
+                if ($child_deck->category_ids && in_array($this->categoryId, $child_deck->category_ids)) {
                     return true;
                 }
             }
@@ -141,20 +158,21 @@ class Library extends Component
 
     private function buildDeckStatsWithShortcode(
         DeckData $deck,
-        CardRepository $cardRepository,
+        CardRepository $card_repository,
         $user,
-        DeckRepository $deckRepository
+        DeckRepository $deck_repository,
+        MaterialRepository $material_repository
     ): array {
-        $stats = $this->buildDeckStats($deck, $cardRepository, $user, $deckRepository);
+        $stats = $this->buildDeckStats($deck, $card_repository, $user, $deck_repository, $material_repository);
 
         // Get shortcode if this is a standalone deck (not a collection)
         if (! $deck->is_collection) {
-            $userModel = \Domain\User\Models\User::find($user->id);
-            $enrolledDeck = $userModel->enrolledDecks()
+            $user_model = \Domain\User\Models\User::find($user->id);
+            $enrolled_deck = $user_model->enrolledDecks()
                 ->where('deck_id', $deck->id)
                 ->first();
 
-            $stats['shortcode'] = $enrolledDeck ? $enrolledDeck->pivot->shortcode : null;
+            $stats['shortcode'] = $enrolled_deck ? $enrolled_deck->pivot->shortcode : null;
         } else {
             $stats['shortcode'] = null;
         }
@@ -164,114 +182,118 @@ class Library extends Component
 
     private function buildDeckStats(
         DeckData $deck,
-        CardRepository $cardRepository,
+        CardRepository $card_repository,
         $user,
-        DeckRepository $deckRepository
+        DeckRepository $deck_repository,
+        MaterialRepository $material_repository
     ): array {
-        $isParent = $deck->is_collection;
+        $is_parent = $deck->is_collection;
         $children = $deck->children;
 
-        if ($isParent && $children !== null && $children->isNotEmpty()) {
+        if ($is_parent && $children !== null && $children->isNotEmpty()) {
             // For parent decks, aggregate stats from all children
-            $totalCards = 0;
-            $stageSum = 0;
-            $childStats = [];
+            $total_cards = 0;
+            $stage_sum = 0;
+            $child_stats = [];
 
-            foreach ($children as $childDeck) {
-                $childCardStats = $this->getCardStats($childDeck, $cardRepository, $user);
-                $totalCards += $childCardStats['totalCards'];
-                $stageSum += $childCardStats['stageSum'];
+            foreach ($children as $child_deck) {
+                $child_card_stats = $this->getCardStats($child_deck, $card_repository, $user);
+                $total_cards += $child_card_stats['totalCards'];
+                $stage_sum += $child_card_stats['stageSum'];
 
-                $isChildEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $childDeck->id);
+                $is_child_enrolled = $deck_repository->isUserEnrolledInDeck($user->id, $child_deck->id);
 
-                $childStats[] = [
-                    'deck' => $childDeck,
-                    'totalCards' => $childCardStats['totalCards'],
-                    'reviewedCount' => $childCardStats['reviewedCount'],
-                    'progress' => $childCardStats['progress'],
-                    'isEnrolled' => $isChildEnrolled,
-                    'image' => DeckImageHelper::getImagePath($childDeck),
+                $child_stats[] = [
+                    'deck' => $child_deck,
+                    'totalCards' => $child_card_stats['totalCards'],
+                    'reviewedCount' => $child_card_stats['reviewedCount'],
+                    'progress' => $child_card_stats['progress'],
+                    'isEnrolled' => $is_child_enrolled,
+                    'image' => DeckImageHelper::getImagePath($child_deck),
+                    'hasMaterials' => $material_repository->hasMaterials($child_deck->id),
                 ];
             }
 
             // Check if user is enrolled in parent (which means enrolled in all children)
-            $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $deck->id);
+            $is_enrolled = $deck_repository->isUserEnrolledInDeck($user->id, $deck->id);
 
             // Calculate stage-based progress for collection
-            $progress = $totalCards > 0
-                ? (int) round(($stageSum / SrsStage::STAGE_MAX / $totalCards) * 100)
+            $progress = $total_cards > 0
+                ? (int) round(($stage_sum / SrsStage::STAGE_MAX / $total_cards) * 100)
                 : 0;
 
             return [
                 'deck' => $deck,
-                'totalCards' => $totalCards,
-                'reviewedCount' => $totalCards - $this->getNewCardsCount($children, $cardRepository, $user),
+                'totalCards' => $total_cards,
+                'reviewedCount' => $total_cards - $this->getNewCardsCount($children, $card_repository, $user),
                 'progress' => $progress,
-                'isEnrolled' => $isEnrolled,
+                'isEnrolled' => $is_enrolled,
                 'isParent' => true,
-                'children' => $childStats,
-                'childCount' => count($childStats),
+                'children' => $child_stats,
+                'childCount' => count($child_stats),
                 'image' => DeckImageHelper::getImagePath($deck),
+                'hasMaterials' => false, // Collections don't have materials directly
             ];
         }
 
         // Standalone deck (or collection without children yet)
-        $cardStats = $this->getCardStats($deck, $cardRepository, $user);
-        $isEnrolled = $deckRepository->isUserEnrolledInDeck($user->id, $deck->id);
+        $card_stats = $this->getCardStats($deck, $card_repository, $user);
+        $is_enrolled = $deck_repository->isUserEnrolledInDeck($user->id, $deck->id);
 
         return [
             'deck' => $deck,
-            'totalCards' => $cardStats['totalCards'],
-            'reviewedCount' => $cardStats['reviewedCount'],
-            'progress' => $cardStats['progress'],
-            'isEnrolled' => $isEnrolled,
-            'isParent' => $isParent,
+            'totalCards' => $card_stats['totalCards'],
+            'reviewedCount' => $card_stats['reviewedCount'],
+            'progress' => $card_stats['progress'],
+            'isEnrolled' => $is_enrolled,
+            'isParent' => $is_parent,
             'children' => [],
             'childCount' => 0,
             'image' => DeckImageHelper::getImagePath($deck),
+            'hasMaterials' => $material_repository->hasMaterials($deck->id),
         ];
     }
 
-    private function getCardStats(DeckData $deck, CardRepository $cardRepository, $user): array
+    private function getCardStats(DeckData $deck, CardRepository $card_repository, $user): array
     {
-        $cards = $cardRepository->getByDeckId($deck->id);
-        $totalCards = $cards->count();
+        $cards = $card_repository->getByDeckId($deck->id);
+        $total_cards = $cards->count();
 
-        $reviewedCardIds = CardReview::where('user_id', $user->id)
+        $reviewed_card_ids = CardReview::where('user_id', $user->id)
             ->pluck('card_id')
             ->toArray();
-        $reviewedCount = $cards->filter(fn ($card) => in_array($card->id, $reviewedCardIds))->count();
+        $reviewed_count = $cards->filter(fn ($card) => in_array($card->id, $reviewed_card_ids))->count();
 
         // Calculate stage-based progress
-        $cardIds = $cards->pluck('id')->toArray();
-        $stageSum = CardReview::where('user_id', $user->id)
-            ->whereIn('card_id', $cardIds)
+        $card_ids = $cards->pluck('id')->toArray();
+        $stage_sum = CardReview::where('user_id', $user->id)
+            ->whereIn('card_id', $card_ids)
             ->sum('srs_stage');
 
-        $progress = $totalCards > 0
-            ? (int) round(($stageSum / SrsStage::STAGE_MAX / $totalCards) * 100)
+        $progress = $total_cards > 0
+            ? (int) round(($stage_sum / SrsStage::STAGE_MAX / $total_cards) * 100)
             : 0;
 
         return [
-            'totalCards' => $totalCards,
-            'reviewedCount' => $reviewedCount,
-            'stageSum' => $stageSum,
+            'totalCards' => $total_cards,
+            'reviewedCount' => $reviewed_count,
+            'stageSum' => $stage_sum,
             'progress' => $progress,
         ];
     }
 
-    private function getNewCardsCount($children, CardRepository $cardRepository, $user): int
+    private function getNewCardsCount($children, CardRepository $card_repository, $user): int
     {
-        $reviewedCardIds = CardReview::where('user_id', $user->id)
+        $reviewed_card_ids = CardReview::where('user_id', $user->id)
             ->pluck('card_id')
             ->toArray();
 
-        $newCount = 0;
-        foreach ($children as $childDeck) {
-            $cards = $cardRepository->getByDeckId($childDeck->id);
-            $newCount += $cards->filter(fn ($card) => ! in_array($card->id, $reviewedCardIds))->count();
+        $new_count = 0;
+        foreach ($children as $child_deck) {
+            $cards = $card_repository->getByDeckId($child_deck->id);
+            $new_count += $cards->filter(fn ($card) => ! in_array($card->id, $reviewed_card_ids))->count();
         }
 
-        return $newCount;
+        return $new_count;
     }
 }

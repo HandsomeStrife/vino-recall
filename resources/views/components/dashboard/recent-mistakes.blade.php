@@ -24,7 +24,7 @@
             @endforeach
         </div>
         @if($dueCardsCount > 0)
-            <a href="{{ route('enrolled') }}" class="mt-4 block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
+            <a href="{{ route('library') }}" class="mt-4 block text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
                 Review Mistakes
             </a>
         @endif

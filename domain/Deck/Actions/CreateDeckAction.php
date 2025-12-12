@@ -41,6 +41,7 @@ class CreateDeckAction
         }
 
         $deck = Deck::create([
+            'identifier' => $this->generateUniqueDeckIdentifier(),
             'name' => $name,
             'description' => $description,
             'image_path' => $image_path,
@@ -95,5 +96,14 @@ class CreateDeckAction
         } while (\DB::table('deck_user')->where('shortcode', $shortcode)->exists());
 
         return $shortcode;
+    }
+
+    private function generateUniqueDeckIdentifier(): string
+    {
+        do {
+            $identifier = strtoupper(Str::random(8));
+        } while (Deck::where('identifier', $identifier)->exists());
+
+        return $identifier;
     }
 }

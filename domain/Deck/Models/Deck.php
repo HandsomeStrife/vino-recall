@@ -6,6 +6,7 @@ namespace Domain\Deck\Models;
 
 use Domain\Card\Models\Card;
 use Domain\Category\Models\Category;
+use Domain\Material\Models\Material;
 use Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class Deck extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'identifier',
         'name',
         'description',
         'image_path',
@@ -48,6 +50,11 @@ class Deck extends Model
     public function cards(): HasMany
     {
         return $this->hasMany(Card::class);
+    }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(Material::class)->orderBy('sort_order');
     }
 
     public function createdBy(): BelongsTo

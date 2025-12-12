@@ -9,7 +9,7 @@
     'progress' => 0,
 ])
 
-<a href="{{ route('collection.show', ['id' => $collection->id]) }}" 
+<a href="{{ route('collection.show', ['identifier' => $collection->identifier]) }}" 
    class="block bg-white rounded-lg overflow-hidden border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1">
     <!-- Colored Title Banner -->
     <div class="px-6 py-3 flex items-center justify-between" style="background-color: {{ $collectionColor }};">
