@@ -24,6 +24,7 @@ test('library shows active decks', function () {
     $deck3 = Deck::factory()->create(['name' => 'Deck 3', 'is_active' => false]);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Deck 1')
         ->assertSee('Deck 2')
         ->assertDontSee('Deck 3');
@@ -40,9 +41,14 @@ test('library shows enrollment status', function () {
         'shortcode' => 'enroll01',
     ]);
 
+    // Check enrolled tab shows enrolled deck
     Livewire::test(Library::class)
-        ->assertSee('First Deck')
-        ->assertSeeHtml('Enrolled')
+        ->call('switchTab', 'enrolled')
+        ->assertSee('First Deck');
+
+    // Check browse tab shows unenrolled deck with button
+    Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Second Deck')
         ->assertSee('Add to My Library');
 });
@@ -91,6 +97,7 @@ test('library only shows active decks not inactive', function () {
     $inactiveDeck = Deck::factory()->create(['is_active' => false, 'name' => 'Inactive Deck']);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Active Deck')
         ->assertDontSee('Inactive Deck');
 });
@@ -102,6 +109,7 @@ test('library shows card count for decks', function () {
 
     // The count is in a span, so we assert them separately
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('New Deck')
         ->assertSee('>5</span> cards', escape: false);
 });
@@ -117,15 +125,16 @@ test('library shows progress bar for enrolled decks', function () {
         'shortcode' => 'complet1',
     ]);
 
-    // Review all cards
+    // Review all cards at max stage (Wine God)
     foreach ($cards as $card) {
-        CardReview::factory()->create([
+        CardReview::factory()->atStage(9)->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
         ]);
     }
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'enrolled')
         ->assertSee('Complete Deck')
         ->assertSee('100% complete');
 });
@@ -136,6 +145,7 @@ test('library handles deck with no cards', function () {
     // No cards in this deck
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Empty Deck')
         ->assertSee('>0</span> cards', escape: false);
 });
@@ -146,6 +156,7 @@ test('library shows correct card count for deck', function () {
     Card::factory()->count(15)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Counted Deck')
         ->assertSee('>15</span> cards', escape: false);
 });
@@ -161,6 +172,7 @@ test('library shows multiple decks correctly', function () {
     Card::factory()->count(3)->create(['deck_id' => $deck3->id]);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Deck One')
         ->assertSee('Deck Two')
         ->assertSee('Deck Three');
@@ -182,6 +194,7 @@ test('library enrollment is user-specific', function () {
     // User 1 should see "Add to My Library" button (not enrolled)
     // The deck they see shouldn't show enrollment badge since they're not enrolled
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Shared Deck')
         ->assertSee('Add to My Library');
 });
@@ -192,6 +205,7 @@ test('library shows add to library button for unenrolled decks', function () {
     Card::factory()->create(['deck_id' => $deck->id]);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Add to My Library')
         ->assertSee('Link Deck');
 });
@@ -202,6 +216,7 @@ test('library handles very large number of cards in deck', function () {
     Card::factory()->count(500)->create(['deck_id' => $deck->id]);
 
     Livewire::test(Library::class)
+        ->call('switchTab', 'browse')
         ->assertSee('Large Deck')
         ->assertSee('>500</span> cards', escape: false)
         ->assertStatus(200);

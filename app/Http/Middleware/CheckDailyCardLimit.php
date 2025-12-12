@@ -42,7 +42,7 @@ class CheckDailyCardLimit
         // Get today's review count
         $todayReviews = $this->cardReviewRepository->getRecentActivity($user->id, 1000)
             ->filter(function ($activity) {
-                $reviewDate = $activity->created_at ? \Carbon\Carbon::parse($activity->created_at) : null;
+                $reviewDate = $activity->reviewed_at ? \Carbon\Carbon::parse($activity->reviewed_at) : null;
 
                 return $reviewDate && $reviewDate->isToday();
             })

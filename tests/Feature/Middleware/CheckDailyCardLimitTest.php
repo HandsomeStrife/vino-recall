@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\CheckDailyCardLimit;
 use Domain\Card\Models\Card;
-use Domain\Card\Models\CardReview;
+use Domain\Card\Models\ReviewHistory;
 use Domain\Deck\Actions\EnrollUserInDeckAction;
 use Domain\Deck\Models\Deck;
 use Domain\Subscription\Models\Plan;
@@ -23,12 +23,13 @@ test('middleware allows access when under free tier limit', function () {
     // Enroll user in deck (required for reviews to count)
     (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
-    // Create 5 reviews today (under 10 free limit)
+    // Create 5 reviews today (under 10 free limit) - use ReviewHistory
     foreach ($cards as $card) {
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -50,10 +51,11 @@ test('middleware redirects when free tier limit reached', function () {
     // Create 10 reviews today (at free limit)
     for ($i = 0; $i < 10; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -82,10 +84,11 @@ test('middleware allows premium users unlimited access', function () {
     // Create 100 reviews today
     for ($i = 0; $i < 100; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -114,10 +117,11 @@ test('middleware allows basic plan users up to 50 cards per day', function () {
     // Create 49 reviews today (under 50 basic limit)
     for ($i = 0; $i < 49; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -146,10 +150,11 @@ test('middleware redirects basic plan users at 50 cards', function () {
     // Create 50 reviews today (at basic limit)
     for ($i = 0; $i < 50; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -171,10 +176,11 @@ test('middleware ignores yesterday reviews', function () {
     // Create 20 reviews yesterday
     for ($i = 0; $i < 20; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now()->subDay(),
+            'reviewed_at' => now()->subDay(),
+            'is_practice' => false,
         ]);
     }
 
@@ -203,10 +209,11 @@ test('middleware treats inactive subscription as free tier', function () {
     // Create 10 reviews today (at free limit)
     for ($i = 0; $i < 10; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 

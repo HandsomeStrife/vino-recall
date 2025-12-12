@@ -189,7 +189,9 @@
                                     <div class="px-6 py-3" style="background-color: {{ $deckColor }};">
                                         <div>
                                             <h3 class="text-lg font-bold text-white">{{ $deckStat['deck']->name }}</h3>
-                                            @if($deckStat['deck']->categories && $deckStat['deck']->categories->isNotEmpty())
+                                            @if($deckStat['deck']->parent_name)
+                                                <span class="text-xs text-white/80">From: {{ $deckStat['deck']->parent_name }}</span>
+                                            @elseif($deckStat['deck']->categories && $deckStat['deck']->categories->isNotEmpty())
                                                 <span class="text-xs text-white/80">{{ $deckStat['deck']->categories->first()->name }}</span>
                                             @endif
                                         </div>
@@ -305,7 +307,11 @@
                                                 <p class="text-gray-600 text-sm mb-2">{{ $deckStat['deck']->description }}</p>
                                             @endif
                                         </div>
-                                        <div class="ml-4">
+                                        <div class="ml-4 flex gap-2">
+                                            <a href="{{ route('collection.show', $deckStat['deck']->id) }}" 
+                                               class="inline-block bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
+                                                View Collection
+                                            </a>
                                             <button wire:click="enrollInDeck({{ $deckStat['deck']->id }})" 
                                                     class="inline-block bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
                                                 Add Collection to Library

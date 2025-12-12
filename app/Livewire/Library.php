@@ -63,8 +63,16 @@ class Library extends Component
         $enrolledDecks = $deckRepository->getUserEnrolledDecks($user->id);
         $availableDecks = $deckRepository->getAvailableDecks($user->id);
 
+        // Get individually enrolled child decks (enrolled in child but not parent)
+        $individualChildDecks = $deckRepository->getIndividuallyEnrolledChildDecks($user->id);
+
         // Build stats for enrolled decks
         $enrolledWithStats = $enrolledDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
+            return $this->buildDeckStatsWithShortcode($deck, $cardRepository, $user, $deckRepository);
+        });
+
+        // Build stats for individually enrolled child decks
+        $individualChildStats = $individualChildDecks->map(function (DeckData $deck) use ($cardRepository, $user, $deckRepository) {
             return $this->buildDeckStatsWithShortcode($deck, $cardRepository, $user, $deckRepository);
         });
 
@@ -79,20 +87,29 @@ class Library extends Component
                 return $this->matchesCategory($deckStat);
             });
 
+            $individualChildStats = $individualChildStats->filter(function ($deckStat) {
+                return $this->matchesCategory($deckStat);
+            });
+
             $availableWithStats = $availableWithStats->filter(function ($deckStat) {
                 return $this->matchesCategory($deckStat);
             });
         }
 
-        // Separate collections and standalone decks for both enrolled and available
+        // Separate collections and standalone decks for enrolled
         $enrolledCollections = $enrolledWithStats->filter(fn ($stat) => $stat['isParent']);
-        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => ! $stat['isParent']);
+        $enrolledStandalone = $enrolledWithStats->filter(fn ($stat) => ! $stat['isParent'] && $stat['deck']->parent_deck_id === null);
+        
+        // Combine standalone decks with individually enrolled child decks for "My Decks" section
+        $allMyDecks = $enrolledStandalone->merge($individualChildStats);
+
+        // Separate available collections and standalone
         $availableCollections = $availableWithStats->filter(fn ($stat) => $stat['isParent']);
         $availableStandalone = $availableWithStats->filter(fn ($stat) => ! $stat['isParent']);
 
         return view('livewire.library', [
             'enrolledCollections' => $enrolledCollections,
-            'enrolledStandalone' => $enrolledStandalone,
+            'enrolledStandalone' => $allMyDecks,
             'availableCollections' => $availableCollections,
             'availableStandalone' => $availableStandalone,
             'categories' => $categories,

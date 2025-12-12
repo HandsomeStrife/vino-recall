@@ -37,6 +37,75 @@
             </div>
         @endif
 
+        <!-- Subscription Section -->
+        @if($subscription)
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-burgundy-100 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-neutral-900">Subscription</h2>
+                    </div>
+                    <x-badge :variant="$subscription->status === 'active' ? 'success' : ($subscription->status === 'past_due' ? 'warning' : 'danger')">
+                        {{ ucfirst($subscription->status) }}
+                    </x-badge>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-neutral-600">Current Plan</p>
+                        <p class="text-lg font-semibold text-neutral-900">{{ $subscription->plan->name }}</p>
+                    </div>
+                    @if($subscription->current_period_end)
+                        <div>
+                            <p class="text-sm text-neutral-600">
+                                @if($subscription->status === 'active')
+                                    Renews:
+                                @else
+                                    Expires:
+                                @endif
+                            </p>
+                            <p class="text-lg font-semibold text-neutral-900">
+                                {{ $subscription->current_period_end->format('F j, Y') }}
+                            </p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @else
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 bg-burgundy-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-burgundy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-neutral-900">Subscription</h2>
+                </div>
+                <p class="text-neutral-600 mb-6">You don't currently have an active subscription. Choose a plan below to get started:</p>
+                <div class="space-y-4">
+                    @foreach($availablePlans as $plan)
+                        <div class="border border-neutral-200 rounded-lg p-4 hover:border-burgundy-300 transition">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-semibold text-neutral-900">{{ $plan->name }}</h3>
+                                    @if($plan->features)
+                                        <p class="text-sm text-neutral-600">{{ $plan->features }}</p>
+                                    @endif
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-burgundy-600">${{ number_format((float)$plan->price, 2) }}</p>
+                                    <p class="text-xs text-neutral-500">per month</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Profile Information -->
             <div class="bg-white rounded-2xl shadow-lg p-8">

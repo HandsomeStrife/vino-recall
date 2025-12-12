@@ -224,4 +224,35 @@ class DeckRepository
             ->get()
             ->map(fn (Deck $deck) => DeckData::fromModel($deck));
     }
+
+    /**
+     * Get child decks that the user has enrolled in individually
+     * (without being enrolled in the parent collection).
+     *
+     * @return \Illuminate\Support\Collection<int, DeckData>
+     */
+    public function getIndividuallyEnrolledChildDecks(int $userId): \Illuminate\Support\Collection
+    {
+        $user = \Domain\User\Models\User::find($userId);
+
+        if (! $user) {
+            return collect();
+        }
+
+        // Get all decks the user is enrolled in that have a parent
+        $enrolledChildDecks = $user->enrolledDecks()
+            ->whereNotNull('parent_deck_id')
+            ->with(['parent', 'categories'])
+            ->get();
+
+        // Filter out children whose parent collection the user is also enrolled in
+        return $enrolledChildDecks->filter(function (Deck $deck) use ($user) {
+            // If the parent exists and the user is NOT enrolled in the parent, include this deck
+            if ($deck->parent_deck_id !== null) {
+                return ! $this->isUserEnrolledInDeck($user->id, $deck->parent_deck_id);
+            }
+
+            return false;
+        })->map(fn (Deck $deck) => DeckData::fromModel($deck));
+    }
 }

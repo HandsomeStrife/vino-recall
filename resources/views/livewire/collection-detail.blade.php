@@ -26,11 +26,18 @@
                     @endif
                 </div>
                 
-                @if($isEnrolled)
-                    <span class="px-4 py-2 bg-green-500/20 text-green-200 rounded-lg font-medium">
-                        Enrolled
-                    </span>
-                @endif
+                <div class="flex flex-col items-end gap-2">
+                    @if($isEnrolled)
+                        <span class="px-4 py-2 bg-green-500/20 text-green-200 rounded-lg font-medium">
+                            Enrolled
+                        </span>
+                    @else
+                        <button wire:click="enrollInCollection" 
+                                class="bg-white text-burgundy-600 px-6 py-3 rounded-lg hover:bg-cream-50 transition font-semibold shadow-md hover:shadow-lg">
+                            Enroll in Entire Collection
+                        </button>
+                    @endif
+                </div>
             </div>
 
             <!-- Collection Stats -->
@@ -134,6 +141,12 @@
                                                 </svg>
                                                 Start Now
                                             </a>
+                                            @if(!$isEnrolled)
+                                                <button wire:click="unenrollFromChildDeck({{ $deckStat['deck']->id }})" 
+                                                        class="inline-block text-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
+                                                    Remove from My Decks
+                                                </button>
+                                            @endif
                                         @else
                                             <!-- Standard buttons for started decks -->
                                             <a href="{{ route('study', ['type' => 'normal', 'deck' => $deckStat['shortcode']]) }}" 
@@ -144,11 +157,24 @@
                                                class="inline-block text-center bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition font-medium">
                                                 View Stats
                                             </a>
+                                            @if(!$isEnrolled)
+                                                <button wire:click="unenrollFromChildDeck({{ $deckStat['deck']->id }})" 
+                                                        class="inline-block text-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
+                                                    Remove from My Decks
+                                                </button>
+                                            @endif
                                         @endif
                                     @else
-                                        <div class="text-center text-gray-500 text-sm py-2">
-                                            Enroll in the collection to study
-                                        </div>
+                                        @if(!$isEnrolled)
+                                            <button wire:click="enrollInChildDeck({{ $deckStat['deck']->id }})" 
+                                                    class="inline-block text-center bg-burgundy-500 text-white px-6 py-2 rounded-lg hover:bg-burgundy-600 transition font-semibold shadow hover:shadow-md">
+                                                Add to My Decks
+                                            </button>
+                                        @else
+                                            <div class="text-center text-gray-500 text-sm py-2">
+                                                Part of enrolled collection
+                                            </div>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

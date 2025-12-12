@@ -11,7 +11,7 @@ class SubscriptionRepository
 {
     public function findByUserId(int $userId): ?SubscriptionData
     {
-        $subscription = Subscription::where('user_id', $userId)->first();
+        $subscription = Subscription::where('user_id', $userId)->with('plan')->first();
 
         if ($subscription === null) {
             return null;

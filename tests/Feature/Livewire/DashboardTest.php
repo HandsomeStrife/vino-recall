@@ -19,9 +19,10 @@ test('dashboard can be rendered', function () {
 
 test('dashboard shows user name in welcome message', function () {
     $user = actingAsUser();
+    $firstName = explode(' ', $user->name)[0];
 
     Livewire::test(Dashboard::class)
-        ->assertSee('Welcome back, '.$user->name);
+        ->assertSee('Welcome back, '.$firstName);
 });
 
 test('dashboard shows browse library for user with no enrolled decks', function () {
@@ -79,20 +80,20 @@ test('dashboard shows streak when user has consecutive days', function () {
     $card1 = Card::factory()->create(['deck_id' => $deck->id]);
     $card2 = Card::factory()->create(['deck_id' => $deck->id]);
 
-    // Review yesterday
-    CardReview::factory()->create([
+    // Review yesterday - use ReviewHistory
+    \Domain\Card\Models\ReviewHistory::factory()->create([
         'user_id' => $user->id,
         'card_id' => $card1->id,
-        'created_at' => now()->subDay(),
-        'updated_at' => now()->subDay(),
+        'reviewed_at' => now()->subDay(),
+        'is_practice' => false,
     ]);
 
-    // Review today
-    CardReview::factory()->create([
+    // Review today - use ReviewHistory
+    \Domain\Card\Models\ReviewHistory::factory()->create([
         'user_id' => $user->id,
         'card_id' => $card2->id,
-        'created_at' => now(),
-        'updated_at' => now(),
+        'reviewed_at' => now(),
+        'is_practice' => false,
     ]);
 
     Livewire::test(Dashboard::class)
@@ -105,14 +106,14 @@ test('dashboard daily goal shows progress', function () {
 
     (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
-    // Create 5 reviews today (out of 20 goal)
+    // Create 5 reviews today (out of 20 goal) - use ReviewHistory
     for ($i = 0; $i < 5; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        \Domain\Card\Models\ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -127,14 +128,14 @@ test('dashboard shows daily goal achieved when goal met', function () {
 
     (new EnrollUserInDeckAction)->execute($user->id, $deck->id);
 
-    // Create 20 reviews today (meets goal)
+    // Create 20 reviews today (meets goal) - use ReviewHistory
     for ($i = 0; $i < 20; $i++) {
         $card = Card::factory()->create(['deck_id' => $deck->id]);
-        CardReview::factory()->create([
+        \Domain\Card\Models\ReviewHistory::factory()->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'reviewed_at' => now(),
+            'is_practice' => false,
         ]);
     }
 
@@ -166,12 +167,18 @@ test('dashboard shows recent mistakes when user has incorrect reviews', function
         'question' => 'Test Question About Wine',
     ]);
 
+    // Create a card review in SRS state
     CardReview::factory()->create([
         'user_id' => $user->id,
         'card_id' => $card->id,
-        'is_correct' => false,
-        'rating' => 'incorrect',
         'created_at' => now(),
+    ]);
+    
+    // Track the incorrect review in history
+    \Domain\Card\Models\ReviewHistory::factory()->incorrect()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'reviewed_at' => now(),
     ]);
 
     Livewire::test(Dashboard::class)
@@ -224,7 +231,6 @@ test('dashboard shows due cards count on deck card', function () {
         'user_id' => $user->id,
         'card_id' => $card->id,
         'next_review_at' => now()->subDay(),
-        'is_practice' => false,
     ]);
 
     Livewire::test(Dashboard::class)

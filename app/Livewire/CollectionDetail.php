@@ -8,6 +8,8 @@ use Domain\Card\Enums\SrsStage;
 use Domain\Card\Models\CardReview;
 use Domain\Card\Repositories\CardRepository;
 use Domain\Card\Repositories\CardReviewRepository;
+use Domain\Deck\Actions\EnrollUserInDeckAction;
+use Domain\Deck\Actions\UnenrollUserFromDeckAction;
 use Domain\Deck\Data\DeckData;
 use Domain\Deck\Helpers\DeckImageHelper;
 use Domain\Deck\Models\Deck;
@@ -22,6 +24,30 @@ class CollectionDetail extends Component
     public function mount(int $collectionId): void
     {
         $this->collectionId = $collectionId;
+    }
+
+    public function enrollInCollection(EnrollUserInDeckAction $enrollAction, UserRepository $userRepository): void
+    {
+        $user = $userRepository->getLoggedInUser();
+        $enrollAction->execute($user->id, $this->collectionId);
+
+        $this->dispatch('collection-enrolled');
+    }
+
+    public function enrollInChildDeck(int $deckId, EnrollUserInDeckAction $enrollAction, UserRepository $userRepository): void
+    {
+        $user = $userRepository->getLoggedInUser();
+        $enrollAction->execute($user->id, $deckId);
+
+        $this->dispatch('deck-enrolled');
+    }
+
+    public function unenrollFromChildDeck(int $deckId, UnenrollUserFromDeckAction $unenrollAction, UserRepository $userRepository): void
+    {
+        $user = $userRepository->getLoggedInUser();
+        $unenrollAction->execute($user->id, $deckId);
+
+        $this->dispatch('deck-unenrolled');
     }
 
     public function render(

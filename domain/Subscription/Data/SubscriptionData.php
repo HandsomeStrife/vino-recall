@@ -15,9 +15,10 @@ class SubscriptionData extends Data
         public int $plan_id,
         public ?string $stripe_subscription_id,
         public string $status,
-        public ?string $current_period_end,
+        public ?\Carbon\Carbon $current_period_end,
         public string $created_at,
         public string $updated_at,
+        public ?PlanData $plan = null,
     ) {}
 
     public static function fromModel(Subscription $subscription): self
@@ -28,9 +29,10 @@ class SubscriptionData extends Data
             plan_id: $subscription->plan_id,
             stripe_subscription_id: $subscription->stripe_subscription_id,
             status: $subscription->status,
-            current_period_end: $subscription->current_period_end?->toDateTimeString(),
+            current_period_end: $subscription->current_period_end,
             created_at: $subscription->created_at->toDateTimeString(),
             updated_at: $subscription->updated_at->toDateTimeString(),
+            plan: $subscription->plan ? PlanData::fromModel($subscription->plan) : null,
         );
     }
 }

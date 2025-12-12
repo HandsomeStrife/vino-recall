@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use Domain\Subscription\Repositories\PlanRepository;
+use Domain\Subscription\Repositories\SubscriptionRepository;
 use Domain\User\Actions\UpdateUserAction;
 use Domain\User\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
@@ -70,8 +72,18 @@ class Profile extends Component
         session()->flash('password_message', 'Password updated successfully.');
     }
 
-    public function render()
-    {
-        return view('livewire.profile');
+    public function render(
+        UserRepository $userRepository,
+        SubscriptionRepository $subscriptionRepository,
+        PlanRepository $planRepository
+    ) {
+        $user = $userRepository->getLoggedInUser();
+        $subscription = $subscriptionRepository->findByUserId($user->id);
+        $availablePlans = $planRepository->getAll();
+
+        return view('livewire.profile', [
+            'subscription' => $subscription,
+            'availablePlans' => $availablePlans,
+        ]);
     }
 }
