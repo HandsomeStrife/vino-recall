@@ -65,7 +65,7 @@
                     <div class="p-8">
                         <!-- Title -->
                         <div>
-                            <x-heading.h4 x-dialog:title>{{ $title }}</x-heading.h4>
+                            <h4 x-dialog:title>{{ $title }}</h4>
                         </div>
 
                         <!-- Content -->
