@@ -17,7 +17,7 @@ class DeckSeeder extends Seeder
     public function run(): void
     {
         $admin = Admin::first();
-        $create_deck_action = new CreateDeckAction();
+        $create_deck_action = new CreateDeckAction;
 
         // Get categories for assignment
         $categories = Category::all()->keyBy('name');
@@ -146,4 +146,3 @@ class DeckSeeder extends Seeder
         }
     }
 }
-

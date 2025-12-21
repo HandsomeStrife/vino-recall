@@ -111,4 +111,3 @@ test('material content is required', function () {
         ->call('createMaterial')
         ->assertHasErrors(['content']);
 });
-

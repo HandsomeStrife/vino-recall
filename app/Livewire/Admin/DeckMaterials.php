@@ -160,4 +160,3 @@ class DeckMaterials extends Component
         $this->resetValidation();
     }
 }
-

@@ -16,7 +16,7 @@ class CardSeeder extends Seeder
      */
     public function run(): void
     {
-        $create_card_action = new CreateCardAction();
+        $create_card_action = new CreateCardAction;
         $decks = Deck::all();
 
         foreach ($decks as $deck) {
@@ -111,4 +111,3 @@ class CardSeeder extends Seeder
         ];
     }
 }
-

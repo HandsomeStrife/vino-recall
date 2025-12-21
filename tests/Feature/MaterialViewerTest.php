@@ -174,4 +174,3 @@ test('deck stats page hides review materials link when deck has no materials', f
     Livewire::test('deck-stats', ['shortcode' => 'TEST1234'])
         ->assertDontSee('Review Materials');
 });
-

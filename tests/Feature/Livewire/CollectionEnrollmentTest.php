@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Livewire\CollectionDetail;
 use App\Livewire\Library;
 use Domain\Deck\Models\Deck;
-use Domain\User\Models\User;
 use Livewire\Livewire;
 
 test('can view collection without enrolling', function () {
@@ -287,4 +286,3 @@ test('child deck enrolled through collection does not show parent name in my dec
     $component->assertSee('Complete Set')
         ->assertSee('My Collections');
 });
-

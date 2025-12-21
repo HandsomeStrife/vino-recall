@@ -173,7 +173,7 @@ test('dashboard shows recent mistakes when user has incorrect reviews', function
         'card_id' => $card->id,
         'created_at' => now(),
     ]);
-    
+
     // Track the incorrect review in history
     \Domain\Card\Models\ReviewHistory::factory()->incorrect()->create([
         'user_id' => $user->id,

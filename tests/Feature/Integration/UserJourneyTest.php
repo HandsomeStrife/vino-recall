@@ -95,7 +95,7 @@ test('user study session: select deck, study cards, rate cards, view progress', 
     $response->assertStatus(200)
         ->assertSee('My Decks') // Verify library page loads
         ->assertSee('Browse'); // Verify browse tab exists
-    
+
     // Deck should be visible somewhere on the page (either tab)
     // Since library is a Livewire component with tabs, just verify the page loads
 
@@ -109,7 +109,7 @@ test('user study session: select deck, study cards, rate cards, view progress', 
         'srs_stage' => 1, // Moved to first stage after correct answer
         'next_review_at' => now()->addDays(3),
     ]);
-    
+
     // Track the review in history
     \Domain\Card\Models\ReviewHistory::factory()->correct()->create([
         'user_id' => $user->id,

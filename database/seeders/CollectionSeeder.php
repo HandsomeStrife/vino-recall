@@ -17,7 +17,7 @@ class CollectionSeeder extends Seeder
     public function run(): void
     {
         $admin = Admin::first();
-        $create_deck_action = new CreateDeckAction();
+        $create_deck_action = new CreateDeckAction;
 
         // Get categories for assignment
         $red_wines = Category::where('name', 'Red Wines')->first();
@@ -159,4 +159,3 @@ class CollectionSeeder extends Seeder
         \Domain\Deck\Models\Deck::find($adv_deck2->id)->categories()->attach([$wine_production->id]);
     }
 }
-

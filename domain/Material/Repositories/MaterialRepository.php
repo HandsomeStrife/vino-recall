@@ -49,4 +49,3 @@ class MaterialRepository
         return Material::where('deck_id', $deck_id)->exists();
     }
 }
-

@@ -20,7 +20,7 @@ class MaterialFactory extends Factory
         return [
             'deck_id' => Deck::factory(),
             'title' => fake()->sentence(),
-            'content' => '<p>' . fake()->paragraphs(3, true) . '</p>',
+            'content' => '<p>'.fake()->paragraphs(3, true).'</p>',
             'image_path' => null,
             'image_position' => 'top',
             'sort_order' => 0,
@@ -41,4 +41,3 @@ class MaterialFactory extends Factory
         ]);
     }
 }
-

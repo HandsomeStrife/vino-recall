@@ -16,7 +16,7 @@ class MaterialSeeder extends Seeder
      */
     public function run(): void
     {
-        $create_material_action = new CreateMaterialAction();
+        $create_material_action = new CreateMaterialAction;
         $decks = Deck::all();
 
         foreach ($decks as $deck) {
@@ -78,4 +78,3 @@ class MaterialSeeder extends Seeder
         return $material;
     }
 }
-

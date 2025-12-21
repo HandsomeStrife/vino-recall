@@ -22,8 +22,8 @@ class MaterialViewer extends Component
 
     public function mount(
         string $deck_shortcode,
-        bool $standalone = false,
-        ?string $exit_url = null,
+        bool $standalone,
+        ?string $exit_url,
         UserRepository $user_repository,
         DeckRepository $deck_repository
     ): void {
@@ -114,4 +114,3 @@ class MaterialViewer extends Component
         }
     }
 }
-

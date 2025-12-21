@@ -39,4 +39,3 @@ class Material extends Model
         return $this->belongsTo(Deck::class);
     }
 }
-

@@ -116,7 +116,7 @@ class Library extends Component
         // Separate collections and standalone decks for enrolled
         $enrolled_collections = $enrolled_with_stats->filter(fn ($stat) => $stat['isParent']);
         $enrolled_standalone = $enrolled_with_stats->filter(fn ($stat) => ! $stat['isParent'] && $stat['deck']->parent_deck_id === null);
-        
+
         // Combine standalone decks with individually enrolled child decks for "My Decks" section
         $all_my_decks = $enrolled_standalone->merge($individual_child_stats);
 

@@ -28,4 +28,3 @@ class UpdateMaterialAction
         return $material->fresh();
     }
 }
-

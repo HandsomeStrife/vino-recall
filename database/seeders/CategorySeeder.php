@@ -16,7 +16,7 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $admin = Admin::first();
-        $create_category_action = new CreateCategoryAction();
+        $create_category_action = new CreateCategoryAction;
 
         $categories = [
             [
@@ -71,4 +71,3 @@ class CategorySeeder extends Seeder
         }
     }
 }
-

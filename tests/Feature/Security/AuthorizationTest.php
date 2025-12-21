@@ -111,7 +111,7 @@ test('user cannot modify another users card reviews', function () {
     $deck = Deck::factory()->create();
     $card = Card::factory()->create(['deck_id' => $deck->id]);
 
-    $review2 =     CardReview::factory()->create([
+    $review2 = CardReview::factory()->create([
         'user_id' => $user2->id,
         'card_id' => $card->id,
     ]);
